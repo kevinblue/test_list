@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+			 select 
+			vic.CONTRACT_ID contractid,
+			vic.CONTRACT_NUMBER contractnumber,
+			vic.CUST_NAME,
+			vic.CONTRACTSTATUS,
+			vic.actual_start_date,
+			vic.custid,
+			vic.project_name projectname,
+			
+			con.EQUIP_AMT equipamt,
+			rentplan.planrent,
+			nvl(rentincome.incomerent,0) as incomerent,
+			rentplan.planrent-nvl(rentincome.incomerent,0) as balancerent,
+			con.LEASE_TERM leaseterm,
+			
+			rentplan.plancorpus,
+			nvl(rentincome.incomecorpus,0) as incomecorpus,
+			rentplan.plancorpus-nvl(rentincome.incomecorpus,0) as balancecorpus,
+			
+			rentplan.planinterest,
+			nvl(rentincome.incomeinterest,0) as incomeinterest,
+			rentplan.planinterest-nvl(rentincome.incomeinterest,0) as balanceinterest,
+			
+			rentplan.planlist-nvl(rentincome.incomelist,0) as balancelist,
+			nvl(outlist.rent,0)  as outrent,
+			nvl(outlist.out_list,0) as outlist,
+			nvl(outlist.out_date,0) as outdate,
+			tabpenalty.planpenalty  as planpenalty,
+			tabpenalty.incomepenalty as incomepenalty,
+			tabpenalty.penalty       as penalty
+			From VI_CONTRACT_INFO vic
+			LEFT JOIN CONTRACT_CONDITION con ON con.CONTRACT_ID=vic.ID
+			left join
+			(select cfrp.contract_id,max(cfrp.rent_list) as planlist,sum(cfrp.rent) as planrent,sum(cfrp.corpus) as plancorpus,sum(cfrp.interest) as planinterest from contract_fund_rent_plan cfrp
+			group by cfrp.contract_id) rentplan on vic.ID=rentplan.contract_id
+			left join
+			(select cfri.contract_id,max(cfri.plan_list) as incomelist,sum(cfri.rent) as incomerent,sum(cfri.corpus) as incomecorpus,sum(cfri.interest) as incomeinterest from contract_fund_rent_income cfri
+			group by cfri.contract_id) rentincome on vic.ID=rentincome.contract_id
+			
+			left join VI_CONTRACT_OUT_LIST outlist on vic.ID=outlist.contract_id
+			left join 
+			(select vip.contract_id,sum(vip.plan_penalty) as planpenalty,sum(vip.income_penalty) as incomepenalty,sum(vip.penalty) as penalty 
+				From VI_CONTRACT_PENALTY vip
+				group by vip.contract_id
+			) tabpenalty on vic.ID = tabpenalty.contract_id
+			where vic.CONTRACT_STATUS>30 
+			and vic.CONTRACT_STATUS<100 
+			and vic.custid ='{custid}'
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

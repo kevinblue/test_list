@@ -1,0 +1,120 @@
+package com.tenwa.leasing.action.contract.contractPatrol;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Component;
+
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ContractInvestInfo;
+import com.tenwa.leasing.entity.contract.ContractPatrolInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+
+
+
+@WorkflowAction(name = "contractPatrolEndAction", description = "流程结束动作", workflowName = "租后巡视")
+@Component(value = "contractPatrolEndAction")
+public class ContractPatrolEndAction implements JbpmBaseAction {
+	@Resource(name = "tableService")
+	private TableService  tableService;
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		String ee = variablesMap.get("json_custid_str");
+		CustInfo custInfo = this.tableService.findEntityByID(CustInfo.class, variablesMap.get("json_custid_str"));
+		ContractInfo contractinfo=this.tableService.findEntityByID(ContractInfo.class, variablesMap.get("contract_info.id"));
+		//保存租后巡视信息 、 本次巡视结论
+		ContractPatrolInfo contractPatrolInfo = new ContractPatrolInfo();
+		contractPatrolInfo.setContractId(contractinfo);
+		String  checktime = variablesMap.get("contract_patrol_info.checkTime");//检查时间
+		contractPatrolInfo.setPatrolDate(checktime);
+		String  checkmode = variablesMap.get("contract_patrol_info.checkMode");//检查方式
+		contractPatrolInfo.setCheckMode(checkmode);
+		String visitPensonnel=variablesMap.get("contract_patrol_info.visitPensonnel");//参访人员
+		contractPatrolInfo.setPosition(visitPensonnel);
+		String  custPersonnel = variablesMap.get("contract_patrol_info.custPersonnel");//客户接待人员
+		contractPatrolInfo.setReceptionStaff(custPersonnel);
+		String lastMajorInfo=variablesMap.get("contract_patrol_info.lastMajorInfo");//与前一次检查有重大出入的信息
+		contractPatrolInfo.setSignificantInformation(lastMajorInfo);
+		String  lastPolicyPoint = variablesMap.get("contract_patrol_info.lastPolicyPoint");//前次风险政策清单及
+		contractPatrolInfo.setRiskPolicy(lastPolicyPoint);
+		String feedback=variablesMap.get("contract_patrol_info.feedback");//本次跟踪反馈说明
+		contractPatrolInfo.setTrackingFeedback(feedback);
+		String  nextPolicyPoint = variablesMap.get("contract_patrol_info.nextPolicyPoint");//后期风险政策清单及关注点
+		contractPatrolInfo.setPatrolPoint(nextPolicyPoint);
+		String overdueRent=variablesMap.get("contract_patrol_info.overdueRent");//逾期租金说明
+		contractPatrolInfo.setOverdueDescription(overdueRent);
+		String  resadvice = variablesMap.get("contract_patrol_info.resadvice");//本次结论
+		contractPatrolInfo.setResadvice(resadvice);
+		String  curassettype = variablesMap.get("contract_patrol_info.curassettype");//关注点
+		contractPatrolInfo.setFocus(curassettype);
+		String qassettype=variablesMap.get("contract_patrol_info.qassettype");//管理措施建议
+		contractPatrolInfo.setSuggestions(qassettype);
+		contractPatrolInfo.setCustInfo(custInfo);//承租人
+		String ifchange=variablesMap.get("proj_info.ifchange");//注册信息是否变更
+		String changeinfomation=variablesMap.get("contract_patrol_info.changeinfomation");//变更信息
+		String ifhave=variablesMap.get("proj_info.ifhave");//是否取得土地证
+		String completion_time=variablesMap.get("completion_time");//竣工时间
+		String CurrentYield=variablesMap.get("contract_patrol_info.CurrentYield");//当前收益率（irr）
+		
+		String mark=variablesMap.get("contract_patrol_info.mark");//备注
+		
+		contractPatrolInfo.setIfChange(ifchange);
+		contractPatrolInfo.setIfHave(ifhave);
+		contractPatrolInfo.setCompletionTime(completion_time);
+		contractPatrolInfo.setChangeInformation(changeinfomation);
+		contractPatrolInfo.setCurrentYield(CurrentYield);
+		contractPatrolInfo.setMark(mark);
+		String guaranteeChange=variablesMap.get("guarantee.ifchange");//担保人信息是否变更
+		String content=variablesMap.get("contract_patrol_info.content");//担保人信息变更描述
+		contractPatrolInfo.setGuaranteeChange(guaranteeChange);
+		contractPatrolInfo.setContent(content);
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+		contractPatrolInfo.setCreateDate(df.format(new Date()));
+		//String contractid=variablesMap.get("contract_id");//当前收益率（irr）
+		//String contractid=variablesMap.get("contract_id");//合同签约收益率
+		//this.tableService.copyAndOverrideExistedValueFromStringMap(variablesMap,contractPatrolInfo,null,"contract_patrol_info");
+		this.tableService.saveEntity(contractPatrolInfo);
+	
+		
+	}
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+	
+	 /**
+	 * (non-Javadoc)
+	 * @see com.business.action.JbpmBaseAction#back(javax.servlet.http.HttpServletRequest, java.util.Map)
+	 **/
+	
+	@Override
+	public void back(HttpServletRequest request,
+			Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

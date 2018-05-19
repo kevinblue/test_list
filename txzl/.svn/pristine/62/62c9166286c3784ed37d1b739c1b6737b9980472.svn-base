@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<ehcache updateCheck="false">
+	<diskStore path="java.io.tmpdir"/>
+	<!--default cache config-->
+	<defaultCache 
+		maxElementsInMemory="10000" 
+		eternal="false" 
+		overflowToDisk="true" 
+		timeToIdleSeconds="120" 
+		timeToLiveSeconds="120" 
+		diskPersistent="false" 
+		diskExpiryThreadIntervalSeconds="120"/>
+	<!-- cluster 	
+	<cacheManagerPeerProviderFactory
+	        class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
+	        properties="peerDiscovery=automatic,
+	        multicastGroupAddress=238.0.0.5,
+	        multicastGroupPort=4446,
+	        timeToLive=32"/>
+	<cacheManagerPeerListenerFactory 
+	        class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"/>
+	-->
+	<!-- 	 
+    <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"/>
+	-->
+	<!-- cache used by the object permission service 
+	<cache 		
+	    name="PermissionCached"
+	    maxElementsInMemory="10000" 
+		eternal="false" 
+		overflowToDisk="true" 
+		timeToIdleSeconds="120" 
+		timeToLiveSeconds="120" 
+		diskPersistent="false" 
+		diskExpiryThreadIntervalSeconds="120"/>
+	-->
+	<!-- cache used by the object permission service -->
+	<cache name="deptsTreeMenuCache"
+		maxElementsInMemory="5"
+		eternal="true" 
+		overflowToDisk="false"
+		timeToIdleSeconds="0"
+		timeToLiveSeconds="0"
+		diskPersistent="false"/>
+	<!-- cache used by the object permission service -->
+	<cache name="menusTreeMenuCache"
+		maxElementsInMemory="5"
+		eternal="true" 
+		overflowToDisk="false"
+		timeToIdleSeconds="0"
+		timeToLiveSeconds="0"
+		diskPersistent="false"/>
+	<!-- cache used by the object permission service -->
+	<cache name="dictionariesTreeMenuCache"
+		maxElementsInMemory="5"
+		eternal="true" 
+		overflowToDisk="false"
+		timeToIdleSeconds="0"
+		timeToLiveSeconds="0"
+		diskPersistent="false"/>
+	<cache name="baseDocumentConfigsTreeMenuCache"
+		maxElementsInMemory="5"
+		eternal="true" 
+		overflowToDisk="false"
+		timeToIdleSeconds="0"
+		timeToLiveSeconds="0"
+		diskPersistent="false"/>
+	<cache name="baseRolesTreeMenuCache"
+		maxElementsInMemory="5"
+		eternal="true" 
+		overflowToDisk="false"
+		timeToIdleSeconds="0"
+		timeToLiveSeconds="0"
+		diskPersistent="false"/>	
+	<cache name="reportCache"
+		maxElementsInMemory="100"
+		eternal="false"
+		overflowToDisk="false"
+		timeToIdleSeconds="1800"
+		timeToLiveSeconds="3600"/>
+	
+	
+	<!--  
+	<cache name="permissionCaches"
+		maxElementsInMemory="10000" 
+		eternal="true" 
+		overflowToDisk="true" 
+		timeToIdleSeconds="120" 
+		timeToLiveSeconds="120" 
+		diskPersistent="false" 
+		diskExpiryThreadIntervalSeconds="120">
+		 <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"/>
+	</cache>
+	-->
+</ehcache>

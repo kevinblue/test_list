@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select
+tai.id as id,
+tai.CODING as coding,
+tai.EQUIP_LABOR as equiplabor,
+tai.UNIT as unit,
+tai.SPECIFICATION as specification,
+tai.NUMBER_ONE as numberone,
+tai.UNIT_PRICE as unitprice,
+tai.TOTAL_PRICE as totalprice
+from T_ACT_INVESTMENTSCH tai 
+where 1=1
+		      /~coding: AND tai.CODING  like '%{coding}%'~/					
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

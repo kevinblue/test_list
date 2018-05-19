@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+select * from 
+(
+	select
+	id_ as id,
+	username_ as username,
+	code_ as code,
+	password_ as password,
+	realname_ as realname,
+	telephone_ as telephone,
+	email_ as email,
+	enabled_ as enabled,
+	deptname_ as deptname,
+	is_excepted_ as isexcepted,
+	create_date_ as createdate,
+	modify_date_ as modifydate,
+	creator_ as creator,
+	modificator_ as modificator,
+	4500 as money,
+	'130000' as province,
+	'131100' as city,
+	'131125' as county,
+	id_ as motherid,
+	id_ as fatherid,
+	realname_ as mothername,
+	username_ as fathername
+	from t_users
+)
+where 1=1
+/~email: and email like '%{email}%' ~/
+/~enabled: and enabled = '{enabled}' ~/
+/~username: and username like '%{username}%' ~/
+/~createdate: and createdate = '{createdate}' ~/
+/~createdateStart: and createdate >= '{createdateStart}' ~/
+/~createdateEnd: and createdate <= '{createdateEnd}' ~/
+/~fatherid: and id = '{fatherid}' ~/
+/~motherid: and id = '{motherid}' ~/
+/~globalQueryText: and deptname||username||realname||email like '%{globalQueryText}%' ~/
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

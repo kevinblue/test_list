@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 租金回笼清单列表 -->
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select
+					bank.ebdata_id ebdataid,
+					bank.client_name clientname,
+					bank.fact_date factdate,
+					to_char(bank.fact_money, 'FM999,999,999,999,990.00') factmoney,
+					--to_char(, 'FM999,999,999,999,999.00') mayopemoney,
+					to_char(bank.fact_money-nvl(bank.no_with_money,0)-nvl(cf.fundmoney,0)- nvl(cr.rent,0),'FM999,999,999,999,990.00') mayopemoney,
+					to_char(nvl(pro.process_amount,0), 'FM999,999,999,999,990.00') processmoney
+				from fund_ebank_data bank
+				left outer join 
+				(
+				   select sum(process_amount) process_amount ,ebdata_id from fund_ebank_process 
+				    where 1=1
+				    group by  ebdata_id
+				)pro on pro.ebdata_id=bank.id
+				left outer join 
+				( select sum(fact_money) fundmoney,ebank_number from contract_fund_fund_charge group by ebank_number
+				)cf on cf.ebank_number=bank.id
+				  left outer join 
+				( select sum(isnull(rent,0))+sum(isnull(penalty,0)) rent,ebank_number from contract_fund_rent_income group by ebank_number
+				)cr on cr.ebank_number=bank.id
+				where 1=1 
+				/~ebid: and bank.id = '{ebid}' ~/
+			 ]]>
+				</table_sql>
+			</alldb>
+			<sqlserver>
+				<table_sql>
+	        <![CDATA[
+					select a.*,a.penaltyoverage+a.CURPENALTYINCOME+a.CURPENALTYADJUSTINCOME penalty from (
+					SELECT VRP.*,
+					[dbo].[FN_getPenalty_By_Rentlist](VRP.contractid,VRP.rentlist,'{plan_date}') penaltyoverage 
+					FROM VI_CONTRACT_FUND_RENT_PLAN VRP
+					WHERE  1=1
+					/~contract_id:and VRP.CONTRACTID = '{contract_id}' ~/
+					/~ids:and VRP.id  in({ids}) ~/
+					/~ismaymoney:{ismaymoney}~/
+					)a
+					<EXTRACTEND> order by rentlist<EXTRACTEND>
+				 ]]>
+				</table_sql>
+			</sqlserver>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<isPrepared>false</isPrepared>
+		</data>
+	</table>
+</table-root>

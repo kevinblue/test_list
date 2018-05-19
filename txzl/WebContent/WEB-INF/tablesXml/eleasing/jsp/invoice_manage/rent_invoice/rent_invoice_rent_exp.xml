@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	         select 
+			  cftc.hire_date as  rentdate,--收款日期
+			  c.cust_name    as  custname,--客户名称
+			  tdd1.name_     as  feetype,--款项类型
+			  tdd2.name_     as  settlemethodname,--结算方式
+			  cftc.rent      as  rentmoney,--金额
+			  case when  tdd1.name_='租金' then
+			       ci.contract_number||'合同项第'||cftc.hire_list||'期租金'  
+			       when  tdd1.name_='罚息' then
+			       ci.contract_number||'合同项第'||cftc.hire_list||'期违约金' 
+			       else ''
+			       end    as  reasonname        --收款事由
+			  from contract_fund_rent_income  cftc
+			   left join contract_info ci  on  cftc.contract_id=ci.id
+			   left join cust_info c on ci.cust_id=c.id
+			   left join contract_fund_rent_plan  cfrp  on cftc.plan_id=cfrp.id
+			   left join t_dicts_datas  tdd1  on  cftc.hire_type=tdd1.id_
+			   left join t_dicts_datas  tdd2  on  cftc.balance_mode=tdd2.id_
+			where  ci.contract_id='{cash_receipt.contractid}' and  cftc.hire_date='{cash_receipt.date}' and  cftc.hire_list='{cash_receipt.list}'
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

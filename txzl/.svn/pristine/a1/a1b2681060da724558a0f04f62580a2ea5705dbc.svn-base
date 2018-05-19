@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+select 
+  t.id  ,
+  t.row_number   rownumber,
+  t.archives_title     archivestitle,
+  t.archives_explain  archivesexplain,
+  t.archives_type    archivestype,
+  td.name_           archivestypename,
+   t.archives_number archivesnumber
+  from CUST_MATERIAL_NEW t
+  left join t_dicts_datas td
+    on td.id_ = t.archives_type
+    where 1=1 
+    /~rownumber: and t.row_number = '{rownumber}'~/
+    /~archivestitle: and t.archives_title = '{archivestitle}'~/
+    /~archivestypename: and t.archives_type = '{archivestypename}'~/
+
+
+            
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,154 @@
+/**table*/
+table.fillTable {
+	width: 100%;
+	border-collapse: collapse;
+	padding: 0;
+	margin: 0;
+}
+
+table.fillTable td.td-content-title,table.fillTable td.td-content {
+	border: 0px dotted #CAD9EA;
+	border-bottom: 1px dotted #d3dbde;
+	padding: 0;
+	margin: 0;
+}
+
+.td-content-input {
+	border: 1px solid #d3dbde;
+	width: 164px;
+	float: left;
+	height: 16px;
+}
+
+textarea.td-content-input {
+	border: 1px solid #d3dbde;
+	width: 164px;
+	float: left;
+	height: 50px;
+	overflow: auto;
+}
+
+table.fillTable textarea {
+	border: 1px solid #d3dbde;
+	overflow: auto;
+}
+
+input.Wdate {
+	background: #F6F6F6 url(../../menuIcons/calendar.png) no-repeat 98%;
+	cursor: pointer;
+}
+
+.fillTable .leftComboContainer {
+	float: left;
+	width: 164px;
+	border: 1px solid #d3dbde;
+	height: 20px;
+}
+
+.fillTable .td-content textarea {
+	border: 1px solid #d3dbde;
+	overflow: auto;
+}
+
+.fillTable .td-content-readonly { /*background-color:#F6F6F6;*/
+	background: url(../../images/toolbg.gif) repeat-x;
+}
+
+.fillTable .tr-even {
+	background: #FFFFFF;
+	line-height: 34px;
+	text-indent: 10px;
+}
+
+.fillTable .tr-odd {
+	background: #fafafa;
+	line-height: 34px;
+	text-indent: 10px;
+}
+
+.fillTable .toggle-icon-expanded {
+	width: 11px;
+	float: left;
+	height: 11px;
+	margin-left: 15px;
+	margin-right: 2px;
+	margin-top: 15px;
+	cursor: pointer;
+	background: url('../../images/jt_b.gif') no-repeat;
+}
+
+.fillTable .toggle-icon-collapsed {
+	width: 11px;
+	float: left;
+	height: 11px;
+	margin-left: 15px;
+	margin-right: -3px;
+	margin-top: 12px;
+	cursor: pointer;
+	background: url('../../images/jt_a.gif') no-repeat;
+}
+
+.fillTable .required-content {
+	color: red;
+	width: 10px;
+	text-align: center;
+	line-height: 20px;
+	float: left;
+}
+
+.fillTable .required-tag {
+	color: red;
+	width: 10px;
+	text-align: center;
+	line-height: 20px;
+	margin-left: 10px;
+}
+
+.fillTable  .required-percent-content {
+	color: #000000;
+	width: 10px;
+	text-align: center;
+	line-height: 20px;
+	float: left;
+}
+/*workflow table 1115 helen*/
+.wf_form_title {
+	text-align: center;
+	font: bold 16px/28px "宋体", Arial;
+	color: #1C2B37;
+	height: 30px;
+}
+
+.wf_form_table,.x-panel-div-content {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	font-size: 12px;
+	color: #555;
+	padding: 0 0 0 0;
+	margin: 0 0 10px 0;
+	word-break: break-all;
+	word-wrap: break-word;
+	border-top: 3px solid #005580;
+}
+
+.x-panel-div-content {
+	border: 0px;
+}
+/*.tr-project-info{
+	border:1px dotted #DDD; 
+	line-height:30px;
+	text-indent:10px;
+	border-left:0px; 
+	border-top:0px;
+	}*/
+.td-content-readonly {
+	background: url(../../images/toolbg.gif) repeat-x;
+	border: solid 1px #d3dbde;
+	color: #005580;
+	height: 16px;
+}
+
+.element-readonly {
+	/*background: #f5f8fa;*/
+}

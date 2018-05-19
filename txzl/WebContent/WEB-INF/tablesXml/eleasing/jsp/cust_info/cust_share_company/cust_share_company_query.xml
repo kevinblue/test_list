@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+		<alldb>
+			<table_sql> 
+	        <![CDATA[
+ 				
+ 	select * from 
+		(	select 
+		   	 tdd.id_  value,
+ 			 company.custname  name,   --公司名称
+ 			 cic.org_code   orgcode,       --信用代码
+  			 cic.reg_capital	regcapital,    --注册资金
+      	 --  case when   company.rawValue_custscale=tdd.name_  then  tdd.name_
+         -- else ''  end  as   rawValue_enterprisetype, 
+        	 company.rawValue_custscale  rawValue_enterprisetype,--企业类型
+ 		     cic.person_rep  legalrepresentative,       --法人代表
+ 			 cic.establish_date  founddate,  --成立时间
+ 		     company.rawValue_province||company.rawValue_city||company.county   domicile,-- 住所
+ 			 cic.company_address 	addr,     --公司地址
+         	 cic.operate_master   bizscopeprimary   --主营  
+         from  vi_cust_info_company  company
+         left  join  cust_info_company cic on company.id=cic.cust_id     
+             
+         left  join t_dicts_datas tdd on tdd.enabled_='1' and tdd.name_=company.rawValue_custscale
+		)aa
+		where aa.value  like  '%cust_scale%' or  aa.value is null
+		
+		    union
+    select 
+    csm.enterprise_type  value,
+    csm.stockholder_name name,
+    csm.org_code  orgcode,
+    csm.reg_capital  regcapital,
+    tdd.name_  rawValue_enterprisetype,
+    csm.legal_representative  legalrepresentative,
+    csm.found_date  founddate,
+    csm.domicile domicile,
+    csm.addr_   addr,
+    csm.biz_scope_primary bizscopeprimary
+    
+    from cust_share_company  csm
+    left join t_dicts_datas  tdd  on tdd.id_=csm.enterprise_type
+    where  csm.rowid       in  (select max(rowid)
+          from cust_share_company c2
+    
+         group by c2.stockholder_name,
+         c2.org_code)
+			 ]]>
+			</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

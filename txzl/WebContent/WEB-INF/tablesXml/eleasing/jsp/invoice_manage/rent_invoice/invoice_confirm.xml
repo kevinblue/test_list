@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	
+					select tdd.name_ invoicetype,
+					       case
+					         when invoice.invoiceratename is not null then
+					          invoice.invoiceratename
+					         else
+					          tdd2.name_
+					       end as taxratename,
+					       case
+					         when invoice.invoiceratename is not null then
+					          decode(invoice.invoiceratename, '17%', '0.17', '6%', '0.06')
+					         else
+					          decode(tdd2.name_, '17%', '0.17', '6%', '0.06')
+					       end as taxrate,
+					       round((case
+					               when invoice.invoiceratename is not null then
+					                to_number(invoice.planmoney) *
+					                (to_number(case
+					                             when invoice.invoiceratename is not null then
+					                              decode(invoice.invoiceratename, '17%', '0.17', '6%', '0.06')
+					                             else
+					                              decode(tdd2.name_, '17%', '0.17', '6%', '0.06')
+					                           end) / (to_number(case
+					                                               when invoice.invoiceratename is not null then
+					                                                decode(invoice.invoiceratename, '17%', '0.17', '6%', '0.06')
+					                                               else
+					                                                decode(tdd2.name_, '17%', '0.17', '6%', '0.06')
+					                                             end) + 1))
+					             
+					               else
+					                to_number(invoice.planmoney) *
+					                (to_number(decode(tdd2.name_, '17%', '0.17', '6%', '0.06')) /
+					                 (to_number(decode(tdd2.name_, '17%', '0.17', '6%', '0.06')) + 1))
+					             end),
+					             2) as taxmoney,
+					       invoice.*
+					  from --租金发票
+					        ((select billtype,
+					                 zujin.id,
+					                 zujin.contract_id,
+					                 plantype,
+					                 status,
+					                 cit.invoice_type invoicetypename,
+					                 to_char(rentlist) rentlist,
+					                 plandate,					            
+					                 incomedate,
+					                 planmoney,
+					                 haveExpMoney,
+					                 ci.id cid,
+					                 ci.contract_id contractid,
+					                 ci.contract_number contractnumber,
+					                 cust.cust_name custname,
+					                 cit.tax_reg_code taxregcode,
+					                 cit.tax_bank || ' ' || cit.tax_acc taxbank,
+					                 cit.tax_acc taxacc,
+					                 cit.invoice_phone taxtel,
+					                 cit.invoice_add || ' ' || cit.invoice_phone regaddress,
+					                 decode(plantype,
+					                        '本金',
+					                        ri.corpus_rate,
+					                        '租金',
+					                        ri.rent_rate,
+					                        '利息',
+					                        ri.rent_rate,
+					                        '罚息',
+					                        ri.rent_rate) taxrateid,
+					                 case
+					                   when plantype = '本金' then
+					                    cit.corpus_invoice_ratio
+					                   when plantype = '租金' then
+					                    cit.interest_invoice_ratio
+					                   when plantype = '利息' then
+					                    cit.interest_invoice_ratio
+					                   when plantype = '罚息' then
+					                    cit.interest_invoice_ratio
+					                 end as invoiceratename,
+					                 decode(plantype,
+					                        '本金',
+					                        ri.corpus_invoice_type,
+					                        '租金',
+					                        ri.rent_invoice_type,
+					                        '利息',
+					                        ri.rent_invoice_type,
+					                        '罚息',
+					                        ri.rent_invoice_type) invoicetypeid,
+					                 zujin.planmoney - nvl(zujin.haveExpMoney, 0) currentmoney
+					            from ( --租金计划开票
+					                  select 'rent' billtype,
+					                          rii.id,
+					                          cfrp.contract_id,
+					                          decode(rii.tax_type,
+					                                 'corpusone',
+					                                 '本金',
+					                                 'rent',
+					                                 '租金',
+					                                 'corpus',
+					                                 '本金',
+					                                 'interest',
+					                                 '利息') plantype,
+					                          decode(rii.invoice_status,
+					                                 '1',
+					                                 '已退回',
+					                                 '2',
+					                                 '已申请') status,
+					                          cfrp.rent_list rentlist,
+					                          cfrp.plan_date plandate,
+					                          cfri.incomedate,
+					                          decode(rii.tax_type,
+					                                 'corpusone',
+					                                 cfrp.corpus,
+					                                 'rent',
+					                                 cfrp.rent,
+					                                 'corpus',
+					                                 cfrp.corpus,
+					                                 'interest',
+					                                 cfrp.interest) planmoney, --计划金额       
+					                          nvl(ridi.haveExpMoney, 0) haveExpMoney --已经确认开票金额
+					                    from rent_invoice_info rii
+					                    left join contract_fund_rent_plan cfrp
+					                      on rii.cfrp_id = cfrp.id
+					                    left join (select ridi.rent_invoice_id,
+					                                      SUM(nvl(ridi.invoice_money, 0)) haveExpMoney
+					                                 from rent_invoice_download_info ridi
+					                                where ridi.hc_status is null
+					                                  and ridi.is_cancel is null
+					                                group by ridi.rent_invoice_id) ridi
+					                      on ridi.rent_invoice_id = rii.id
+					                    left join (select MAX(cfri.HIRE_DATE) incomedate,
+					                                      SUM(cfri.RENT) rent,
+					                                      cfri.plan_id
+					                                 from contract_fund_rent_income cfri
+					                                where nvl(cfri.roll_back, 0) = 0
+					                                group by cfri.plan_id) cfri
+					                      on cfri.plan_id = cfrp.id
+					                     and cfri.rent = cfrp.rent
+					                   where rii.cfrp_id is not null
+					                  
+					                  union all
+					                  --租金实收开票
+					                  select 'rent' billtype,
+					                          rii.id,
+					                          cfri.contract_id,
+					                          decode(rii.tax_type,
+					                                 'corpusone',
+					                                 '本金',
+					                                 'rent',
+					                                 '租金',
+					                                 'corpus',
+					                                 '本金',
+					                                 'interest',
+					                                 '利息') plantype,
+					                          decode(rii.invoice_status,
+					                                 '1',
+					                                 '已退回',
+					                                 '2',
+					                                 '已申请') status,
+					                          cfri.plan_list rentlist,
+					                          cfrp.plan_date plandate,
+					                          cfri.hire_date incomedate,
+					                          decode(rii.tax_type,
+					                                 'corpusone',
+					                                 cfrp.corpus,
+					                                 'rent',
+					                                 cfri.rent,
+					                                 'corpus',
+					                                 cfri.corpus,
+					                                 'interest',
+					                                 cfri.interest) planmoney, --实收计划金额    
+					                          nvl(ridi.haveExpMoney, 0) haveExpMoney --已经确认开票金额
+					                    from RENT_INVOICE_INFO rii
+					                    left join contract_fund_rent_income cfri
+					                      on rii.cfri_id = cfri.id
+					                    left join contract_fund_rent_plan cfrp
+					                      on cfri.plan_id = cfrp.id
+					                    left join (select ridi.rent_invoice_id,
+					                                      SUM(nvl(ridi.invoice_money, 0)) haveExpMoney
+					                                 from rent_invoice_download_info ridi
+					                                where ridi.hc_status is null
+					                                  and ridi.is_cancel is null
+					                                group by ridi.rent_invoice_id) ridi
+					                      on ridi.rent_invoice_id = rii.id
+					                   where rii.cfri_id is not null
+					                     and rii.tax_type != 'penalty'
+					                  
+					                  union all
+					                  --罚息开票申请
+					                  select 'rent' billtype,
+					                          rii.id,
+					                          cfri.contract_id,
+					                          '罚息' plantype,
+					                          decode(rii.invoice_status,
+					                                 '1',
+					                                 '已退回',
+					                                 '2',
+					                                 '已申请') status,
+					                          cfri.plan_list rentlist,
+					                          '' plandate,
+					                          cfri.HIRE_DATE incomedate,
+					                          cfri.penalty planmoney, --计划金额
+					                          nvl(ridi.invoice_money, 0) haveExpMoney --已经确认开票金额
+					                    from rent_invoice_info rii
+					                    left join contract_fund_rent_income cfri
+					                      on cfri.id = rii.cfri_id
+					                    left join rent_invoice_download_info ridi
+					                      on ridi.id = rii.ridi_id
+					                     and ridi.hc_status is null
+					                     and ridi.is_cancel is null
+					                   where rii.cfri_id is not null
+					                     and nvl(cfri.roll_back, 0) = 0
+					                     and rii.tax_type = 'penalty') zujin
+					            left join contract_info ci
+					              on zujin.contract_id = ci.id
+					            left join cust_info cust
+					              on cust.id = ci.cust_id
+					            left join contract_invoice_type cit
+					              on ci.id = cit.contract_id
+					            left join rate_info ri
+					              on ri.leas_form = ci.leas_form
+					             and ri.tax_reg_type = cit.tax_reg_type --and ri.received_invoice_type=cit.received_invoice_type
+					              and  ri.rent_invoice_type=cit.invoice_type
+					           where  1=1
+					           --zujin.planmoney - nvl(zujin.haveExpMoney, 0) > 0
+					           )
+					        
+					         union all
+					        --资金发票
+					         (select billtype,
+					                 zijin.id,
+					                 zijin.contract_id,
+					                 plantype,
+					                 status,
+					                 cit.invoice_type invoicetypename,
+					                 rentlist,
+					                 plandate,
+					                 incomedate,
+					                 planmoney,
+					                 haveExpMoney,
+					                 ci.id cid,
+					                 ci.contract_id contractid,
+					                 ci.contract_number contractnumber,
+					                 cust.cust_name custname,
+					                 cit.tax_reg_code taxregcode,
+					                 cit.tax_bank|| ' ' || cit.tax_acc  taxbank,
+                                     cit.tax_acc taxacc,
+                                     cit.invoice_phone taxtel,
+                                     cit.invoice_add|| ' ' ||cit.invoice_phone  regaddress,
+					                 decode(zijin.fee_type,
+					                        'feetype1',
+					                        ri.hand_rate,
+					                        'feetype3',
+					                        ri.service_rate,
+					                        'feetype4',
+					                        ri.nominal_rate,
+					                        'feetype6',
+					                        ri.returnamt_rate,
+					                        'feetype5',
+					                        ri.firstpayment_rate,
+					                        'feetype7',
+					                        ri.insurancelessor_rate,
+					                        'feetype9',
+					                        ri.rent_rate
+					                        ) taxrateid,
+					                 case
+					                   when zijin.fee_type = 'feetype1' then
+					                    cit.handling_charge_invoice_ratio --手续费
+					                   when zijin.fee_type = 'feetype3' then
+					                    cit.management_invoice_ratio --咨询费
+					                   when zijin.fee_type = 'feetype24' then
+					                    cit.handling_charge_invoice_ratio --牵头费                
+					                 end as invoiceratename,
+					                 decode(zijin.fee_type,
+					                        'feetype1',
+					                        ri.hand_invoice_type,
+					                        'feetype3',
+					                        ri.service_invoice_type,
+					                        'feetype4',
+					                        ri.nominal_invoice_type,
+					                        'feetype6',
+					                        ri.returnamt_invoice_type,
+					                        'feetype5',
+					                        ri.firstpayment_invoice_type,
+					                        'feetype7',
+					                        ri.insurancelessor_invoice_type,
+					                        'feetype9',
+					                        ri.rent_invoice_type
+					                        ) invoicetypeid,
+					                 zijin.planmoney - nvl(zijin.haveExpMoney, 0) currentmoney
+					            from ( --资金计划开票
+					                  select 'invoice' billtype,
+					                          fii.id,
+					                          cffp.contract_id,
+					                          tds.name_ plantype,
+					                          case
+					                            when nvl(fii.invoice_status, 0) = 1 then
+					                             '已退回'
+					                            when nvl(fii.invoice_status, 0) = 2 then
+					                             '已申请'
+					                          end as status,
+					                          cffp.payment_id rentlist,
+					                          cffp.plan_date plandate,
+					                          '' incomedate,
+					                          cffp.plan_money planmoney,
+					                          nvl(exporttab.exportmoney, 0) haveExpMoney,
+					                          fii.bill_type,
+					                          cffp.fee_type,
+					                          fii.invoice_status
+					                    from fund_invoice_info fii
+					                    left join contract_fund_fund_plan cffp
+					                      on fii.cffp_id = cffp.id
+					                     and fii.bill_type = 'invoice'
+					                    left join t_dicts_datas tds
+					                      on cffp.fee_type = tds.id_
+					                    left join (select fidi.fund_invoice_id,
+					                                      nvl(sum(nvl(fidi.invoice_money, 0)), 0) as exportmoney
+					                                 from fund_invoice_download_info fidi
+					                                where fidi.HC_STATUS is null
+					                                  and fidi.IS_CANCEL is null
+					                                group by fidi.fund_invoice_id) exporttab
+					                      on fii.id = exporttab.fund_invoice_id
+					                   where fii.cffp_id is not null
+					                     and ((select td.description_
+					                             From t_dicts_datas td
+					                            where td.id_ = 'iscorpusone.01') = '否' or
+					                         (cffp.fee_type != 'feetype5'))
+					                  
+					                  union all
+					                  --资金实收开票
+					                  select 'invoice' billtype,
+					                          fii.id,
+					                          cffc.contract_id,
+					                          tds.name_ plantype,
+					                          case
+					                            when nvl(fii.invoice_status, 0) = 1 then
+					                             '已退回'
+					                            when nvl(fii.invoice_status, 0) = 2 then
+					                             '已申请'
+					                          end as status,
+					                          cffp.payment_id rentlist,
+					                          cffp.plan_date plandate,
+					                          cffc.fact_date incomedate,
+					                          cffc.fact_money planmoney,
+					                          nvl(exporttab.exportmoney, 0) haveExpMoney,
+					                          fii.bill_type,
+					                          cffp.fee_type,
+					                          fii.invoice_status
+					                    from fund_invoice_info fii
+					                    left join contract_fund_fund_charge cffc
+					                      on fii.cffc_id = cffc.id
+					                    left join contract_fund_fund_plan cffp
+					                      on cffc.payment_id = cffp.id
+					                    left join t_dicts_datas tds
+					                      on cffc.fee_type = tds.id_
+					                    left join (select fidi.fund_invoice_id,
+					                                      nvl(sum(nvl(fidi.invoice_money, 0)), 0) as exportmoney
+					                                 from fund_invoice_download_info fidi
+					                                where fidi.HC_STATUS is null
+					                                  and fidi.IS_CANCEL is null
+					                                group by fidi.fund_invoice_id) exporttab
+					                      on fii.id = exporttab.fund_invoice_id
+					                   where fii.cffc_id is not null
+					                     and ((select td.description_
+					                             From t_dicts_datas td
+					                            where td.id_ = 'iscorpusone.01') = '否' or
+					                         (cffc.fee_type != 'feetype5'))) zijin
+					            left join contract_info ci
+					              on zijin.contract_id = ci.id
+					            left join contract_invoice_type cit
+					              on ci.id = cit.contract_id
+					            left join cust_info cust
+					              on ci.cust_id = cust.id
+					            left join rate_info ri
+					              on ri.leas_form = ci.leas_form
+					             and ri.tax_reg_type = cit.tax_reg_type --and ri.received_invoice_type=cit.received_invoice_type
+					           and  ri.rent_invoice_type=cit.invoice_type
+					           where zijin.bill_type = 'invoice'
+					             and nvl(zijin.invoice_status, 0) != -1
+					                -- and cit.rent_invoice_type not in('invoice_type01','invoice_type02')
+					             --and zijin.planmoney - nvl(zijin.haveExpMoney, 0) > 0
+					             
+					             )) invoice
+					  left join t_dicts_datas tdd
+					    on tdd.id_ = invoice.invoicetypename
+					  left join t_dicts_datas tdd2
+					    on tdd2.id_ = invoice.taxrateid
+					 where 1 = 1
+			/~status: and invoice.status in ('<<status>>') ~/
+	         /~ids: and invoice.id in (<<ids>>) ~/
+	          /~instrids: and instr('<<instrids>>',invoice.id)>0 ~/
+	         /~contractid: and invoice.contractid like '%{contractid}%' ~/
+	         /~contractnumber: and invoice.contractnumber like '%{contractnumber}%' ~/
+		     /~custname: and invoice.custname like '%{custname}%' ~/
+			 /~plandateStart: and invoice.plavndate >='{plandateStart}' ~/
+             /~plandateEnd: and invoice.plandate <='{plandateEnd}' ~/
+             /~plantype: and invoice.plantype like '%{plantype}%' ~/
+             /~balanceexportmoneyMin: and invoice.balanceexportmoney >'{balanceexportmoneyMin}' ~/
+             /~balanceexportmoneyMax: and invoice.balanceexportmoney <'{balanceexportmoneyMax}' ~/
+             /~leaseform: and invoice.leaseform = '{leaseform}' ~/
+              <EXTRACTEND>  order by contractid,rentlist<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

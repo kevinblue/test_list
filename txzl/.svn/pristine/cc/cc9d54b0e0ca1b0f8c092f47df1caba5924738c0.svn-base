@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jbpm-configuration spring="enabled">
+
+  <process-engine-context>
+    <string name="spring.cfg" value="classpath:applicationContext.xml,classpath:applicationContext-jbpm.xml"/>
+    <!-- Default command service has a Spring transaction interceptor-->
+    <command-service name="txRequiredCommandService">
+      <retry-interceptor />
+      <environment-interceptor/>
+      <spring-transaction-interceptor current="true"/>
+    </command-service>
+    
+  </process-engine-context>
+
+  <transaction-context>
+    <transaction type="spring"/>
+    <hibernate-session current="true" />
+  </transaction-context>
+
+</jbpm-configuration>

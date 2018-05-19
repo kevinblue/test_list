@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+租金回笼清单列表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		SELECT * FROM (
+		SELECT CI.*, VRP.CURRENTOVERAGE, FN_GETPENALTY_BY_CONTRACT(CI.ID, TO_CHAR(SYSDATE, 'YYYY-MM-DD')) AS PENALTYOVERAGE
+		   
+		  FROM VI_CONTRACT_INFO CI
+		  LEFT JOIN (SELECT VRP.CONTRACTID,
+		                    SUM(VRP.CURRENTOVERAGE) AS CURRENTOVERAGE
+		               FROM VI_CONTRACT_FUND_RENT_PLAN VRP
+		              GROUP BY VRP.CONTRACTID) VRP
+		    ON CI.ID = VRP.CONTRACTID
+		 WHERE CI.CONTRACT_STATUS >= 31 and CI.CONTRACT_STATUS<=100
+		/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+		/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+		/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+		/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+		/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+		) WHERE ( CURRENTOVERAGE > 0 or PENALTYOVERAGE > 0) 
+		<EXTRACTEND>order by contract_id desc<EXTRACTEND>   
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+	   <sqlserver>
+	   <table_sql>
+	        <![CDATA[  
+	   SELECT * FROM (
+		SELECT CI.*, VRP.CURRENTOVERAGE, dbo.FN_GETPENALTY_BY_CONTRACT(CI.ID, CONVERT(varchar(100), GETDATE(), 23)) AS PENALTYOVERAGE
+		 
+		  FROM VI_CONTRACT_INFO CI
+		  LEFT JOIN (SELECT VRP.CONTRACTID,
+		                    SUM(VRP.CURRENTOVERAGE) AS CURRENTOVERAGE
+		               FROM VI_CONTRACT_FUND_RENT_PLAN VRP
+		              GROUP BY VRP.CONTRACTID) VRP
+		    ON CI.ID = VRP.CONTRACTID
+		 WHERE CI.CONTRACT_STATUS >= 31 and  CI.CONTRACT_STATUS<=100 
+		/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+		/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+		/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+		/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+		/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/	
+		) list WHERE 1=1 
+		<EXTRACTEND>order by contract_id desc<EXTRACTEND>   
+			 ]]> 
+			 </table_sql>
+	   </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

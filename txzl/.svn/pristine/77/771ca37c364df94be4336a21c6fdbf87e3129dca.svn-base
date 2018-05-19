@@ -1,0 +1,189 @@
+package com.tenwa.leasing.action.contract.contractOnhire;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Component;
+
+import com.reckon.entity.contract.reckon.fund.ContractFundRentPlanBefore;
+import com.reckon.entity.contract.reckon.fund.ContractFundRentPlanTemp;
+import com.reckon.service.RentConditionDataOperator;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.RemindTask;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ContractSignatory;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.cust.CustInfoCompany;
+import com.tenwa.leasing.entity.cust.CustTypeInfo;
+import com.tenwa.leasing.service.contractcomm.ContractCommService;
+import com.tenwa.leasing.service.fund.fundcomm.FundCommMethod;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+/**
+ * @author Jason
+ * @date 2013-4-24
+ * @info
+ */
+@WorkflowAction(name = "contractOnhireStartAction", description = "流程开始动作", workflowName = "合同起租流程")
+@Component(value = "contractOnhireStartAction")
+public class ContractOnhireStartAction implements JbpmBaseAction {
+	@Resource(name = "tableService")
+	private TableService tableService;
+
+	@Resource(name = "RentConditionDataService")
+	private RentConditionDataOperator rentConditionData;
+	
+	@Resource(name = "fundCommMethod")
+	private FundCommMethod fundCommMethod;
+	
+	
+	@Resource(name = "contractCommService")
+	private ContractCommService contractCommService;
+	
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		//删除流程互斥
+		WorkflowUtil.deleteWorkFlowConflict(this.tableService, variablesMap);  
+		//删除流程重新显示推送提醒任务
+		WorkflowUtil.updatRemindTaskStatus(this.tableService,variablesMap,jbpmWorkflowHistoryInfo,"合同起租流程-1","0");
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+	}
+
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		String contract_id = variablesMap.get("contract_id");
+		
+		variablesMap.put("workFlowFlag", WorkflowUtil.checkWorkFlowConflict(this.tableService, jbpmWorkflowHistoryInfo, contract_id)); 
+		//起租推送提醒
+		WorkflowUtil.updatRemindTaskStatus(this.tableService,variablesMap,jbpmWorkflowHistoryInfo,"合同起租流程-1","1");
+		//将合同基本信息放入variablesMap
+		ContractInfo contractInfo=this.contractCommService.loadContractInfo( variablesMap);
+		CustInfo customerInfo=contractInfo.getCustId();
+		//租赁物件明细
+		contractCommService.loadContractEquip(contractInfo, variablesMap);
+		//租金开票类型
+		contractCommService.loadContractInvoice(contractInfo, variablesMap);
+		 //设置租金测算参数为合同审批
+		String flowunid=jbpmWorkflowHistoryInfo.getHistoryProcessInstanceImpl().getDbid()+ "";;
+		contractCommService.loadContractRentCalculationParam(contractInfo.getContractId(), customerInfo.getCustName(), customerInfo.getId(), flowunid,"onHire_process", variablesMap);
+		//加载合同层的交易结构，租金计划，现在金流，财务租金计划，财务现金流	
+		contractCommService.loadContractRentCalculationFromBefore(contractInfo, variablesMap);
+		
+		//加载账户变更信息
+		Map<String, Object> propertiesMap=new HashMap<String, Object>();
+		ContractInfo contractid=this.tableService.findEntityByID(ContractInfo.class, contract_id);
+		propertiesMap.put("contractId", contractid);
+		List<ContractSignatory> contractSignatorys=this.tableService.findEntityByProperties(ContractSignatory.class, propertiesMap);
+		ContractSignatory contractSignatory=contractSignatorys.get(0);
+		//变更前
+		variablesMap.put("contract_signatory.leaseaccname", contractSignatory.getLeaseAccName());
+		variablesMap.put("contract_signatory.leaseaccnumber", contractSignatory.getLeaseAccNumber());
+		variablesMap.put("contract_signatory.leaseaccbank", contractSignatory.getLeaseAccBank());
+		//变更后
+		variablesMap.put("contractsignatory.leaseaccname", contractSignatory.getLeaseAccName());
+		variablesMap.put("contractsignatory.leaseaccnumber", contractSignatory.getLeaseAccNumber());
+		variablesMap.put("contractsignatory.leaseaccbank", contractSignatory.getLeaseAccBank());
+		
+		//赋值城市，省份，资金总额
+		CustInfo custinfo=contractInfo.getCustId();
+		DictionaryData  custclass=custinfo.getCustClass();
+		String classid=custclass.getId();
+		if("CUST_INFO_PERSON".equals(classid)){
+			variablesMap.put("cust_info.provice", contractInfo.getCustId().getCustInfoPerson().getProvince().getName());
+			variablesMap.put("cust_info.city", contractInfo.getCustId().getCustInfoPerson().getCity().getName());
+		}else{
+			CustInfoCompany custinfocompany =null;
+			Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();
+			queryMainObjectMap.put("custId", custinfo);
+			List<CustInfoCompany> CustInfoCompanylist = this.tableService.findEntityByProperties(CustInfoCompany.class, queryMainObjectMap);
+			if(CustInfoCompanylist.size()>0){
+				 custinfocompany = CustInfoCompanylist.get(0);
+			}
+			variablesMap.put("cust_info.provice",custinfocompany.getProvince()==null?"":custinfocompany.getProvince().getName());
+			variablesMap.put("cust_info.city",contractInfo.getCustId().getCustInfoCompany().getCity()==null?"":contractInfo.getCustId().getCustInfoCompany().getCity().getName());
+			custinfocompany=null;
+		}
+	  	
+	  	
+		
+		//将业务/财务租金计划从before表移往contract_fund_rent_plan_temp表中
+		this.savaConditionDataFromBeforeToContract(contract_id, flowunid,contractInfo);
+		
+		Map<String,String>  queryMainObjectMap =new HashMap<String,String>();
+		queryMainObjectMap.put("contractid", contractInfo.getId());
+	    //资金计划历史
+		this.fundCommMethod.initFundFundPlan("json_fund_plan_old_str", variablesMap, queryMainObjectMap);
+		//加载付款前提
+		this.contractCommService.loadContractPremise(contractInfo, variablesMap);
+		//加载租金计划中付款前提条件
+	   this.contractCommService.loadContractPaymentPremiseCondition(contractInfo, variablesMap);
+		
+	   
+	}
+
+	@Override
+	public void back(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+	}
+	
+	/**
+	 * 把涉及到租金计划的相关的数据从BEFORE表复制到合同的临时的表contract_fund_rent_plan_temp中
+	 * @param contract_id
+	 * @param doc_id
+	 * @param projInfo
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "deprecation", "unchecked" })
+	public void savaConditionDataFromBeforeToContract(String contract_id, String doc_id,ContractInfo contract) throws Exception {
+		
+		Map<String, Object>	propertiesMap = new HashMap<String, Object>();
+		propertiesMap.put("contractId", contract_id);
+		
+		propertiesMap.put("docId", doc_id);
+		//移除临时表中的数据  CONTRACT_FUND_RENT_PLAN_TEMP
+		String sql = " DELETE CONTRACT_FUND_RENT_PLAN_TEMP WHERE  DOC_ID = '"+doc_id+"'  ";
+		
+		this.tableService.getBussinessDao().getJdbcTemplate().execute(sql);
+		
+		//查询BEFORE表租金计划
+		String HSQL = " FROM com.reckon.entity.contract.reckon.fund.ContractFundRentPlanBefore BF WHERE  BF.contractId.id =  '"+contract_id+"'   ";
+		
+		List<ContractFundRentPlanBefore> before_l =  this.tableService.findResultsByHSQL(HSQL);
+		for(ContractFundRentPlanBefore before : before_l){
+			// 租金计划/会计租金计划
+			List<ContractFundRentPlanTemp> contractFundRentPlanTemps = new ArrayList<ContractFundRentPlanTemp>();
+			//复制数据
+			ContractFundRentPlanTemp contractFundRentPlanTemp = new ContractFundRentPlanTemp();
+			contractFundRentPlanTemp = (ContractFundRentPlanTemp)this.tableService.copyAndOverrideExistedValueFromObject(before, contractFundRentPlanTemp);
+			contractFundRentPlanTemp.setContractId(contract.getContractId());
+			contractFundRentPlanTemp.setDocId(doc_id);
+			contractFundRentPlanTemps.add(contractFundRentPlanTemp);
+			//写入
+			this.tableService.saveAllEntities(contractFundRentPlanTemps);
+		}
+		if(before_l.size() <= 0){
+			
+		}
+		
+		
+	} 
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select  * from (
+					 select 
+					 a.id,
+			--		a.lawtype,
+					a.lawnum,
+			--		dict.name_  lawtypename,
+					a.lawmemo,
+					a.create_date lawdate,
+					contract_info.contract_number contractnumber,
+					cust.cust_name custname,
+					cust.id custid,
+					a.is_preserve ispreserve,
+					a.preserve_date preservedate,
+					a.indict_date	 indictdate,
+					a.detailmemo,
+					a.closeinfo,
+					a.closemoney,
+					a.closememo,
+					a.jalawtype,
+					dict2.name_ jalawtypename
+					
+					from law_approval  a
+			--		left join t_dicts_datas dict on dict.id_=a.lawtype
+					left join contract_info on contract_info.id = a.contractinfo_id 
+					left join cust_info cust on cust.id=contract_info.cust_id
+					left join t_dicts_datas dict2 on dict2.id_=a.jalawtype
+				
+				)rs  where 1=1 
+				/~custname: AND rs.custname like '%{custname}%' ~/
+				/~contractnumber: AND rs.contractnumber like '%{contractnumber}%' ~/
+				/~preservedateStart: AND rs.preservedate >= '{preservedateStart}' ~/
+				/~preservedateEnd: AND rs.preservedate <= '{preservedateEnd}' ~/
+				/~indictdateStart: AND rs.indictdate >= '{indictdateStart}' ~/
+				/~indictdateEnd: AND rs.indictdate <= '{indictdateEnd}' ~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

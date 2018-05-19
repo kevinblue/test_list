@@ -1,0 +1,43 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+jQuery(function(){
+	var contractid = "${requestScope['contract_info.contractid']}";
+	var showTools = true;
+	if('${param.isView}' == 'true'||isViewHistoryTask==true){showTools = false;}
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+		id: "insurance_list",
+		renderTo: "id_table_insurance_list",
+		width: globalClientWidth ,
+		height: 365,
+		lazyLoad: false,
+		isClickLoad:false,
+		title: "",
+		remoteOper : false,
+		showPager: false,
+		showToolbar: showTools,
+		params:{filekey:contractid,modelname:'保险清单'},
+		xmlFileName : '/eleasing/jsp/doc/insurance_list.xml',
+		columns: [
+			{type : 'indexcolumn'},
+			{type : 'checkcolumn'}, 
+			{field: 'id',header:'标识',headerAlign:'center',width:100,allowSort:true,visible:false},
+			{field: 'filename',header:'附件名称',headerAlign:'center' ,width:100,allowSort:true},
+			{field: 'creator',header:'上传人',headerAlign:'center' ,width:100,allowSort:true},						
+			{field: 'createdate',header:'上传时间',headerAlign:'center', width:100,dateFormat:"yyyy-MM-dd HH:mm:ss"},
+			{field: 'invalid',header:'是否有效'},
+			{field: '',header:'操作',
+			            renderer:function(e){
+				              var id = e.record.id;
+			                 return "<a href='javascript:void(0);' onclick='downloadFileById(\"" + id + "\")'>下载 </a>";
+			}
+			}
+		         ]
+	   });
+	});
+});
+function downloadFileById(id) {
+		attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+id});
+	}
+</script>
+<div id="id_table_insurance_list"></div>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        		<![CDATA[
+	        		
+						select 
+						f.id 										as id,
+						f.factoring_controversy_id 	as factoringcontroversyid,									--争议申请ID
+						fc.contract_id						as contractid,														--合同编号(合同id)		
+                        ci.contract_id		 				as contractidname,												--合同编号
+                        ci.contract_number    		as contractnumber,       										--业务合同编号
+                        cust.cust_name        			as custname,              											--客户名称
+                        ci.project_name       			as projectname,           										--项目名称
+					                                                                        													--应收账款总额
+					                                                                        													--剩余应收账款金额
+					                                                                        													--项目开发
+                        fc.application_number  		as applicationnumbername,  							--争议申请编号1
+                        fc.application_number  		as applicationnumber,  										--争议申请编号2
+                        fc.create_date         			as createdate,            											--争议申请日期
+                        fc.explaination        			as explaination,          										--争议说明
+                        
+                        f.relieve_date        				as relievedate,           											--争议解除日期
+                        f.relieve_explaination 		as relieveexplaination,  										--争议解除说明
+                        case when f.status=1 then '争议中' else '已解除' end	as statusname,       --争议状态1 
+                        f.status 								as status																--争议状态2
+                        
+                    	from factoring_controversy_relieve f
+		                left join factoring_controversy fc on fc.id=f.factoring_controversy_id
+		                left join contract_info ci on ci.id=fc.contract_id
+		                left join cust_info cust on cust.id=ci.cust_id
+		                where 1=1 and f.status=2
+		                
+		                /~fcid: and f.factoring_controversy_id like '%{fcid}%'~/
+		                /~contractidname: and ci.contract_id like '%{contractidname}%'~/
+						/~contractnumber: and ci.contract_number like '%{contractnumber}%'~/
+						/~custname: and cust.cust_name like '%{custname}%'~/
+						/~projectname: and ci.project_name like '%{projectname}%'~/
+						
+						/~applicationnumbername: and fc.application_number  like '%{applicationnumbername}%'~/
+						
+						/~createdatestart: and f.create_date >= '{createdatestart}'~/
+						/~createdateend: and f.create_date <= '{createdateend}'~/
+						/~explaination: and fc.explaination like '%{explaination}%'~/
+						
+						/~relievedatestart: and f.relieve_date >= '{relievedatestart}'~/
+						/~relievedateend: and f.relieve_date <= '{relievedateend}'~/
+						
+						/~relieveexplaination: and f.relieve_explaination like '%{relieveexplaination}%'~/
+						
+						/~status: and f.status like '%{status}%'~/
+						
+						order by f.status asc
+						
+				 	]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>
+
+
+
+
+
+
+
+
+
+

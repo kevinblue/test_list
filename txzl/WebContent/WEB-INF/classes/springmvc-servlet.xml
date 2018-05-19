@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+       
+        <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	        <property name="prefix" value="/WEB-INF/jsps/" />
+	        <property name="suffix" value="" />
+	    </bean>
+	    <!-- UrlFilenameViewController 
+		<bean name="urlFilenameController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController" >
+			<property name="prefix" value="/solutions/" />
+			<property name="suffix" value=".jsp" />
+		</bean> 
+		-->
+		<!--handle file uploads using commons-fileupload  -->
+	   <bean id="multipartResolver" class="org.springframework.web.multipart.commons.PJCommonsMultipartResolver">
+        <property name="defaultEncoding" value="UTF-8" />  
+        <!-- 内存缓存1M -->  
+        <property name="maxInMemorySize" value="50000000"></property>  
+        <!-- 最大2GB -->  
+        <property name="maxUploadSize" value="2000000000" ></property>  
+
+	   </bean>
+	   <!-- 多请求处理控制器 
+	   <bean id="methodNameResolver" class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
+		   <property name="paramName" value="method"></property>
+	   </bean>
+       -->
+	   <!-- 异常处理 
+	   <bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">  
+	         <property name="defaultErrorView">  
+	             <value>solutions/errorPages/error.jsp</value>  
+	         </property>  
+	         <property name="defaultStatusCode">  
+	             <value>500</value>  
+	         </property>  
+	         <property name="warnLogCategory">  
+	             <value>org.springframework.web.servlet.handler.SimpleMappingExceptionResolver</value>  
+	         </property>  
+	         <property name="exceptionMappings">    
+	             <props>    
+	                 <prop key="org.springframework.web.multipart.MaxUploadSizeExceededException">solutions/errorPages/maxUploadExceeded.jsp</prop>    
+	             </props>     
+	         </property>  
+	   </bean> 
+	   --> 
+	   <!-- 拦截器配置 -->   
+	   <mvc:interceptors>
+		   <mvc:interceptor>
+			  <mvc:mapping path="/**"/>
+	          <bean id="globalMVCExceptionHandlerInterceptor" class="com.tenwa.kernal.web.interceptor.GlobalMVCExceptionHandlerInterceptor"></bean>  
+		   </mvc:interceptor>
+	   </mvc:interceptors>
+	
+      <!-- 启动Spring MVC的注解功能，完成请求和注解POJO的映射   -->  
+      <mvc:annotation-driven  />  
+      <!--
+      <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor" >
+	      <property name="paramName" value="locale"/>
+	  </bean>  
+      <bean id="handlerMapping"  
+        class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">   
+        <property name="interceptors">
+                  <list><ref bean="localeChangeInterceptor" />  </list>   
+        </property>   
+      </bean>
+      -->
+      <!--<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" />  -->
+      <!-- 扫描所有的controller 但是不扫描service-->
+	  <context:component-scan base-package="com.*.**.controller">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository" />
+	  </context:component-scan>
+	  <!-- 启动JSON格式的配置 -->
+      <bean id="jacksonMessageConverter" class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+        <!-- 解决 HttpMediaTypeNotAcceptableException: Could not find acceptable representation -->
+        <property name="supportedMediaTypes">
+            <list>
+                <value>text/html;charset=UTF-8</value>
+            </list>
+        </property>
+      </bean>
+      
+</beans>
+
+

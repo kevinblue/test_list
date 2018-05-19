@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+select  b.*,sys_guid() id
+  from (
+--付款
+select '付款' fundtype,
+       a.id aaa,
+       a.fund_plan_no fundplanno,
+       a.payment_name paymentcount,
+       a.payment amount,
+       a.plan_time paymenttime,
+       a.payment_unit supportunit,
+       a.payment_type plannameid,
+       t1.name_ planname,
+       a.payment_silver silver,
+       a.payment_note note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.payment_type
+union
+select '资金上存' fundtype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.fund_deposit_name fund_depositcount,
+       a.fund_deposit amount,
+       a.plan_time fund_deposittime,
+       a.fund_deposit_unit supportunit,
+       a.fund_deposit_type plannameid,
+       t1.name_ planname,
+       a.fund_deposit_silver silver,
+       a.fund_deposit_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.fund_deposit_type
+
+union
+--内部账户转款(转出)
+select '内部账户转款(转出)' fundtype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.inner_tran_name inner_trancount,
+       a.inner_tran amount,
+       a.plan_time inner_trantime,
+       a.inner_tran_unit supportunit,
+       a.inner_tran_type plannameid,
+       t1.name_ planname,
+       a.inner_tran_silver silver,
+       a.inner_tran_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.inner_tran_type
+union
+--外部还款
+select '外部还款' fundtype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.outter_return_name outter_returncount,
+       a.outter_return amount,
+       a.plan_time outter_returntime,
+       a.outter_return_unit supportunit,
+       a.outter_return_type plannameid,
+       t1.name_ planname,
+       a.outter_return_silver silver,
+       a.outter_return_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.outter_return_type
+union
+
+        --还集团借款
+        select '还集团借款' fundtype,
+                a.id id,
+                a.fund_plan_no fundplanno,
+                a.group_return_name group_returncount,
+                a.group_return amount,
+                a.plan_time group_returntime,
+                a.group_return_unit supportunit,
+                a.group_return_type plannameid,
+                t1.name_ planname,
+                a.group_return_silver silver,
+                a.group_return_note
+          from deposit_interest_detail a
+          left join t_dicts_datas t1
+            on t1.id_ = a.group_return_type) b
+
+    where 1=1  and b.amount is not null and b.amount<>'0' 
+	        /~plantimeStart: and b.PAYMENTTIME >= '{plantimeStart}' ~/
+            /~plantimeEnd: and b.PAYMENTTIME <= '{plantimeEnd}' ~/
+           <EXTRACTEND> ORDER BY paymenttime,fundplanno	<EXTRACTEND>		
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

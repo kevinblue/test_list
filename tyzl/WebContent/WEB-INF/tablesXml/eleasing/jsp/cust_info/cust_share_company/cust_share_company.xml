@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+		<alldb>
+			<table_sql> 
+	        <![CDATA[
+						SELECT    
+		              share_.id as id,
+		              share_.cust_id as custid, 
+		              cust.cust_name AS custname,
+		              share_.stockholder_name as stockholdername,
+		              share_.org_code as orgcode, 
+		              share_.reg_capital as regcapital,
+		              share_.shareholding as shareholding, 
+		                      share_.legal_representative as legalrepresentative,
+		                      dict1.code_ as relationship ,
+		                      dict1.name_ as relation_shipname,
+		                      share_.addr_ as addr,
+		                      share_.biz_scope_primary as bizscopeprimary,
+		                      share_.creator_ as creator,
+		                      base1.Realname_ AS creatorname,
+		                      SUBSTR(share_.create_date,0,10) as createdate,
+		                      share_.modificator_ as modificator, 
+		                      base2.Realname_ AS modificatorname, 
+		                      SUBSTR(share_.modify_date,0,10) as modifydate,
+		                      dict.code_ as stockholdertype, 
+		                      dict.name_ AS cust_info_typename
+		              FROM  cust_share_company  share_
+		              left join cust_info  cust on share_.cust_id=cust.id
+		              left join t_users  base1 on share_.creator_=base1.id_
+		              left join t_users  base2 on share_.modificator_=base2.id_
+		                  left join t_dicts_datas dict on (dict.id_=share_.stockholder_type)
+		                  left join t_dicts_datas dict1 on (dict1.id_=share_.relationship)
+		                where 1=1
+		                /~custid: and share_.cust_id like '%{custid}%'~/
+			 ]]>
+			</table_sql>
+			</alldb>
+		    <sqlserver>
+			<table_sql> 
+	        <![CDATA[
+						SELECT    
+		              share_.id as id,
+		              share_.cust_id as custid, 
+		              cust.cust_name AS custname,
+		              share_.stockholder_name as stockholdername,
+		              share_.org_code as orgcode, 
+		              share_.reg_capital as regcapital,
+		              share_.shareholding as shareholding, 
+		                      share_.legal_representative as legalrepresentative,
+		                      dict1.code_ as relationship ,
+		                      dict1.name_ as relation_shipname,
+		                      share_.addr_ as addr,
+		                      share_.biz_scope_primary as bizscopeprimary,
+		                      share_.creator_ as creator,
+		                      base1.Realname_ AS creatorname,
+		                      CONVERT(varchar(100), share_.create_date,23) as createdate,
+		                      share_.modificator_ as modificator, 
+		                      base2.Realname_ AS modificatorname, 
+		                      CONVERT(varchar(100),share_.modify_date,23) as modifydate,
+		                      dict.code_ as stockholdertype, 
+		                      dict.name_ AS cust_info_typename
+		              FROM  cust_share_company  share_
+		              left join cust_info  cust on share_.cust_id=cust.id
+		              left join t_users  base1 on share_.creator_=base1.id_
+		              left join t_users  base2 on share_.modificator_=base2.id_
+		                  left join t_dicts_datas dict on (dict.id_=share_.stockholder_type)
+		                  left join t_dicts_datas dict1 on (dict1.id_=share_.relationship)
+		                where 1=1
+		                /~custid: and share_.cust_id like '%{custid}%'~/
+			 ]]>
+			</table_sql>
+			</sqlserver>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

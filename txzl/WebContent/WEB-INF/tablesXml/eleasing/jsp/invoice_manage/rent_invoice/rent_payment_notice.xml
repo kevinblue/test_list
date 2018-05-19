@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select 
+     nvl(record.export_times,'0') export_times,
+     case when nvl(record.id,'1') = '1' then '未导出' else '已导出' end export_state,
+v.* from (SELECT  CI.ID AS ID,
+'租金'    moneytype,
+               CFRP.id CFRP_ID,
+               CI.CONTRACT_NUMBER,
+               CI.Contract_Id,
+               ci.project_name projname,
+               CI.CUST_ID custid,
+               CI.PROJECT_NAME projectname,
+               SIGNATORY.LESSOR lessor,
+               CUST.CUST_NAME,
+               CFRP.RENT_LIST,
+
+               CFRP.PLAN_DATE PLANDATE,
+               to_char(to_date(CFRP.PLAN_DATE,'YYYY-MM-DD')-100,'YYYY-MM-DD') PLAN_DATE,
+               CFRP.RENT,
+               TU.REALNAME_ AS PROJ_MANAGE,
+               TD.NAME_ AS PROJ_DEPT,
+               SIGNATORY.Lease_Acc_Number leaseaccnumber,
+               SIGNATORY.Lease_Acc_Bank leaseaccbank,
+               SIGNATORY.Lease_Acc_Name leaseaccname,
+               CC.START_DATE firstrentdate,
+  
+               to_char(add_months(to_date(CC.START_DATE,'yyyy-mm-dd'), CC.lease_term),'yyyy-mm-dd') lastrentdate,
+               case when ci.leas_form = 'lease_form1' then '《融资租赁合同》' else '《融资租赁合同(售后回租)》' end contractname,
+               CC.PERIOD_TYPE,
+               fn_getpenalty_by_contract(ci.id,to_char(sysdate,'yyyy-mm-dd')) penalty,
+               CC.INCOME_NUMBER_YEAR,
+               case when caution.balance>0 and 
+              (
+                (caution.balance<vrp.currentoverage and  caution.balance > (vrp.currentoverage - temp.rent)) --租金余额-下一期租金<抵扣保证金余额<租金余额    不足额当期 
+                or
+                (caution.balance<vrp.currentoverage and caution.balance < temp2.rent and 
+                 CFRP.RENT_LIST = (select max(rent_list)-1 from contract_fund_rent_plan where contract_id = ci.id  ))--倒数第二期提醒 租金余额小于最后一期租金 
+              ) then 'offset' else 'normal' end offsetflag
+           
+          from contract_info ci 
+          LEFT JOIN CONTRACT_SIGNATORY SIGNATORY on SIGNATORY.contract_id = ci.id
+          LEFT JOIN (
+          select plan1.* from  CONTRACT_FUND_RENT_PLAN plan1 right join   (
+          select contract_id,rent_list rent_list from CONTRACT_FUND_RENT_PLAN where plan_date >= to_char(sysdate-100,'yyyy-mm-dd')
+            ) plan2 on plan1.contract_id = plan2.contract_id and plan1.rent_list = plan2. rent_list
+          ) CFRP ON CFRP.CONTRACT_ID = CI.ID
+          LEFT JOIN CONTRACT_CONDITION CC ON CFRP.CONTRACT_ID = CC.CONTRACT_ID
+          LEFT JOIN CUST_INFO CUST ON CI.CUST_ID = CUST.ID
+          LEFT JOIN CUST_INFO_COMPANY CIC ON CI.CUST_ID = CIC.CUST_ID
+          left join (
+          select  contract_id,min(plan_date) firstrentdate,max(plan_date) lastrentdate from  CONTRACT_FUND_RENT_PLAN group by contract_id 
+          ) tempplan on tempplan.contract_id = ci.id
+          LEFT JOIN T_USERS TU ON CI.PROJ_MANAGE = TU.ID_
+          LEFT JOIN T_DEPTS TD ON CI.PROJ_DEPT = TD.ID_
+          left join (
+          select cp.contract_id,sum(nvl(cp.plan_money,0)) plancaution,sum(nvl(cc.fact_money,0)) chargecaution , 
+          sum(nvl(cp.plan_money,0))-sum(nvl(cc.fact_money,0)) balance
+          from contract_fund_fund_plan cp
+          left join contract_fund_fund_charge cc on cp.id = cc.payment_id
+          where cp.fee_type = 'feetype16'
+          group by cp.contract_id ) caution on caution.contract_id = ci.id 
+          left join (select vrp.contractid, sum(vrp.currentoverage) as currentoverage
+          from vi_contract_fund_rent_plan vrp
+          where vrp.plandate  >= to_char(sysdate, 'yyyy-mm-dd') 
+          group by vrp.contractid) vrp on vrp.contractid = ci.id
+          left join (
+          select a.contract_id,a.rent from contract_fund_rent_plan a
+          where a.plan_date = (select min(plan_date) from contract_fund_rent_plan b where b.contract_id = a.contract_id and b.plan_date>= to_char(sysdate, 'yyyy-mm-dd'))
+          ) temp on temp.contract_id = ci.id  
+        left join (
+          select a.contract_id,a.rent from contract_fund_rent_plan a
+          where a.plan_date = (select max(plan_date) from contract_fund_rent_plan b where b.contract_id = a.contract_id)
+          ) temp2 on temp2.contract_id = ci.id 
+        WHERE 1=1 AND ci.contract_status>=21 and ci.contract_status<100 
+        union
+        SELECT CI.ID AS ID,
+    tdd3.name_||tdd1.name_||tdd2.name_   moneytype,
+       CFRP.id CFRP_ID,
+       CI.CONTRACT_NUMBER,
+       CI.Contract_Id,
+       ci.project_name projname,
+       CI.CUST_ID custid,
+       CI.PROJECT_NAME projectname,
+       SIGNATORY.LESSOR lessor,
+       CUST.CUST_NAME,
+       to_number(CFRP.RENT_LIST),
+       CFRP.PLAN_DATE PLANDATE,
+       to_char(to_date(CFRP.PLAN_DATE, 'YYYY-MM-DD') - 100, 'YYYY-MM-DD') PLAN_DATE,
+       CFRP.RENT,
+       TU.REALNAME_ AS PROJ_MANAGE,
+       TD.NAME_ AS PROJ_DEPT,
+       SIGNATORY.Lease_Acc_Number leaseaccnumber,
+       SIGNATORY.Lease_Acc_Bank leaseaccbank,
+       SIGNATORY.Lease_Acc_Name leaseaccname,
+       '' firstrentdate,
+       
+       '' lastrentdate,
+       case
+         when ci.leas_form = 'lease_form1' then
+          '《融资租赁合同》'
+         else
+          '《融资租赁合同(售后回租)》'
+       end contractname,
+       CC.PERIOD_TYPE,
+       0 penalty,
+       CC.INCOME_NUMBER_YEAR,
+       '' offsetflag
+  from contract_info ci
+  LEFT JOIN CONTRACT_SIGNATORY SIGNATORY
+    on SIGNATORY.contract_id = ci.id
+  LEFT JOIN (select distinct plan1.*,
+                             plan1.payment_id RENT_LIST,
+                             plan1.plan_money rent
+               from CONTRACT_FUND_fund_PLAN plan1
+              right join (select contract_id, plan_date plandate
+                           from CONTRACT_FUND_fund_PLAN
+                          where plan_date >=
+                                to_char(sysdate - 100, 'yyyy-mm-dd')) plan2
+                 on plan1.contract_id = plan2.contract_id
+                and plan1.plan_date = plan2. plandate) CFRP
+    ON CFRP.CONTRACT_ID = CI.ID
+     left join t_dicts_datas tdd1 on tdd1.id_=cfrp.fee_type
+    left join t_dicts_datas tdd2 on tdd2.id_=cfrp.fund_type
+    left join t_dicts_datas tdd3 on tdd3.id_=cfrp.device_name
+  LEFT JOIN CONTRACT_CONDITION CC
+    ON CFRP.CONTRACT_ID = CC.CONTRACT_ID
+  LEFT JOIN CUST_INFO CUST
+    ON CI.CUST_ID = CUST.ID
+  LEFT JOIN CUST_INFO_COMPANY CIC
+    ON CI.CUST_ID = CIC.CUST_ID
+  LEFT JOIN T_USERS TU
+    ON CI.PROJ_MANAGE = TU.ID_
+  LEFT JOIN T_DEPTS TD
+    ON CI.PROJ_DEPT = TD.ID_
+ WHERE 1 = 1
+   AND ci.contract_status >= 21
+   and ci.contract_status < 100
+        
+        
+        
+        ) v
+        left join RENT_PAY_NOTICE_RECORD record on record.contract_id = v.id and record.plan_id= v.CFRP_ID 
+        WHERE 1=1
+				 /~contract_number: AND CONTRACT_NUMBER LIKE '%{contract_number}%'~/
+				 /~projectname: AND PROJECTNAME LIKE '%{projectname}%'~/
+				 /~cust_name: AND CUST_NAME LIKE '%{cust_name}%'~/
+				 /~proj_dept: AND PROJ_DEPT LIKE '%{proj_dept}%'~/
+				 /~plandateStart: AND PLANDATE >= '{plandateStart}'~/
+				 /~plandateEnd: AND PLANDATE <= '{plandateEnd}'~/
+				 /~proj_manage: AND PROJ_MANAGE LIKE '%{proj_manage}%'~/
+				 /~export_state: AND <<export_state>>~/
+				 ORDER BY substr(v.CONTRACT_NUMBER,0,8),	v.RENT_LIST asc
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

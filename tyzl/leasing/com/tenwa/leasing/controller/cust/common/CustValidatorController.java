@@ -1,0 +1,483 @@
+package com.tenwa.leasing.controller.cust.common;
+
+import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.tenwa.business.entity.AttachmentFileUploadInfo;
+import com.tenwa.business.entity.AttachmentFileUploadInfoDetail;
+import com.tenwa.business.entity.Department;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.service.TableService;
+import com.tenwa.exception.BusinessException;
+import com.tenwa.jbpm.entity.GrantDelegateUser;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfoUser;
+import com.tenwa.jbpm.entity.JBPMWorkflowReadUser;
+import com.tenwa.jbpm.entity.JBPMWorkflowSignatureUser;
+import com.tenwa.kernal.utils.ExcelSwitchHtmlUtil;
+import com.tenwa.kernal.utils.FileUtil;
+import com.tenwa.kernal.utils.PdfSwitchImage;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.kernal.utils.ResourceUtil;
+import com.tenwa.kernal.utils.WordSwitchHtml;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ProjTransferInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+import com.tenwa.leasing.service.cust.CustAccountService;
+import com.tenwa.leasing.service.cust.CustService;
+import com.tenwa.leasing.service.cust.CustValidatorService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+@Controller(value = "CustValidatorController")
+@RequestMapping(value = "/**/acl")
+/**
+ * 客户验证
+ * @Title: CustValidatorController.java
+ * @package: com.tenwa.leasing.controller.cust.common
+ * @author: tpf
+ * @date 2014年11月20日 下午6:03:17 
+ * @version V5.1
+ */
+public class CustValidatorController {
+	@Resource(name = "custValidatorService")
+	private CustValidatorService baseService;
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+
+	/**
+	  * 检查身份证
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIdCard.acl")
+	@ResponseBody
+	public String checkIdCard(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String idcardno = model.get("idcardno");
+			String id = model.get("id");
+			String message="{message:'"+baseService.checkIdCard(idcardno,id)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	  * 检查组织机构代码
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkOrgCode.acl")
+	@ResponseBody
+	public String checkOrgcode(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String orgcode = model.get("orgcode");
+			String id = model.get("id");
+			String message="{message:'"+baseService.checkOrgcode(orgcode,id)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	  * 检查主账户是否重复
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIsMain.acl")
+	@ResponseBody
+	public String checkIsMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String message="{message:'"+baseService.checkIsMain(id,custId)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	 * 检查银行账号是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCustAccountRepeat.acl")
+	@ResponseBody
+	public String checkCustAccountRepeat(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String accNumber=model.get("accNumber");
+			String message="{message:'"+baseService.checkCustAccountRepeat(id,custId,accNumber)+"'}";
+			return message;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "{message:'检查失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	 * 检查关联企业中的身份证/组织机构代码是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCardNoShareCompany.acl")
+	@ResponseBody
+	public String checkCardNoShareCompany(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			String message="{message:'"+baseService.checkCardNoShareCompanyRepeat(id,custId,cardNo)+"'}";
+			return message;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "{message:'检查失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	 * 检查股本结构中的身份证/组织机构代码是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCardNoCustStockHolder.acl")
+	@ResponseBody
+	public String checkCardNoCustStockHolder(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			String message="{message:'"+baseService.checkCardNoCustStockHolderRepeat(id,custId,cardNo)+"'}";
+			return message;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "{message:'检查失败!["+e.getMessage()+"]'}";
+		}
+	}
+	
+	/**
+	  * 修改是否草稿、检查是否已经立过项
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkCustByProjInfo.acl")
+	@ResponseBody
+	public String checkCustByProjInfo(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String custId = model.get("custId");
+			String message="{message:'"+baseService.checkCustByProjInfo(custId)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	  * 检查重要个人（主联系人）是否重复
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIsPersonMain.acl")
+	@ResponseBody
+	public String checkIsPersonMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String message="{message:'"+baseService.checkIsPersonMain(id,custId)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	/**
+	 * 检查重要个人下面的身份证是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	
+	@RequestMapping(value = "/checkCardNoPersonMain.acl")
+	@ResponseBody
+	public String checkCardNoPersonMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			String message="{message:'"+baseService.checkCardNoPersonMain(id,custId,cardNo)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}   
+	}
+	
+	@RequestMapping(value = "/changemanage.acl")
+	@ResponseBody
+	public String changemanage(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String userid = model.get("userid");
+			String custid = model.get("custid");
+			String message="{message:'"+baseService.changemanage(custid, userid)+"'}";
+			return message;
+		}catch (Exception e) {
+			return "{message:'修改失败!["+e.getMessage()+"]'}";
+		}
+	}
+	
+	@RequestMapping(value = "/qeryCustfile.acl")
+	@ResponseBody
+	public String qeryCustfile(HttpServletRequest request,
+			HttpServletResponse response) throws Throwable {
+
+		String message="";
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String userid = model.get("userid");
+			String custid = model.get("custid");
+			String filedict=model.get("filedict");
+			Map<String,Object> map=new HashMap<String,Object>();
+			if(custid!=null)
+			{	
+				map.put("cust", this.tableService.findEntityByID(CustInfo.class, custid));
+				map.put("attachmentFileDict", this.tableService.findEntityByID(DictionaryData.class, filedict));
+				map.put("module", "custfile");
+			}
+			else
+			{	
+				map.put("module", "custfile");
+				map.put("identifierTwo", userid);
+				map.put("attachmentFileDict", this.tableService.findEntityByID(DictionaryData.class, filedict));
+			}
+			List<AttachmentFileUploadInfo> list=this.tableService.findEntityByProperties(AttachmentFileUploadInfo.class, map);
+			AttachmentFileUploadInfo attachmentFileUploadInfo=null;
+			AttachmentFileUploadInfoDetail attachmentFileUploadInfoDetail = null;
+			if (list.size()>0) {
+				attachmentFileUploadInfo = list.get(0);
+				Map<String,Object> detailmap=new HashMap<String,Object>();
+				detailmap.put("attachmentFileUploadInfo", attachmentFileUploadInfo);
+				List<AttachmentFileUploadInfoDetail> detaillist=this.tableService.findEntityByProperties(AttachmentFileUploadInfoDetail.class, detailmap);
+				if(detaillist.size()>0)
+				{
+					attachmentFileUploadInfoDetail=detaillist.get(0);
+					String fileTitleName = attachmentFileUploadInfoDetail.getChineseFileName();//文件名称
+					String uploadTime = attachmentFileUploadInfoDetail.getUploadTime();
+					String uploadDate = uploadTime.substring(0, 10);
+					String module = attachmentFileUploadInfo.getModule();
+					String uploadDirPath = FileUtil.getFilePathString(ResourceUtil.getFileUploadDataPath())+ "/" + module + "/" + FileUtil.getYearMonthDayPathByString(uploadDate, "yyyy-MM-dd");
+					String encodeFileName = attachmentFileUploadInfoDetail.getEncodeFileName();
+					String downloadedFileFullPath = FileUtil.getFilePathString(uploadDirPath + "/" + encodeFileName);
+					  
+					String extName = ""; // 保存文件拓展名
+					if (fileTitleName.lastIndexOf(".") >= 0) {	// 获取拓展名
+						extName = fileTitleName.substring(fileTitleName.lastIndexOf(".")+1).toLowerCase();
+					}
+					if (extName != null && extName.matches("xls|xlsx")) {
+						 message=ExcelSwitchHtmlUtil.getExcelHtml(downloadedFileFullPath);
+					}else if(extName != null && extName.matches("doc")) {
+						message=WordSwitchHtml.getWordHtml(downloadedFileFullPath,uploadDirPath);  
+					}else if(extName != null && extName.matches("docx")) {
+						message=WordSwitchHtml.getWord2007Html(downloadedFileFullPath);  
+					}else if(extName.matches("jpg|jpeg|png|bmp|gif|pdf")){
+					      FileInputStream is =null;  
+						if(extName.equals("pdf")){
+							String newpdfpath=PdfSwitchImage.getPdfPath(downloadedFileFullPath, uploadDirPath);
+							is = new FileInputStream(newpdfpath); 
+						}else{
+							is = new FileInputStream(downloadedFileFullPath); 
+						}
+				            int i = is.available(); // 得到文件大小  
+				            byte data[] = new byte[i];  
+				            is.read(data); // 读数据  
+				            is.close();  
+				            response.setContentType("image/*"); // 设置返回的文件类型  
+				            //response.setContentType("text/*;charset=UTF-8");
+				            response.setHeader("Cache-Control", "no-cache"); 
+				            OutputStream toClient = response.getOutputStream(); // 得到向客户端输出二进制数据的对象  
+				            toClient.write(data); // 输出数据  
+				            toClient.close(); 
+						
+					}else{
+						message="<table style='border-collapse:collapse;' width='100%'><tr><span style='color:red;' >系统只支持图片和word、excel预览！</span></tr></table>";
+						
+					}
+			  
+
+				}
+			}
+		
+		}catch (Exception e) {
+		}
+		System.out.println("222222222222222222"+message);
+		return message;
+	}
+	
+	@RequestMapping(value = "/projTransfer.acl")
+	@ResponseBody
+	public String projTransfer(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+		
+		String userid=model.get("newcreator");
+		String deptid=model.get("newdepartment");
+		User user=this.baseService.findEntityByID(User.class, userid);//移交接收对象
+		Department dept=this.baseService.findEntityByID(Department.class, deptid);
+		
+		String note=model.get("note");
+		String creatorid=model.get("creatorid");
+		String createDate=model.get("createDate");
+		User creator=this.baseService.findEntityByID(User.class, creatorid);
+		//项目移交
+		String[] projid=model.get("transferprojid").split(",");
+		//流程冲突
+		for(String str:projid){
+			ProjInfo proj=this.baseService.findEntityByID(ProjInfo.class,str.replaceAll("'", ""));
+			User manage=proj.getProjManage();
+			ProjTransferInfo  custTransferInfo = new ProjTransferInfo();
+			custTransferInfo.setCreateDate(createDate);
+			custTransferInfo.setCreator(creator);
+			custTransferInfo.setNote(note);
+			custTransferInfo.setProjid(proj);
+			custTransferInfo.setProjManageFormer(manage);
+			custTransferInfo.setProjManageCurrent(user);
+			proj.setProjManage(user);
+			proj.setDepartment(dept);
+			this.baseService.updateEntity(proj);
+			this.baseService.saveEntity(custTransferInfo);
+			Map<String,Object> map=new HashMap<String,Object>();
+			map.put("projId", proj);
+			List<ContractInfo> conts=this.baseService.findEntityByProperties(ContractInfo.class, map);
+			for(int i=0;i<conts.size();i++)
+			{
+				ContractInfo contract=conts.get(0);
+				contract.setProjManage(user);
+				contract.setDepartment(dept);
+				this.baseService.updateEntity(contract);
+			}
+		
+			//代办移交
+			Map<String, String> queryMainObjectMap = new HashMap<String, String>();
+			queryMainObjectMap.put("USERID", manage.getId());
+			String task_info=this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_transfer/loadPendingTasks.xml", queryMainObjectMap).toString();
+			JSONArray taskarray=new JSONArray(task_info);
+			for(int i=0;i<taskarray.length();i++){
+				JSONObject obj= taskarray.getJSONObject(i);
+				JBPMWorkflowHistoryInfoUser work1=this.baseService.findEntityByID(JBPMWorkflowHistoryInfoUser.class, obj.optString("actorid"));//待办
+				if(null!=work1){
+					work1.setPlanActor(user);//只更改计划 处理人
+					this.baseService.updateEntity(work1);
+				}
+				GrantDelegateUser work2=this.baseService.findEntityByID(GrantDelegateUser.class, obj.optString("actorid"));//委托
+				if(null!=work2){
+					work2.setDelegateUser(user);;//只更改计划 处理人
+					this.baseService.updateEntity(work2);
+				}
+				JBPMWorkflowSignatureUser work3=this.baseService.findEntityByID(JBPMWorkflowSignatureUser.class, obj.optString("actorid"));//会签
+				if(null!=work3){
+					work3.setSignaturedActor(user);//只更改计划 处理人
+					this.baseService.updateEntity(work3);
+				}
+				JBPMWorkflowReadUser work4=this.baseService.findEntityByID(JBPMWorkflowReadUser.class, obj.optString("actorid"));//传阅
+				if(null!=work3){
+					work4.setReadedActor(user);//只更改计划 处理人
+					this.baseService.updateEntity(work4);
+				}
+				
+			}
+		}
+		return null;
+	}
+	
+	/**
+	  * /校验放假日是否有重复的数据
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkHolholiday.acl")
+	@ResponseBody
+	public String checkHolholiday(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String holiday = model.get("holiday");
+			String message=baseService.checkHolholiday(holiday);
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	
+	
+	/**
+	  * 初始化周六周末
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/updatequartzJobHoliday.acl")
+	@ResponseBody
+	public String updatequartzJobHoliday(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String year = model.get("year");
+			String message=baseService.updatequartzJobHoliday(year);
+			System.out.println(message);
+			return message;
+		}catch (Exception e) {
+			return "{message:'添加失败!["+e.getMessage()+"]'}";
+		}
+	}
+	
+}

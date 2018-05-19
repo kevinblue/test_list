@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:ehcache="http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring" xmlns:util="http://www.springframework.org/schema/util"
+
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-2.5.xsd
+		http://www.springframework.org/schema/jee 
+		http://www.springframework.org/schema/jee/spring-jee-2.5.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-2.5.xsd 
+		http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring     
+        http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring/ehcache-spring-1.1.xsd
+        http://www.springframework.org/schema/util 
+        http://www.springframework.org/schema/util/spring-util-3.0.xsd
+     ">
+
+	<util:properties id="jdbcProperties" location="classpath:quartz.properties" />
+	<bean id="dataSourceJDBC" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="#{jdbcProperties['org.quartz.dataSource.myDS.driver']}" />
+		<property name="jdbcUrl" value="#{jdbcProperties['org.quartz.dataSource.myDS.URL']}" />
+		<!--连接池中保留的最小连接数。 -->
+		<property name="minPoolSize">
+			<value>#{jdbcProperties['c3p0.minPoolSize']}</value>
+		</property>
+
+		<!--连接池中保留的最大连接数。Default: 15 -->
+		<property name="maxPoolSize">
+			<value>#{jdbcProperties['c3p0.maxPoolSize']}</value>
+		</property>
+
+		<!--初始化时获取的连接数，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->
+		<property name="initialPoolSize">
+			<value>#{jdbcProperties['c3p0.initialPoolSize']}</value>
+		</property>
+
+		<!--最大空闲时间,60秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+		<property name="maxIdleTime">
+			<value>#{jdbcProperties['c3p0.maxIdleTime']}</value>
+		</property>
+
+		<!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+		<property name="acquireIncrement">
+			<value>#{jdbcProperties['c3p0.acquireIncrement']}</value>
+		</property>
+
+		<!--JDBC的标准参数，用以控制数据源内加载的PreparedStatements数量。但由于预缓存的statements
+			属于单个connection而不是整个连接池。所以设置这个参数需要考虑到多方面的因素。
+			如果maxStatements与maxStatementsPerConnection均为0，则缓存被关闭。Default: 0 -->
+		<property name="maxStatements">
+			<value>#{jdbcProperties['c3p0.maxStatements']}</value>
+		</property>
+
+		<!--每60秒检查所有连接池中的空闲连接。Default: 0 -->
+		<property name="idleConnectionTestPeriod">
+			<value>#{jdbcProperties['c3p0.idleConnectionTestPeriod']}</value>
+		</property>
+
+		<!--当连接池用完时客户端调用getConnection()后等待获取新连接的时间，超时后将抛出
+			SQLException,如设为0则无限期等待。单位毫秒。Default: 0 -->
+		<property name="checkoutTimeout">
+			<value>#{jdbcProperties['c3p0.checkoutTimeout']}</value>
+		</property>
+		<!--定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 -->
+		<property name="acquireRetryAttempts">
+			<value>#{jdbcProperties['c3p0.acquireRetryAttempts']}</value>
+		</property>
+		<!--两次连接中间隔时间，单位毫秒。Default: 1000 -->
+		<property name="acquireRetryDelay">
+			<value>#{jdbcProperties['c3p0.acquireRetryDelay']}</value>
+		</property>
+		<!--获取连接失败将会引起所有等待连接池来获取连接的线程抛出异常。但是数据源仍有效
+			保留，并在下次调用getConnection()的时候继续尝试获取连接。如果设为true，那么在尝试
+			获取连接失败后该数据源将申明已断开并永久关闭。Default: false -->
+		<property name="breakAfterAcquireFailure">
+			<value>#{jdbcProperties['c3p0.breakAfterAcquireFailure']}</value>
+		</property>
+		<!--因性能消耗大请只在需要的时候使用它。如果设为true那么在每个connection提交的
+			时候都将校验其有效性。建议使用idleConnectionTestPeriod或automaticTestTable
+			等方法来提升连接测试的性能。Default: false -->
+		<property name="testConnectionOnCheckout">
+			<value>#{jdbcProperties['c3p0.testConnectionOnCheckout']}</value>
+		</property>
+		<!--如果设为true那么在取得连接的同时将校验连接的有效性。Default: false -->
+		<property name="testConnectionOnCheckin">
+			<value>#{jdbcProperties['c3p0.testConnectionOnCheckin']}</value>
+		</property>
+		<!--定义所有连接测试都执行的测试语句。在使用连接测试的情况下这个一显著提高测试速度。注意：
+			测试的表必须在初始数据源的时候就存在。Default: null -->
+		<property name="preferredTestQuery">
+			<value>#{jdbcProperties['c3p0.preferredTestQuery']}</value>
+		</property>
+		
+		<property name="properties" ref="dataSourceProperties"/> 
+	</bean>
+	
+	 <bean id="dataSourceProperties" class="org.hibernate.cfg.PropertiesEncryptFactoryBean">  
+        <property name="properties">  
+            <props>  
+                <prop key="user">#{jdbcProperties['org.quartz.dataSource.myDS.user']}</prop>  
+                <prop key="key">#{jdbcProperties['org.quartz.dataSource.myDS.key']}</prop>  
+            </props>  
+        </property>  
+    </bean> 
+	
+	<!-- dataSource 多数据源动态切换支持 -->
+	<bean id="dynamicDataSource" class="com.tenwa.kernal.datasource.DynamicDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="dataSourceJDBC" value-ref="dataSourceJDBC" />
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="dataSourceJDBC" />
+	</bean>
+	<!-- dataSourceproxy 配置代理管理事务 ，将jdbctemplate和hibernate事物合并在一起 -->
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy" p:targetDataSource-ref="dynamicDataSource" />
+
+	<!--mybatis注解方式
+		<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations">
+		<list>
+		<value>classpath:com/tenwa/business/mybatis/mapper/*Mapper.xml</value>
+		</list>
+		</property>
+		</bean>
+		<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="basePackage" value="com.tenwa.business.mybatis.mapper"></property>
+		</bean>
+		<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		</bean>
+	-->
+	
+	<!-- hibernate监听器 -->
+	<bean id="postListener" class="com.tenwa.business.log.PostListener"></bean>
+	<!-- 使用TransactionAwareDataSourceProxy管理事务与jdbcTemplate处于同一事务管理下 -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="useTransactionAwareDataSource" value="true"></property>
+		<property name="packagesToScan">
+			<list>
+				<value>com.tenwa..*.entity</value>
+				<value>com.reckon.entity</value>
+			</list>
+		</property>
+		<property name="mappingDirectoryLocations">
+			<list>
+				<value>classpath:/com/tenwa/business/entity/</value>
+			</list>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>jbpm.repository.override.hbm.xml</value>
+				<value>jbpm.execution.hbm.xml</value>
+				<value>jbpm.history.override.hbm.xml</value>
+				<value>jbpm.task.hbm.xml</value>
+				<value>jbpm.identity.hbm.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">#{jdbcProperties['hibernate.dialect']}</prop>
+				<prop key="hibernate.default_schema">#{jdbcProperties['hibernate.default_schema']}</prop> 
+				<prop key="hibernate.hbm2ddl.auto">#{jdbcProperties['hibernate.hbm2ddl.auto']}</prop>
+				<prop key="hibernate.show_sql">#{jdbcProperties['hibernate.show_sql']}</prop>
+				<prop key="hibernate.format_sql">#{jdbcProperties['hibernate.format_sql']}</prop>
+				<prop key="hibernate.connection.release_mode">#{jdbcProperties['hibernate.connection.release_mode']}</prop>
+				<prop key="hibernate.jdbc.batch_size">#{jdbcProperties['hibernate.jdbc.batch_size']}</prop>
+				<prop key="hibernate.jdbc.use_streams_for_binary">#{jdbcProperties['hibernate.jdbc.use_streams_for_binary']}</prop>
+			</props>
+		</property>
+		<property name="eventListeners">
+			<map>
+				<entry key="post-insert">
+					<ref bean="postListener"/>
+				</entry>
+                <entry key="post-update">  
+                    <ref local="postListener"/>  
+                </entry>  
+                <entry key="post-delete">  
+                    <ref local="postListener"/>  
+                </entry>  
+			</map>
+		</property>
+	</bean>
+	<!-- hibernateTemplate配置 -->
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<!-- JdbcTemplate配置 -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!--配置事务管理器 -->
+	<!-- spring transaction 事务管理 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager" scope="singleton">
+		<property name="dataSource" ref="dataSource" />
+		<property name="globalRollbackOnParticipationFailure" value="false" /> 
+	</bean>
+
+	<!-- the transactional advice (what 'happens'; see the <aop:advisor/> bean below) -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="create*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="save*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="add*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="insert*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="modify*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="remove*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="delete*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="update*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="reset*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="upload*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="download*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="delegate*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="transfer*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="run*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="deploy*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="start*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="submit*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="back*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="import*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="export*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="do*" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:advisor pointcut="execution(* com.tenwa..*.serviceImpl..*.*(..))" advice-ref="txAdvice" />
+	</aop:config>
+	
+	<!-- enable autowire -->
+	<context:annotation-config />
+	
+	<!-- enable transaction demarcation with annotations
+		<tx:annotation-driven />
+	-->
+	
+	<!-- 引用ehCache的配置 -->
+	<bean id="ehCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation">
+			<value>classpath:ehcache.xml</value>
+		</property>
+	</bean>
+	
+	<!-- 定义ehCache的工厂，并设置所使用的Cache name -->
+	<ehcache:annotation-driven cache-manager="ehCacheManager" />
+	
+	<!--启用annotation的aop支持 -->
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+	
+	<!-- 自动扫描组件，除去影响事务管理的Controller。 -->
+	<context:component-scan base-package="com.tenwa,com.reckon">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	<!-- 国际化 -->
+	<!-- 资源文件绑定器 -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>messages</value>
+				<value>reportMessage</value>
+			</list>
+		</property>
+		<!-- Set whether to use the message code as default message instead of throwing a NoSuchMessageException. Useful for development and debugging. -->
+		<property name="useCodeAsDefaultMessage" value="true" />
+	</bean>
+	<!-- 这个时候,但凡有了符合UrlMapping的请求,就会被拦截,并且开始配置国际化参数,默认的参数名为locale主意大小写.里面放的就是你的提交参数.如:en_US,zh_CN之类的,这个时候,你在页面上加一句<a href="?locale=zh_CN">简体中文
+		<bean id="localeResolver" class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver"/>
+	-->
+	<!-- 利用cookie设置国际化
+		<bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver">
+		<property name="cookieName" value="clientLocale"/>
+		<property name="cookieMaxAge" value="-1"/>
+		</bean>
+	-->
+	<!-- 利用session设置国际化
+		通过设置 SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME改变session中的locale
+	-->
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+	</bean>
+	<import resource="classpath:spring-cxf.xml" />
+	
+	
+  
+	<!-- XFire start -->  
+	<import resource="classpath:org/codehaus/xfire/spring/xfire.xml" />  
+	<bean id="webAnnotations" class="org.codehaus.xfire.annotations.jsr181.Jsr181WebAnnotations" />  
+	<bean id="jsr181HandlerMapping"  class="org.codehaus.xfire.spring.remoting.Jsr181HandlerMapping">  
+	    <property name="xfire" ref="xfire" />  
+	    <property name="webAnnotations" ref="webAnnotations" />  
+	</bean> 
+	<!-- XFire end --> 
+</beans>

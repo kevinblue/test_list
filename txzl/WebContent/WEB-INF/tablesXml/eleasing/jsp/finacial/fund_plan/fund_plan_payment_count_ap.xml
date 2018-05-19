@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+   select a.id id,
+       a.payment_count paymentcount,
+       a.amount amount,
+       a.payment_time paymenttime,
+       a.SUPPORT_UNIT supportunit,
+       a.plan_name plannameid,
+       tdd.name_ planname,
+       a.fund_type fundtype,
+       a.silver silver,
+       a.NOTE_ note
+  from PAYMENT_COUNT_DETAIL_AP a
+   left join t_dicts_datas tdd on tdd.id_ = a.plan_name
+           
+   where 1=1
+	       	/~reportid: and a.report_id = '{reportid}'~/
+			 <EXTRACTEND> ORDER BY paymenttime	<EXTRACTEND>		
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

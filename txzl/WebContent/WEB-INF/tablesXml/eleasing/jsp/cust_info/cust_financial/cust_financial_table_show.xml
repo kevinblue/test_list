@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	  	<![CDATA[
+	  	 select ft.title_index,subject_code,ft.TITLE_NAME,
+          fs.SUBJECT_NAME SUBJECT_NAME,
+          nvl(fd.subjectdata,'') obj,nvl(fd.subjectotherdata,'') otherobj,
+          '{custid}' cust_id,fs.percent,fs.subject_index from financial_subjects fs 
+           left outer join (                     
+           select fina_sub_id,
+       max(r)
+       
+       subjectdata,
+       max(m) subjectotherdata
+  from (SELECT cust_id,
+               fina_sub_id，wm_concat(nvl(subject_data, ' ')) over(partition by fina_sub_id order by financial_date) r,
+               wm_concat(nvl(subject_other_data, ' ')) over(partition by fina_sub_id order by financial_date) m
+          FROM financial_data WHERE cust_id='{custid}' ) fd
+ where fd.cust_id = '{custid}'
+ group by fina_sub_id) fd
+        on fd.Fina_sub_id=fs.id
+        left join financial_table ft on ft.id = fs.financial_table
+        where ft.id='{financeid}'
+
+       order by  case when  fs.table_index is null then 
+                     to_number(fs.subject_index)
+                     else 
+                       to_number(fs.table_index)
+                       end  asc 
+		]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	      <table_sql>
+	      	<![CDATA[
+	      	select ft.TITLE_NAME,fs.SUBJECT_NAME,isnull(fd.subjectdata,'') obj,isnull(fd.subjectotherdata,'') otherobj,
+	      	'{custid}' cust_id,fs.subject_index from financial_subjects fs 
+           left outer join (                     
+            select fd.fina_sub_id,
+                     [subjectdata]=stuff((select ','+isnull([subject_data],'') 
+                     from financial_data t where 
+                     t.fina_sub_id=fd.Fina_sub_id order by t.financial_date desc  for xml path('')), 1, 1, ''),
+                     [subjectotherdata]=stuff((select ','+isnull([subject_other_data],'')
+                     from financial_data t where 
+                     t.fina_sub_id=fd.Fina_sub_id order by t.financial_date desc  for xml path('')), 1, 1, '')               
+				from financial_data fd
+				where fd.cust_id='{custid}'
+				group by fina_sub_id) fd
+				on fd.Fina_sub_id=fs.id
+				left join financial_table ft on ft.id = fs.financial_table
+				<EXTRACTEND> order by Cast(subject_index as decimal) <EXTRACTEND>		          
+	      	]]> 
+	      </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,357 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+
+<!--签约方信息 -->
+<div id="contract_signatory_form1" style="overflow: auto;" title="签约方">
+	<input require="true" label="出租人" id="contract_signatory_id" name="contract_signatory.id" class="mini-textbox"  style="display:none" value="${requestScope['contract_signatory.id']}">
+	<table cellspacing="0" cellpadding="0" width="100%" class="fillTable" id="contract_signatory_form">
+		<tr>
+			<td colspan="4">
+				<table cellspacing="0" cellpadding="0" width="100%" class="fillTable" id="contract_signatory_form_table">
+					<tr>
+						<td class="x-panel-table-div-title" colspan=4>天信租赁基本信息(甲方)</td>
+					</tr>
+					<tr class="tr-lessor-info tr-even">
+						<td class="td-content-title" width="12%">出租人：</td>
+						<td class="td-content" width="38%"><input require="true" label="出租人" id="contract_signatory_lessor" name="contract_signatory.lessor" class="mini-textbox" value="${requestScope['contract_signatory.lessor']}"></td>
+						<%-- <td class="td-content-title" width="12%">委托代理人：</td>
+						<td class="td-content" width="38%"><input require="true" label="委托代理人" name="contract_signatory.leaseconsigner" class="mini-textbox" style="display:none" value="${requestScope['contract_signatory.leaseconsigner']}"></td>
+						<td class="td-content-title">注册地址：</td>
+						<td class="td-content"><input require="true" label="注册地址" name="contract_signatory.leaseregisteraddr" class="mini-textbox" value="${requestScope['contract_signatory.leaseregisteraddr']}"></td>
+						<td class="td-content-title">电子邮件：</td>
+						<td class="td-content"><input label="电子邮件" name="contract_signatory.leaseemail" class="mini-textbox" style="display:none" value="${requestScope['contract_signatory.leaseemail']}"></td>--%>
+						<td class="td-content-title">法定代表人：</td>
+						<td class="td-content"><input require="true" label="法定代表人" id="contract_signatory_leaseperson" name="contract_signatory.leaseperson" class="mini-textbox" value="${requestScope['contract_signatory.leaseperson']}"></td>
+						
+					</tr>
+					<tr class="tr-lessor-info tr-odd">
+						<td class="td-content-title">联系人：</td>
+						<td class="td-content"><input require="true" label="联系人" name="contract_signatory.leaselinkman" class="mini-textbox"  value="${requestScope['contract_signatory.leaselinkman']}"></td>
+						<td class="td-content-title">联系地址：</td>
+						<td class="td-content"><input require="true" label="通讯地址" name="contract_signatory.leaseaddr" class="mini-textbox"  value="${requestScope['contract_signatory.leaseaddr']}"></td>
+					</tr>
+					<tr class="tr-lessor-info tr-even">
+					    <td class="td-content-title">电话：</td>
+						<td class="td-content"><input require="true" label="电话" id="contract_signatory_leasetel" name="contract_signatory.leasetel" class="mini-textbox" 	value="${requestScope['contract_signatory.leasetel']}"></td>
+						<td class="td-content-title">传真：</td>
+						<td class="td-content"><input label="传真" id="contract_signatory_leasefax" name="contract_signatory.leasefax" class="mini-textbox" value="${requestScope['contract_signatory.leasefax']}"></td>
+					</tr>
+					<tr class="tr-lessor-info tr-odd">
+						<td class="td-content-title">邮编：</td>
+						<td class="td-content"><input require="true" label="邮编" id="contract_signatory_leasepostcode" name="contract_signatory.leasepostcode" class="mini-textbox" value="${requestScope['contract_signatory.leasepostcode']}"></td>
+						<td class="td-content-title">开户户名：</td>
+						<td class="td-content"><input require="true" label="开户户名" readonly name="contract_signatory.leaseaccname" id="contract_signatory_leaseaccname" class="mini-textbox"  value="${requestScope['contract_signatory.leaseaccname']}"></td>
+						<td class="td-content-title"></td>
+						<td class="td-content"></td>
+					</tr>
+					<tr class="tr-lessor-info tr-even">
+						<td class="td-content-title">开户账号：</td>
+						<td class="td-content">
+							<input id="contract_signatory.leaseaccnumber" name="contract_signatory.leaseaccnumber" label="开户账号"  class="mini-combobox" textField="accnumber" valueField="accnumber" dataField="datas" allowInput="false"
+							data-options="{_xmlFileName:'/eleasing/jsp/sysmgr/sysdatamgr/ownaccountinfo.xml'}"  value="${requestScope['contract_signatory.leaseaccnumber'] }" 
+							text="${requestScope['contract_signatory.leaseaccnumber'] }"
+							onvaluechanged="leaseaccnumbervaluechange" onbeforeshowpopup="miniextonbeforeshowpopup"/>
+						</td>
+						<td class="td-content-title">开户银行：</td>
+						<td class="td-content"><input require="true" label="开户银行" readonly name="contract_signatory.leaseaccbank" id="contract_signatory_leaseaccbank" class="mini-textbox" value="${requestScope['contract_signatory.leaseaccbank']}"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="4">
+				<table cellspacing="0" cellpadding="0" width="100%" class="fillTable">
+					<tr>
+						<td class="x-panel-table-div-title" colspan=4>客户基本信息(乙方)</td>
+					</tr>
+					<tr class="tr-client-info tr-even">
+						<td class="td-content-title" width="12%">客户名称：</td>
+						<td class="td-content" width="38%"><input require="true" label="客户名称" name="contract_signatory.client" class="mini-textbox" readOnly value="${requestScope['contract_signatory.client']}"></td>
+						<td class="td-content-title" width="12%">委托代理人：</td>
+						<td class="td-content" width="38%"><input require="true" label="委托代理人" name="contract_signatory.clientconsigner" class="mini-textbox"  value="${requestScope['contract_signatory.clientconsigner']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-odd">
+						<td class="td-content-title">通讯地址：</td>
+						<td class="td-content"><input require="true" label="通讯地址" name="contract_signatory.clientaddress" class="mini-textbox"  value="${requestScope['contract_signatory.clientaddress']}"></td>
+						<td class="td-content-title">邮编：</td>
+						<td class="td-content"><input require="true" label="邮编" name="contract_signatory.clientpostcode" class="mini-textbox"  value="${requestScope['contract_signatory.clientpostcode']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-even">
+						<td class="td-content-title">法定代表人：</td>
+						<td class="td-content"><input require="true" label="法定代表人" name="contract_signatory.clientperson" class="mini-textbox"  value="${requestScope['contract_signatory.clientperson']}"></td>
+						<td class="td-content-title">联系人：</td>
+						<td class="td-content"><input require="true" label="联系人" id="contract_signatory_clientlinkman" name="contract_signatory.clientlinkman" class="mini-textbox" value="${requestScope['contract_signatory.clientlinkman']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-odd">
+						<td class="td-content-title">电话：</td>
+						<td class="td-content"><input require="true" label="电话" id="contract_signatory_clienttel" name="contract_signatory.clienttel" class="mini-textbox" value="${requestScope['contract_signatory.clienttel']}"></td>
+						<td class="td-content-title">传真：</td>
+						<td class="td-content"><input label="传真" name="contract_signatory.clientfax" class="mini-textbox"  value="${requestScope['contract_signatory.clientfax']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-even">
+						<td class="td-content-title">短信联系手机号：</td>
+						<td class="td-content"><input require="true" label="短信联系手机号" id="contract_signatory_clientmobilenumber" name="contract_signatory.clientmobilenumber" class="mini-textbox" value="${requestScope['contract_signatory.clientmobilenumber']}"></td>
+						<td class="td-content-title">电子邮件：</td>
+						<td class="td-content"><input label="电子邮件" id="contract_signatory_clientemail" name="contract_signatory.clientemail" class="mini-textbox" value="${requestScope['contract_signatory.clientemail']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-odd">
+						<td class="td-content-title">开户账号：</td>
+						<td class="td-content">
+							<input id="contract_signatory_clientaccnumber" name="contract_signatory.clientaccnumber" label="开户账号"  class="mini-buttonedit mini-queryinput" textField="accnumber" valueField="accnumber" dataField="datas" allowInput="false"
+							 value="${requestScope['contract_signatory.clientaccnumber'] }" 
+							text="${requestScope['contract_signatory.clientaccnumber'] }"
+							showNullItem="true"
+							onvaluechanged="clientaccnumbervaluechange" />
+							<input id="rawValue_contract_signatory_clientaccnumber" name="rawValue_contract_signatory.clientaccnumber"
+								value="${requestScope['rawValue_contract_signatory.clientaccnumber']}"
+								class="mini-textbox"  style="display:none"/>
+							<a class="mini-button" id="addAccNumBtn" name="addAccNumBtn" iconCls="icon-save" onclick="addAccountNum('${requestScope['contract_info.custid'] }','${requestScope['contract_info.custclass'] }')">添加账号</a>
+						<font class="required-tag" size="0.5">客户信息明细中的银行账号</font>
+						</td>
+						<td class="td-content-title">开户银行：</td>
+						<td class="td-content"><input require="true" label="开户银行" id="contract_signatory_clientaccbank" name="contract_signatory.clientaccbank" readOnly class="mini-textbox" value="${requestScope['contract_signatory.clientaccbank']}"></td>
+					</tr>
+					<tr class="tr-client-info tr-even">
+						<td class="td-content-title">开户户名：</td>
+						<td class="td-content"><input require="true" label="开户户名" id="contract_signatory_clientaccname" name="contract_signatory.clientaccname" readOnly class="mini-textbox" value="${requestScope['contract_signatory.clientaccname']}"></td>
+						<td class="td-content-title">行号</td>
+						<td class="td-content"><input require="true" label="开户户名" id="contract_signatory_bankno" name="contract_signatory.bankno" readOnly class="mini-textbox" value="${requestScope['contract_signatory.bankno']}"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td class="x-panel-table-div-title" colspan=4>卖方/供应商</td>
+		</tr>
+	</table>
+	<div id="id_table_leasing_contract_supplier_container"></div>
+</div>
+<script>
+	$(function(){
+		if('${param.isView}' == 'true'){
+			mini.get("addAccNumBtn").hide();
+		}
+		tenwa.createQueryInput({
+			id:'contract_signatory_clientaccnumber',
+			label:'银行账号',
+			textField:"accnumber",
+	      	valueField:"accnumber",
+			windowWidth: 600,
+			onSelect: function($me, inputObj, rowData){
+				mini.getbyName("contract_signatory.clientaccbank").setValue(rowData.bankname); 
+				mini.getbyName("contract_signatory.clientaccname").setValue(rowData.account);
+				mini.getbyName("contract_signatory.bankno").setValue(rowData.bankno);
+				mini.get("rawValue_contract_signatory_clientaccnumber").setValue(rowData.accnumber);
+			},
+			params: {
+				custid:'${requestScope['contract_info.custid']}',
+				xmlFileName: '/eleasing/workflow/contract/contract_approval/get_bankaccount_by_custid.xml'
+			}
+		});
+
+	});
+	function addAccountNum(id,custclass){
+		var params = "id="+id+"&isView=true";
+	 	var url="";
+		if(custclass=="CUST_INFO_COMPANY"){
+			url = getRootPath()+"/leasing/cust_info/cust_company/cust_company_detail.bi?"+params;
+		}else{
+			url = getRootPath()+"/leasing/cust_info/cust_person/cust_person_detail.bi?"+params;
+		}
+		var sheight = window.screen.availHeight - 30;
+		var swidth = window.screen.availWidth - 10;
+		var winoption = "left=0px,top=0px,height=" + sheight + "px,width=" + swidth + "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+		window.open(url, '_blank', winoption);
+	}
+
+	function showcust(custid){
+		var params = "id="+custid+"&isView=true";
+		if ('${param.isView}' != 'true'){
+			params=params+"&accNumView=false";
+		}
+			var url = getRootPath()+"/leasing/cust_info/cust_company/cust_company_detail.bi?"+params;
+			var sheight = window.screen.availHeight - 30;
+		var swidth = window.screen.availWidth - 10;
+		var winoption = "left=0px,top=0px,height=" + sheight + "px,width=" + swidth + "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+			window.open(url, '_blank', winoption);
+	}
+
+	function leaseaccnumbervaluechange(e){
+		var selected = e.selected;
+		mini.getbyName("contract_signatory.leaseaccbank").setValue(selected.accbank);
+		mini.getbyName("contract_signatory.leaseaccname").setValue(selected.accname);
+		mini.getbyName("contract_signatory.bankno").setValue(selected.bankno);
+	}
+	function clientaccnumbervaluechange(e){
+		var selected = e.selected; 
+		mini.getbyName("contract_signatory.clientaccbank").setValue(selected.bankname); 
+		mini.getbyName("contract_signatory.clientaccname").setValue(selected.account);
+		mini.getbyName("contract_signatory.bankno").setValue(selected.bankno);
+	}
+	var dealerid = "${requestScope['contract_info.dealerid']}";
+	jQuery(function() {
+		var showTools = true;
+		if ('${param.isView}' == 'true' || isViewHistoryTask==true) {
+			showTools = false;
+			miniui_ext.initformenabled("contract_signatory_form1");
+		}
+		tenwa.createTable({
+					id : "contract_supplier",
+					renderTo : "id_table_leasing_contract_supplier_container",
+					width : '100%',
+					height : 250,
+					title : "",
+					remoteOper : false,
+					showPager : false,
+					showToolbar : showTools,
+					tools : ['add', '-', 'edit', '-', 'remove' ],
+					lazyLoad : true,
+					data : JsonUtil.decode('${empty json_contract_supplier_str ? "[]" : json_contract_supplier_str }'),
+					columns : [
+							{type:'indexcolumn'},
+							{type: 'checkcolumn'},
+							{field:'id',header:'编号',headerAlign:'center',width:100,allowSort:true,visible:false,
+								   formEditorConfig:{
+									       readOnly:true,
+									   fieldVisible:false}},
+							{field:'sellername', header:'供应商', visible:true,
+								   formEditorConfig:{
+								       fieldVisible:false},
+								       renderer:function(e){
+			          	            		 var rowData = e.record;
+			          	            		return "<a  style='text-decoration:underline;color:blue;'  onclick='showcust(\"" + rowData.seller +"\")'>" + rowData.sellername + "</a>";
+			          		                } },
+		  					{field:'seller',header:'供应商',visible:false,
+						  		   formEditorConfig:{
+		  						            newLine:true,
+		  						              width:200,
+		  						               type:'queryinput',
+		  						           required:true,
+		  						          textField:'sellername',
+		  						         valueField:'seller',
+		  						         allowInput:false,
+		  						       fieldVisible:true,
+		  						 onBeforeShowWindow:function($me){$me.params.custidstr = getAddedSellers();return true;},
+		  						           onSelect:function($me, queryInput, rowData){
+						  							mini.getbyName("sellerlegalperson").setValue(rowData.sellerlegalperson);
+						  							mini.getbyName("sellerlinkman").setValue(rowData.sellerlinkman);
+						  							mini.getbyName("sellerregisteraddr").setValue(rowData.sellerlink);
+						  							mini.getbyName("selleraddr").setValue(rowData.selleraddr);
+						  							mini.getbyName("sellerpostcode").setValue(rowData.sellerpostcode);
+						  							mini.getbyName("sellertel").setValue(rowData.sellertel);
+						  							mini.getbyName("sellerfax").setValue(rowData.sellerfax);
+						  							clearCustbank();},
+		  						             params:{xmlFileName:'/eleasing/workflow/contract/contract_approval/get_contract_supplier_info.xml'}}
+								          
+		  					},
+		  					{field:'vndrtypename', header:'贸易类型', formEditorConfig:{fieldVisible:false,fillFromFieldName:'vndrtype',fillProperty:'name'}},
+						   	{field:'vndrtype',visible:false,header:'贸易类型',
+						   		         formEditorConfig:{
+						   			              newLine:true,
+						   			                 type:'combobox',
+									             required:true,
+									          multiSelect:false, 
+									            textField:'name',
+									           valueField:'value',
+									         fieldVisible:true,
+									               params:{pid:'vndr_type',xmlFileName:'combos/comboDict.xml'}}},
+									               
+		  				    {field:'sellerlegalperson',header:'法定代表人',
+								   formEditorConfig:{
+									       readOnly:true,
+								  fillFromFieldName:'seller',
+									   fillProperty:'sellerlegalperson'}},
+							{field:'sellerlinkman',header:'联系人',
+								   formEditorConfig:{
+									        newLine:true,
+									     labelWidth:100,
+									       readOnly:true,
+								  fillFromFieldName:'seller',
+								       fillProperty:'sellerlinkman'}},
+						    {field:'sellerregisteraddr',header:'注册地址',
+								   formEditorConfig:{
+									       readOnly:true,
+								  fillFromFieldName:'seller',
+									   fillProperty:'sellerregisteraddr'}},
+						    {field:'selleraddr',header:'通讯地址',
+								formEditorConfig:{
+									     newLine:true,
+									    readOnly:true,
+							   fillFromFieldName:'seller',
+									fillProperty:'selleraddr'}},
+							{field:'sellerpostcode',header:'邮政编码',
+							    formEditorConfig:{
+									    readOnly:true,
+							   fillFromFieldName:'seller',
+									fillProperty:'sellerpostcode'}},
+						   {field:'sellertel',header:'电话',
+								formEditorConfig:{
+									     newLine:true,
+									    readOnly:true,
+							   fillFromFieldName:'seller',
+									fillProperty:'sellertel'}},
+							{field:'sellerfax',header:'传真',
+								formEditorConfig:{
+									    readOnly:true,
+							   fillFromFieldName:'seller',
+									fillProperty:'sellerfax'}},
+							{field:'selleraccnumbername', header:'开户账号',visible:false,formEditorConfig:{
+								fillFromFieldName:'selleraccnumber',
+								fillProperty:'accnumber'}},
+							{field:'selleraccnumber', header:'开户账号',
+								 formEditorConfig:{
+										  newLine:true,
+										     type:'combobox', 
+										 required:true, 
+									  multiSelect:false,
+										 lazyLoad:true,
+									   valueField:'accnumber', 
+										textField:'accnumber', 
+									   labelWidth:100, 
+										    width:200, 
+								    onbeforeshowpopup:'initCustbank',
+								    onbuttonclick:'initCustbank',
+										   params:{xmlFileName:'/eleasing/workflow/contract/contract_approval/get_bankaccount_by_custid.xml'
+											   ,custid:'xx'}}},   
+							{field:'selleraccbank', header:'开户银行',
+								 formEditorConfig:{
+								fillFromFieldName:'selleraccnumber',
+									 fillProperty:'bankname',  
+							   			 readonly:true}},
+							{field:'selleraccname', header:'开户户名',
+								 formEditorConfig:{
+								fillFromFieldName:'selleraccnumber',
+									 fillProperty:'account',
+							   			 readonly:true,
+							   			  newLine:true,
+							   			  colspan:3}}
+							]
+				});
+	});
+	function initCustbank(){
+	    var param={};
+	    param["custid"]=getMiniEditFormField("contract_supplier.seller").getValue();
+	    var selleraccnumber=getMiniEditFormField("contract_supplier.selleraccnumber");
+	    seajs.use([ "js/apcomponent/aputil/aputil.js" ],function(ApUtil){
+	    	 ApUtil.setComboxParams(selleraccnumber,param);
+	     });
+	}
+	function clearCustbank(){
+		getMiniEditFormField("contract_supplier.selleraccbank").setValue("");
+		getMiniEditFormField("contract_supplier.selleraccname").setValue("");
+		getMiniEditFormField("contract_supplier.selleraccnumber").setValue("");
+		getMiniEditFormField("contract_supplier.selleraccnumber").setText("");
+	}
+	//获取已经添加过的供应商
+	function getAddedSellers(){
+		var sellers = "";
+		var grid_supplier_data = mini.get("contract_supplier").getData();
+		for(var i = 0;i < grid_supplier_data.length;i++){
+			sellers = sellers + "'" + grid_supplier_data[i].seller + "',";
+		}
+		sellers = sellers.substring(0,sellers.length-1);
+		return sellers;
+	}
+	/* jQuery(function(){
+		if('${param.isView}' == 'true' || isViewHistoryTask==true){miniui_ext.disableFormFields("contract_signatory_form");};
+	}); */
+</script>

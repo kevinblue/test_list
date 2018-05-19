@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+               SELECT 
+                  MAX(ITEM_LEVEL_) AS MAX_ITEM_LEVEL_ 
+               FROM(  
+				    SELECT  LEVEL AS ITEM_LEVEL_ 
+				    FROM( 
+				      SELECT * FROM {dictTableName} 
+				      WHERE (ENABLED_) = 1 
+				    )  
+				    START WITH ID_='{rootDictId}' 
+				    CONNECT BY PRIOR ID_ = PID_  
+		        ) 				  
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

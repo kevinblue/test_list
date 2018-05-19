@@ -1,0 +1,127 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<input  style="display:none;"	class="mini-textarea" id="id_json_csut_apply_list_str" name="json_csut_apply_list_str" value='${empty json_csut_apply_list_str ? "[]" : json_csut_apply_list_str }'></input>
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "proj_invoice",  
+			renderTo: "id_table_proj_invoice_detail",
+			width: globalClientWidth - 30,
+			height: 360,
+			lazyLoad: false,
+			isClickLoad:false,
+			remoteOper : true,
+			entityClassName : "com.tenwa.leasing.entity.contract.ContractEquip",
+			showPager: false,
+			multiSelect: true,
+			title:'',
+			showToolbar: showTools,
+			virtualScroll:true,
+		 	params:{id:contractid},
+		 	validateForm:dateJudge,
+		 	 confirmRemoveCallBack:function(miniTable, selectedRowDatas){
+		 		var row = miniTable.getSelecteds();
+		 		if(row.length==1){
+		 			var equipstatus = row[0].equipstatus;
+		 			if(equipstatus!='1'){
+		 				mini.alert("该发票正在进行转让或者反转让");
+		 				return false;
+		 			}else{
+		 				return true;
+		 			}
+		 		}else{
+		 			for(var i=0;i<row.length;i++){
+		 				if(row[i].equipstatus!='1'){
+		 					mini.alert("您选择的发票中存在进行转让或者反转让的发票");
+		 					return false;
+		 				}else{
+		 					continue;
+		 				}
+		 			}
+		 			return true;
+		 		} 
+		 		
+		 	}, 
+		 	
+			tools: ['add', '-', 'edit', '-','remove','-','exportExcel'],
+			xmlFileName:'/eleasing/workflow/proj/proj_account_rece/proj_factoring_account_invoice.xml',
+			columns: [
+				{type:'indexcolumn'},
+				{type:'checkcolumn'},
+				{field:'id',header:'id',visible: false},
+				
+				
+				{
+					field:'contractid',
+					header:'合同id',
+					visible: false,
+					formEditorConfig:{
+						fieldVisible:false,
+						value:contractid
+					         }
+				},
+				{field:'purchasername',header:'买方名称',
+					  formEditorConfig:{
+						      required:true,
+						    labelWidth:100,
+						     maxLength:120,
+						       colspan:3,
+						         width:'100%'}},
+				{field:'invoicecode', header:'发票号',
+					  formEditorConfig:{
+						       newLine: true,
+						    labelWidth:100,
+						     maxLength:120,
+						       colspan: 3,
+						         width: '100%'}},
+				{field:'equipprice', header:'发票金额',align:'right',summary:true,
+					  formEditorConfig:{
+					        	  type:'text',
+						         vtype:'float',
+						         newLine:true}},
+				{field: 'invoicedate', header:'发票日期',dateFormat:"yyyy-MM-dd",
+						  formEditorConfig:{
+					                  type:'date',
+					                 vtype:'date',
+					                format:'yyyy-MM-dd',
+					                newLine:true,
+					            allowInput:false}},
+			   {field: 'invoiceexpiredate', header:'发票到期日',dateFormat:"yyyy-MM-dd",
+									  formEditorConfig:{
+								                  type:'date',
+								                 vtype:'date',
+								                format:'yyyy-MM-dd',
+								                newLine:true,
+								            allowInput:false}},
+		 	 	{field: 'equipstatus', header:'应收账款状态',visible: false,
+						formEditorConfig:{
+							value:'1',
+							fieldVisible:false
+							}
+			 	},
+			 	{field: 'cenote', header:'备注',visible: true,
+					formEditorConfig:{
+						newLine: true,
+						type:'textarea',
+						fieldVisible:true
+						}
+		 	},
+			]
+		});
+	});
+});
+function dateJudge(){
+	var date1=getMiniEditFormField("proj_invoice.invoiceexpiredate").getValue();
+	var date2=getMiniEditFormField("proj_invoice.invoicedate").getValue();
+    var oDate1 = new Date(date1);
+    var oDate2 = new Date(date2);
+    if(oDate1.getTime() > oDate2.getTime()){
+        return true;
+    } else {
+        mini.alert("发票到期日不能小于发票日期");
+        return false;
+    }
+}
+</script>
+<div id="id_table_proj_invoice_detail" style="height: 100%;"></div>

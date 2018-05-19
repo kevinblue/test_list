@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			select * from vi_contract_info 
+			where 1=1
+			and contract_status>=15
+			/~contract_id: AND CONTRACT_ID = '{contract_id}' ~/
+			/~cust_name: AND CUST_NAME like '%{cust_name}%' ~/
+			/~projmanagename: AND PROJMANAGENAME like '%{projmanagename}%' ~/
+			/~department: AND DEPARTMENT like '%{department}%' ~/
+			/~docstatus: AND CUST_NAME = '{docstatus}' ~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+     <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        select *from 
+	        (
+			SELECT ci.*,ci.proj_dept au_projdept,
+			case when docinfo.docname is not null  then '有'
+			     else   '无'  end docstatus,
+			docinfo.docname,
+			feeinfo.firstdate
+			 FROM VI_CONTRACT_INFO ci
+			 left join 
+			(
+			SELECT cd.CONTRACT_ID,[docname]=STUFF((SELECT ','+DOC_NAME FROM CONTRACT_DOC_LIST cl 
+			where (cl.DEAL_WAIT=1 or cl.SUBMIT_WAIT=1) and cl.CONTRACT_ID=cd.CONTRACT_ID  for xml path('')),1,1,'')
+			from CONTRACT_DOC_LIST cd
+			GROUP BY cd.CONTRACT_ID
+			) docinfo on ci.id=docinfo.contract_id
+			
+			left join 
+			(
+			select  cc.CONTRACT_ID,min(cc.ACCOUNTING_DATE) as firstdate from CONTRACT_FUND_FUND_CHARGE cc
+			where cc.FEE_TYPE='feetype10'
+			GROUP BY cc.CONTRACT_ID
+			) feeinfo on ci.id=feeinfo.contract_id
+	        
+	         WHERE CI.CONTRACT_STATUS >= 21
+	        
+	        /~id: AND CI.id='{id}' ~/
+			/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+			/~cust_name:   AND CI.cust_name like '%{cust_name}%' ~/
+			/~projmanage: AND CI.projmanage like '%{projmanage}%' ~/
+			/~department: AND CI.department like '%{department}%' ~/
+			) list
+			where 1=1
+			/~docstatus: AND list.docstatus like '%{docstatus}%' ~/
+				 ]]> 
+	  </table_sql>
+	   </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

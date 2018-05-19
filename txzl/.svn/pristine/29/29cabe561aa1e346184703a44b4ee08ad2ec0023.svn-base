@@ -1,0 +1,64 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<input name="contract_info.custInfo" id="contract_info.custInfo" type="hidden" value="${requestScope['contract_info.custInfo'] }" />
+<input name="contract_info.businessmanager" id="contract_info.businessmanager" type="hidden" value="${requestScope['contract_info.businessmanager'] }" />
+<input name="contract_info.contractstatus" id="contract_info.contractstatus" type="hidden" value="${requestScope['contract_info.contractstatus'] }" />
+<input name="contract_info.projid" id="contract_info.projid" type="hidden" value="${requestScope['contract_info.projid']}" />
+<input name="contract_info.id" id="contract_info.id" class="mini-textbox" style="display: none;" value="${requestScope['contract_info.id']}" />
+<input name="contract_info.contract_id" id="contract_info.contract_id" type="hidden" value="${requestScope['contract_info.contract_id']}" />
+<div id="contract_base_info_form" title="承租人基本信息">
+	<div class="mini-panel" title="承租人基本信息" showCollapseButton="true" style="width:100%;">
+		<table class="fillTable" cellspacing="0" cellpadding="0" style="width:100%" id="contract_base_info">
+			<tr class="tr-even">
+				<td class="td-content-title">承租人名称：</td>
+				<td class="td-content-title">
+					<input name="contract_info.projectname" id="cust_name"  label="项目名称" class="mini-textbox" readOnly type="text"
+						value="${requestScope['cust_name']}" />
+					<input style="display:none;"	class="mini-textarea" id="id_custid_str" name="json_industryType_str" value='${custid}'></input>
+				</td>
+				<td class="td-content-title">项目名称：</td>
+				<td class="td-content"><input id="project_name" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['project_name'] }" allowInput="false" /></td>
+				
+			</tr>
+			<tr class="tr-odd">
+					<td class="td-content-title">租赁合同编号：</td>
+				<td class="td-content"><input id="contract_number"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['contractnumber'] }" allowInput="false" /></td>
+				<td class="td-content-title">租赁种类：</td>
+				<td class="td-content"><input id="lease_type" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['leasetype'] }" allowInput="false" /></td>
+					</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title">融资金额（万元）：</td>
+				<td class="td-content"><input id="lease_money" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['leasemoney'] }" allowInput="false" /></td>
+				<td class="td-content-title">租赁期限：</td>
+				<td class="td-content"><input id="leaseterm"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['lease_term'] }" allowInput="false" /></td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title">租金总期数：</td>
+				<td class="td-content"><input id="rent_num"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['rentnum'] }" allowInput="false" /></td>
+		        <td class="td-content-title">剩余期数：</td>
+				<td class="td-content"><input id="surplus" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['surplus'] }" allowInput="false" /></td>
+			</tr>
+			<tr class="tr-odd">
+				
+				<td class="td-content-title">每期平均租金：</td>
+				<td class="td-content"><input id="avgrent"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['avgrent'] }" allowInput="false" /></td>
+		        <td class="td-content-title">租金支付周期：</td>
+				<td class="td-content"><input id="income_time"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['incometime'] }" allowInput="false" /></td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title">支付方式：</td>
+				<td class="td-content"><input id="periodtype" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['periodtype'] }" allowInput="false" /></td>
+				<td class="td-content-title">逾期期数：</td>
+			    <td class="td-content"><input id="ouot_list"   name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['ouotlist'] }" allowInput="false" /></td>
+			</tr>
+			<tr class="tr-odd">
+		          <td class="td-content-title">逾期金额（万元）：</td>
+				   <td class="td-content"><input id="out_money" name="contract_info.contractid" class="mini-textbox" label="合同编号" value="${requestScope['outmoney'] }" allowInput="false" /></td>
+			        <td class="td-content-title">应收租赁款余额（万元）：</td>
+				   <td class="td-content"><input id="current_overage"  name="contract_info.contractnumber" class="mini-textbox" label="业务合同编号"  value="${requestScope['currentoverage'] }" allowInput="false" /></td>
+			</tr>
+		</table>
+	</div>
+</div>
+<script language="javascript">
+
+</script>

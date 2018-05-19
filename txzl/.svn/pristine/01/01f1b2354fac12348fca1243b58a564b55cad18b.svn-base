@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+			select 
+				  p.id,	
+				  p.time,
+				  p.ongrid_energy    ongridenergy,
+				  p.standard_hours    standardhours,
+				  p.convert_standard_hours    convertstandardhours,
+				  p.bill_after_receivable    billafterreceivable,
+				  p.bill_receivable    billreceivable,
+				  p.cash_received    cashreceived,
+				  p.benchmark_price     benchmarkprice ,
+				  p.benchmark_after_tariff     benchmarkaftertariff,
+				  p.benchmark_tariff    benchmarktariff,
+				  p.nosubsidy_income    nosubsidyincome,
+				  p.excluding_nosubsidy    excludingnosubsidy,
+				  p.electricity_subsidy    electricitysubsidy,
+				  p.after_benchmark_price afterbenchmarkprice,
+				  p.receive_nosubsidy    receivenosubsidy,
+				  p.noelectricity_received    noelectricityreceived,
+				  p.power_rationing    powerrationing,
+				  p.month_power_rationing    monthpowerrationing,
+				  p.power_limit    powerlimit
+				 from Proj_Electricity_Info p
+				  where 1=1
+				/~time: and p.time = '{time}' ~/
+                /~billreceivable: and p.bill_receivable like '%{billreceivable}%' ~/
+				/~billafterreceivable: and p.bill_after_receivable like '%{billafterreceivable}%' ~/				
+				
+				
+				
+				
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

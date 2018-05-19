@@ -1,0 +1,193 @@
+package com.tenwa.leasing.entity.letter;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+
+/**
+ * 
+ * @author hucl
+ * @date 2017-01-03 下午2:24:10
+ * @info 函件审批
+ * Tenwa
+ *
+ */
+@Entity
+@FieldName(name = "函件审批")	
+@Table(name="LETTER_APPROVAL")
+public class LetterApproval {
+	@Id
+    @GeneratedValue(generator = "paymentableGenerator")     
+    @GenericGenerator(name = "paymentableGenerator", strategy = "uuid") 
+    @Column(length=32)
+	private String id;
+	
+	@FieldName(name = "项目名称")
+	@Column(name = "PROJECT_NAME", length = 200)
+	private String projectName;
+	
+	@FieldName(name="函件编号")
+	@Column(name="LETTER_NUMBER", length=300)
+	private String  letternumber;
+	
+	@FieldName(name="函件名称")
+	@Column(name="LETTER_NAME", length=300)
+	private String  lettername;
+
+	@FieldName(name="收件人")
+	@Column(name="RECIPIENT",length=300)
+	private String  recipient;
+
+	@FieldName(name="函件内容描述")
+	@Column(name="LETTER_DESCRIPTION",length=300)
+	private String  letterdescription;
+	
+	@FieldName(name="发起人")
+	@Column(name="ORIGINATOR",length=300)
+	private String  originator;
+	
+	@FieldName(name="发起时间")
+	@Column(name="ORIGINATIME",length=300)
+	private String  originatime;
+
+	@FieldName(name="函件状态")
+	@Column(name="LETTER_STATE",length=30)
+	private String  letterstate;
+	
+	@ManyToOne
+	@FieldName(name="创建人")
+	@JoinColumn(name="CREATOR_")
+	private User creator;
+
+	@FieldName(name="创建时间")
+	@Column(name="CREATE_DATE", length=20)	
+	private String createDate;
+	
+	@ManyToOne
+	@FieldName(name="修改人")
+	@JoinColumn(name="MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name="修改时间")
+	@Column(name="MODIFY_DATE", length=20)	
+	private String modifyDate;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	
+	public String getLetternumber() {
+		return letternumber;
+	}
+
+	public void setLetternumber(String letternumber) {
+		this.letternumber = letternumber;
+	}
+
+	public String getLettername() {
+		return lettername;
+	}
+
+	public void setLettername(String lettername) {
+		this.lettername = lettername;
+	}
+
+	public String getRecipient() {
+		return recipient;
+	}
+
+	public void setRecipient(String recipient) {
+		this.recipient = recipient;
+	}
+	
+	public String getLetterdescription() {
+		return letterdescription;
+	}
+
+	public void setLetterdescription(String letterdescription) {
+		this.letterdescription = letterdescription;
+	}
+	public String getOriginator() {
+		return originator;
+	}
+
+	public void setOriginator(String originator) {
+		this.originator = originator;
+	}
+
+	public String getOriginatime() {
+		return originatime;
+	}
+
+	public void setOriginatime(String originatime) {
+		this.originatime = originatime;
+	}
+
+	public String getLetterstate() {
+		return letterstate;
+	}
+
+	public void setLetterstate(String letterstate) {
+		this.letterstate = letterstate;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public LetterApproval() {
+		super();
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+	
+	
+}

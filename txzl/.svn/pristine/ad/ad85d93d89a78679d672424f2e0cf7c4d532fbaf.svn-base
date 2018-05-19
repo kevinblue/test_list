@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+	      <table_sql> 
+		        <![CDATA[
+			          SELECT 
+			               T_NOTICES.ID_   AS ID,
+			               T_NOTICES.TITLE_ AS  TITLE,
+			               T_NOTICES.CONTENT_ AS CONTENT,
+			               T_NOTICES.PUBLISH_DATE_ AS PUBLISHDATE,
+			               T_NOTICES.DEADLINE_DATE_ AS DEADLINEDATE,
+			               T_NOTICES.DESCRIPTION_ AS DESCRIPTION,
+			               T_NOTICES.CREATE_DATE_ AS CREATEDATE,
+			               T_NOTICES.MODIFY_DATE_ AS MODIFYDATE,
+			               T_USERS.REALNAME_     AS CREATOR, 
+			               T_NOTICES.MODIFICATOR_ AS MODIFICATOR
+			          FROM T_NOTICES  
+			          LEFT JOIN T_USERS  ON T_USERS.ID_ = T_NOTICES.CREATOR_
+					  WHERE 1=1 
+					  /~deadline:
+					   AND TO_CHAR(SYSDATE,'YYYY-MM-DD') >= SUBSTR(T_NOTICES.PUBLISH_DATE_,1,10)
+					   AND TO_CHAR(SYSDATE,'YYYY-MM-DD') <= SUBSTR(T_NOTICES.DEADLINE_DATE_,1,10)
+					  ~/
+					  /~queryText: AND (
+					        UPPER(T_NOTICES.TITLE_) like '%{queryText}%' 
+					  )~/
+					 <EXTRACTEND>  ORDER BY PUBLISHDATE DESC  <EXTRACTEND>
+				 ]]> 
+		  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	  <table_sql>
+	  	<![CDATA[
+			          SELECT 
+			               T_NOTICES.ID_   AS ID,
+			               T_NOTICES.TITLE_ AS  TITLE,
+			               T_NOTICES.CONTENT_ AS CONTENT,
+			               T_NOTICES.PUBLISH_DATE_ AS PUBLISHDATE,
+			               T_NOTICES.DEADLINE_DATE_ AS DEADLINEDATE,
+			               T_NOTICES.DESCRIPTION_ AS DESCRIPTION,
+			               T_NOTICES.CREATE_DATE_ AS CREATEDATE,
+			               T_NOTICES.MODIFY_DATE_ AS MODIFYDATE,
+			               T_USERS.REALNAME_     AS CREATOR, 
+			               T_NOTICES.MODIFICATOR_ AS MODIFICATOR
+			          FROM T_NOTICES  
+			          LEFT JOIN T_USERS  ON T_USERS.ID_ = T_NOTICES.CREATOR_
+					  WHERE 1=1 
+					  /~deadline:
+					   AND CONVERT(char(10),getDate(),120) >= SUBSTRING(T_NOTICES.PUBLISH_DATE_,1,10) 
+					   AND CONVERT(char(10),getDate(),120) <= SUBSTRING(T_NOTICES.DEADLINE_DATE_,1,10)
+					  ~/
+					  /~queryText: AND (
+					        UPPER(T_NOTICES.TITLE_) like '%{queryText}%' 
+					  )~/
+					 <EXTRACTEND>  ORDER BY PUBLISHDATE DESC  <EXTRACTEND>
+				 ]]> 
+		  </table_sql>
+	  </sqlserver>
+	  <mysql>
+	      <table_sql> 
+		        <![CDATA[
+			          SELECT 
+			               T_NOTICES.ID_   AS ID,
+			               T_NOTICES.TITLE_ AS  TITLE,
+			               T_NOTICES.CONTENT_ AS CONTENT,
+			               T_NOTICES.PUBLISH_DATE_ AS PUBLISHDATE,
+			               T_NOTICES.DEADLINE_DATE_ AS DEADLINEDATE,
+			               T_NOTICES.DESCRIPTION_ AS DESCRIPTION,
+			               T_NOTICES.CREATE_DATE_ AS CREATEDATE,
+			               T_NOTICES.MODIFY_DATE_ AS MODIFYDATE,
+			               T_USERS.REALNAME_     AS CREATOR, 
+			               T_NOTICES.MODIFICATOR_ AS MODIFICATOR
+			          FROM T_NOTICES  
+			          LEFT JOIN T_USERS  ON T_USERS.ID_ = T_NOTICES.CREATOR_
+					  WHERE 1=1 
+					  /~deadline:
+					   AND DATE_FORMAT(now(),'%Y-%m-%d %T') >= SUBSTR(T_NOTICES.PUBLISH_DATE_,1,10)
+					   AND DATE_FORMAT(now(),'%Y-%m-%d %T') <= SUBSTR(T_NOTICES.DEADLINE_DATE_,1,10)
+					  ~/
+					  /~queryText: AND (
+					        UPPER(T_NOTICES.TITLE_) like '%{queryText}%' 
+					  )~/
+					 <EXTRACTEND>  ORDER BY PUBLISHDATE DESC  <EXTRACTEND>
+				 ]]> 
+		  </table_sql>
+	  </mysql>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

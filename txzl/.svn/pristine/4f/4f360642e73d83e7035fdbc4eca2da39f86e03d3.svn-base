@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select *from (
+              select 
+              ci.id as cid,
+              cfri.id           as id,
+              ci.contract_id    as contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              rii.id            as rentinvoiceid,
+              cinfo.cust_name   as custname,
+              cfri.hire_date    as cdate,
+              cfri.plan_list    as planlist,
+              cfri.corpus       as corpus,
+              '本金'          as corpustype,
+              'corpus'          as corpustypeid,
+             
+              case nvl(rii.invoice_status,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' when  3 then '已导出' end as status,
+              tds2.name_        as leaseform
+              from contract_fund_rent_income cfri
+              left join rent_invoice_info rii on cfri.id=rii.cfri_id and rii.bill_type='receipt'
+              left join contract_info ci on cfri.contract_id=ci.id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.rent_invoice_type=tds1.id_
+              left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              
+             where 1=1
+             and cit.rent_invoice_type='invoice_type06'
+	         and ci.contract_status>=31
+             
+             
+             union all
+             
+             select 
+             ci.id as cid,
+		     ci.id             as id,
+             ci.contract_id    as contractid,
+             CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+		     rinfo.contract_id as rentinvoiceid,
+		     cinfo.cust_name   as custname,
+             cc.start_date     as cdate,
+             1                 as planlist,
+		     cc.equip_amt      as corpus,
+             '本金一次性收据'          as corpustype,
+              'corpusone'          as corpustypeid,
+	         
+	         case nvl(rinfo.invoicestatus,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' when  3 then '已导出' end as status,
+	         tds2.name_        as leaseform
+	         from 
+	         contract_info ci
+			 left join contract_condition cc on ci.id=cc.contract_id
+			 left join 
+			 (
+				select rii.contract_id,nvl(max(rii.invoice_status),0) invoicestatus from rent_invoice_info rii
+				where  rii.bill_type='receipt'
+				group by rii.contract_id
+			 )rinfo on ci.id=rinfo.contract_id 
+	
+	         left join contract_invoice_type cit on ci.id=cit.contract_id
+	         left join t_dicts_datas tds1 on cit.rent_invoice_type=tds1.id_
+	         left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+	         left join cust_info cinfo on ci.cust_id=cinfo.id
+	         where 1=1
+	         and ci.contract_status>=31
+	         and  cit.rent_invoice_type='invoice_type01'
+	      ) list  
+	      where 1=1
+	      and list.status!='已导出'
+	      /~status: and list.status in ('<<status>>') ~/
+	        
+          /~contractid: and list.contractid like '%{contractid}%' ~/
+          /~contractnumber: and list.contractnumber like '%{contractnumber}%' ~/
+	      /~custname: and list.custname like '%{custname}%' ~/
+	      /~cdateStart: and list.cdate >='{cdateStart}' ~/
+          /~cdateEnd: and list.cdate <='{cdateEnd}' ~/
+		  /~leaseform: and list.leaseform = '{leaseform}' ~/
+		
+		 <EXTRACTEND> order by contractid,planlist<EXTRACTEND>
+		   
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

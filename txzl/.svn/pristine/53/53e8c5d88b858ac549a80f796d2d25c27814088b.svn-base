@@ -1,0 +1,638 @@
+package com.tenwa.leasing.controller.cust.common;
+import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.google.inject.internal.Maps;
+import com.reckon.util.PdfSwitchImage;
+import com.tenwa.business.dao.BaseDao;
+import com.tenwa.business.entity.AttachmentFileUploadInfo;
+import com.tenwa.business.entity.AttachmentFileUploadInfoDetail;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.ExcelSwitchHtmlUtil;
+import com.tenwa.kernal.utils.FileUtil;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.kernal.utils.ResourceUtil;
+import com.tenwa.kernal.utils.WordSwitchHtml;
+import com.tenwa.leasing.entity.file.BaseFile;
+import com.tenwa.leasing.service.cust.CustValidatorService;
+
+@Controller(value = "CustValidatorController")
+@RequestMapping(value = "/**/acl")
+/**
+ * 客户验证
+ * @Title: CustValidatorController.java
+ * @package: com.tenwa.leasing.controller.cust.common
+ * @author: tpf
+ * @date 2014年11月20日 下午6:03:17 
+ * @version V5.1
+ */
+public class CustValidatorController {
+	@Resource(name = "custValidatorService")
+	private CustValidatorService baseService;
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	/**
+	  * 检查身份证
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIdCard.acl")
+	@ResponseBody
+	public String checkIdCard(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String idcardno = model.get("idcardno");
+			String id = model.get("id");
+			return baseService.checkIdCard(idcardno,id);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	  * 检查组织机构代码
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkOrgCode.acl")
+	@ResponseBody
+	public String checkOrgcode(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String orgcode = model.get("orgcode");
+			String id = model.get("id");
+			return baseService.checkOrgcode(orgcode,id);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	  * 检查主账户是否重复
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIsMain.acl")
+	@ResponseBody
+	public String checkIsMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			return baseService.checkIsMain(id,custId);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	 * 检查银行账号是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCustAccountRepeat.acl")
+	@ResponseBody
+	public String checkCustAccountRepeat(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String accNumber=model.get("accNumber");
+			return baseService.checkCustAccountRepeat(id,custId,accNumber);
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "检查失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	 * 检查关联企业中的身份证/组织机构代码是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCardNoShareCompany.acl")
+	@ResponseBody
+	public String checkCardNoShareCompany(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			return baseService.checkCardNoShareCompanyRepeat(id,custId,cardNo);
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "检查失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	 * 检查股本结构中的身份证/组织机构代码是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/checkCardNoCustStockHolder.acl")
+	@ResponseBody
+	public String checkCardNoCustStockHolder(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			return baseService.checkCardNoCustStockHolderRepeat(id,custId,cardNo);
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "检查失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	/**
+	  * 修改是否草稿、检查是否已经立过项
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkCustByProjInfo.acl")
+	@ResponseBody
+	public String checkCustByProjInfo(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String custId = model.get("custId");
+			return baseService.checkCustByProjInfo(custId);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	  * 检查重要个人（主联系人）是否重复
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkIsPersonMain.acl")
+	@ResponseBody
+	public String checkIsPersonMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			return baseService.checkIsPersonMain(id,custId);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	 * 检查重要个人下面的身份证是否重复
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	
+	@RequestMapping(value = "/checkCardNoPersonMain.acl")
+	@ResponseBody
+	public String checkCardNoPersonMain(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id = model.get("id");
+			String custId = model.get("custId");
+			String cardNo=model.get("cardNo");
+			return baseService.checkCardNoPersonMain(id,custId,cardNo);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+
+	@RequestMapping(value = "/checkSigndate.acl")
+	@ResponseBody
+	public String checkSigndate(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String contractid = model.get("contractid");
+			return baseService.checkSigndate(contractid);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	
+	/**
+	  * 检查法人客户姓名和组织机构代码是否存在
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkBelongingPeople.acl")
+	@ResponseBody
+	public String checkBelongingPeople(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String code = model.get("code");
+			return baseService.checkBelongingPeople(code);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	@RequestMapping(value = "/windowOpenCustApplication.acl")
+	public String windowOpenCustApplication(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String custid = model.get("custid");
+			return baseService.updateBelongingPeople(custid);
+		}catch (Exception e) {
+			return "加载失败!["+e.getMessage()+"]";
+		}
+	}
+	/**
+	 * 资金几乎流水号获取
+	 */
+	
+	@RequestMapping(value = "/getRunningWaterInterest.acl")
+	@ResponseBody
+	public  String getRunningWaterInterest(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+             String number="TX"+createCalNumInterest();
+			return number;
+		}catch (Exception e) {
+			return "调用失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	public synchronized String createCalNumInterest() throws Exception {
+		try{
+			
+			String year=DateUtil.getSystemDate().substring(0, 4);
+			String month=DateUtil.getSystemDate().substring(5, 7);
+			String day=DateUtil.getSystemDate().substring(8, 10);
+			List<Map<String,Object>> numberlist=this.tableService.queryListBySql("select * from T_SERIAL_NUMBER where type_='资金计划序号' ");
+			if(numberlist!=null&&numberlist.size()>0){
+				if(new BigDecimal(year).compareTo(new BigDecimal(numberlist.get(0).get("year_").toString()))!=0||new BigDecimal(month).compareTo(new BigDecimal(numberlist.get(0).get("month_").toString()))!=0){
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set year_=?, month_=?, order_number_=? where  type_='资金计划序号' ", Integer.parseInt(year),Integer.parseInt(month),0001);
+					return "ZL-"+year+month+day+"0001";
+				}else{
+					BigDecimal number=new BigDecimal(numberlist.get(0).get("order_number_").toString()).add(BigDecimal.ONE) ;
+					String format=new DecimalFormat("0000").format(number);
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set  order_number_=? where  type_='资金计划序号' ", Integer.parseInt(format));
+					return "ZL-"+year+month+day+format;
+				}
+			}else{
+				this.tableService.updateBySql("insert into T_SERIAL_NUMBER ( id_,type_,year_,month_,order_number_) values(sys_guid(),'资金计划序号',?,?,?)", Integer.parseInt(year),Integer.parseInt(month),0001);
+				return "ZL-"+year+month+day+"0001";
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	
+	/**
+	 * 供应商编号获取
+	 */
+	
+	@RequestMapping(value = "/getRunningWater.acl")
+	@ResponseBody
+	public  String getRunningWater(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+             String number="TX"+createCalNum();
+			return number;
+		}catch (Exception e) {
+			return "调用失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	public synchronized String createCalNum() throws Exception {
+		try{
+			
+			String year=DateUtil.getSystemDate().substring(0, 4);
+			String month=DateUtil.getSystemDate().substring(5, 7);
+			String day=DateUtil.getSystemDate().substring(8, 10);
+			List<Map<String,Object>> numberlist=this.tableService.queryListBySql("select * from T_SERIAL_NUMBER where type_='供应商编号' ");
+			if(numberlist!=null&&numberlist.size()>0){
+				if(new BigDecimal(year).compareTo(new BigDecimal(numberlist.get(0).get("year_").toString()))!=0||new BigDecimal(month).compareTo(new BigDecimal(numberlist.get(0).get("month_").toString()))!=0){
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set year_=?, month_=?, order_number_=? where  type_='供应商编号' ", Integer.parseInt(year),Integer.parseInt(month),0001);
+					return "ZL-"+year+month+day+"0001";
+				}else{
+					BigDecimal number=new BigDecimal(numberlist.get(0).get("order_number_").toString()).add(BigDecimal.ONE) ;
+					String format=new DecimalFormat("0000").format(number);
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set  order_number_=? where  type_='供应商编号' ", Integer.parseInt(format));
+					return "ZL-"+year+month+day+format;
+				}
+			}else{
+				this.tableService.updateBySql("insert into T_SERIAL_NUMBER ( id_,type_,year_,month_,order_number_) values(sys_guid(),'供应商编号',?,?,?)", Integer.parseInt(year),Integer.parseInt(month),0001);
+				return "ZL-"+year+month+day+"0001";
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	/**
+	  * 检查自然人客户姓名和身份证是否存在
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkPersonBelongingPeople.acl")
+	@ResponseBody
+	public String checkPersonBelongingPeople(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String idcardno = model.get("idcardno");
+			return baseService.checkPersonBelongingPeople(idcardno);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	@RequestMapping(value = "/windowOpenPersonApplication.acl")
+	public String windowOpenPersonApplication(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String custid = model.get("custid");
+			return baseService.updatePersonBelongingPeople(custid);
+		}catch (Exception e) {
+			return "加载失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	/**
+	  *将争议表一条记录改为解除状态
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkFactoringControversy.acl")
+	@ResponseBody
+	public String checkFactoringControversy(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id=model.get("id");
+			String relievedate=model.get("relievedate");
+			String status=model.get("status");
+			String relieveexplaination=model.get("relieveexplaination");
+			return baseService.updateFactoringControversy(id,relievedate,status,relieveexplaination);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	/**
+	  *将争议解除表一条记录改为解除状态，状态2
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/checkFactoringControversyRelieve.acl")
+	@ResponseBody
+	public String checkFactoringControversyRelieve(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String id=model.get("id");
+			int status=Integer.parseInt(model.get("status"));
+			return baseService.updateFactoringControversyRelieve(id,status);
+		}catch (Exception e) {
+			return "删除失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	/**
+	  *动态加载付款前提条件
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/getPremiseCondition.acl")
+	@ResponseBody
+	public String getPremiseCondition(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+	
+			return baseService.getPremiseCondition(model);
+		}catch (Exception e) {
+			return "操作失败!["+e.getMessage()+"]";
+		}
+	}
+	
+	
+	@RequestMapping(value = "/getTermsofpaymentFileInformation.acl")
+	@ResponseBody
+	public String getTermsofpaymentFile(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			String id = request.getParameter("showfilebyid");
+			String flowuid = request.getParameter("flowUnid");
+			String basefilelist = baseService.getBaseFileByFlowunidAndId(id,flowuid);
+			return basefilelist;
+		}catch (Exception e) {
+			System.out.println(e);
+		}
+		return null;
+	}
+	/**
+	  * 校验帐号密码
+	  * @param request
+	  * @param response
+	  * @return 返回响应信息
+	  * @throws Exception
+	  */ 
+	@RequestMapping(value = "/getUsersPassword.acl")
+	@ResponseBody
+	public String getUsersPassword(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			return baseService.getUsersPassword(model);
+		}catch (Exception e) {
+			return "添加失败!["+e.getMessage()+"]";
+		}
+	};
+	
+	public String getuploadFileAllDir(String key) throws Exception {
+		// TODO Auto-generated method stub
+		String SystemDate = DateUtil.getSystemDate();
+		String uploadDirPath = FileUtil.getFilePathString(ResourceUtil.getFileUploadDataPath()) + ResourceUtil.getWordFilesRelativeStorePath() + "/";
+		String dirpath = key + "/" + SystemDate.replaceAll("-", "/") + "/";
+		return uploadDirPath + dirpath;
+	}
+	//预览文件
+	@RequestMapping(value = "/qeryCustfile.acl")
+	@ResponseBody
+	public String qeryCustfile(HttpServletRequest request,
+			HttpServletResponse response) throws Throwable {
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String userid = model.get("userid");
+			String custid = model.get("custid");
+			String filedict=model.get("filedict");
+			String previewtype=model.get("previewtype");
+			String savafilepath ="";
+			String downloadedFileFullPath = "";
+			if("second".equals(previewtype)){
+				BaseFile basefile=this.tableService.findEntityByID(BaseFile.class, filedict);
+				String downloadedFilePath = basefile.getFileAddress();
+				String fileTitleName = basefile.getFileName();
+				String prefix=fileTitleName.substring(fileTitleName.lastIndexOf(".")+1).toLowerCase();
+				downloadedFileFullPath = FileUtil.getFilePathString("D:/system_uploads/wordFiles/" + downloadedFilePath);
+				String uploadTime = basefile.getCreateDate();
+				String uploadDate = uploadTime.substring(0, 10);
+				String module = basefile.getFilekey();
+				String uploadDirPath = FileUtil.getFilePathString(ResourceUtil.getFileUploadDataPath())+ "/" + "pdfToPicture" + "/" +  FileUtil.getYearMonthDayPathByString(uploadDate, "yyyy-MM-dd");
+				if(prefix.matches("jpg|jpeg|png|bmp|gif|pdf")){
+	            	FileInputStream is=null;
+	            	if(prefix.equals("pdf")){
+	            	String newpdfpath =PdfSwitchImage.getPdfPath(downloadedFileFullPath,uploadDirPath);
+	            	is = new FileInputStream(newpdfpath); 
+	            	}else{
+	            		 is = new FileInputStream(downloadedFileFullPath); 
+	            	}
+			            int i = is.available(); // 得到文件大小  
+			            byte data[] = new byte[i];  
+			            is.read(data); // 读数据  
+			            is.close();  
+			            response.setContentType("image/*"); // 设置返回的文件类型  
+			            OutputStream toClient = response.getOutputStream(); // 得到向客户端输出二进制数据的对象  
+			            toClient.write(data); // 输出数据  
+			            toClient.close(); 
+	            }else if(prefix.matches("xlsx|xls")){
+	            	 savafilepath = ExcelSwitchHtmlUtil.getExcelHtml(downloadedFileFullPath);
+	            }else if("doc".matches(prefix)){
+	            	savafilepath=WordSwitchHtml.getWordHtml(downloadedFileFullPath); 
+	            }else if("docx".matches(prefix)){
+	            	savafilepath = WordSwitchHtml.getWord2007Html(downloadedFileFullPath);
+	            }else{
+	            	savafilepath= "<table style='border-collapse:collapse;' width='100%'><tr><span style='color:red;' >系统只支持图片和pdf、word、excel预览！</span></tr></table>";
+	            }
+				 return savafilepath;
+			};
+			try{
+				AttachmentFileUploadInfoDetail attachmentFileUploadInfoDetail=this.tableService.findEntityByID(AttachmentFileUploadInfoDetail.class, filedict);
+					String fileTitleName = attachmentFileUploadInfoDetail.getChineseFileName();
+					String prefix=fileTitleName.substring(fileTitleName.lastIndexOf(".")+1).toLowerCase();
+					String uploadTime = attachmentFileUploadInfoDetail.getUploadTime();
+					String uploadDate = uploadTime.substring(0, 10);
+					String module = attachmentFileUploadInfoDetail.getAttachmentFileUploadInfo().getModule();
+					String uploadDirPath = FileUtil.getFilePathString(ResourceUtil.getFileUploadDataPath())+ "/" + module + "/" + FileUtil.getYearMonthDayPathByString(uploadDate, "yyyy-MM-dd");
+					String encodeFileName = attachmentFileUploadInfoDetail.getEncodeFileName();
+					 downloadedFileFullPath = FileUtil.getFilePathString(uploadDirPath + "/" + encodeFileName);
+		            System.out.println(downloadedFileFullPath);  
+		            if(prefix.matches("jpg|jpeg|png|bmp|gif|pdf")){
+		            	FileInputStream is=null;
+		            	if(prefix.equals("pdf")){
+		            	String newpdfpath =PdfSwitchImage.getPdfPath(downloadedFileFullPath,uploadDirPath);
+		            		 is = new FileInputStream(newpdfpath); 
+		            	}else{
+		            		 is = new FileInputStream(downloadedFileFullPath); 
+		            	}
+				            int i = is.available(); // 得到文件大小  
+				            byte data[] = new byte[i];  
+				            is.read(data); // 读数据  
+				            is.close();  
+				            response.setContentType("image/*"); // 设置返回的文件类型  
+				            OutputStream toClient = response.getOutputStream(); // 得到向客户端输出二进制数据的对象  
+				            toClient.write(data); // 输出数据  
+				            toClient.close(); 
+		            }else if(prefix.matches("xlsx|xls")){
+		            	 savafilepath = ExcelSwitchHtmlUtil.getExcelHtml(downloadedFileFullPath);
+		            }else if("doc".matches(prefix)){
+		            	savafilepath=WordSwitchHtml.getWordHtml(downloadedFileFullPath); 
+		            }else if("docx".matches(prefix)){
+		            	savafilepath = WordSwitchHtml.getWord2007Html(downloadedFileFullPath);
+		            }else{
+		            	savafilepath= "<table style='border-collapse:collapse;' width='100%'><tr><span style='color:red;' >系统只支持图片和pdf、word、excel预览！</span></tr></table>";
+		            }
+			}catch (Exception e) {
+				e.printStackTrace();
+				e.getMessage();
+			}
+		     return savafilepath;
+	}
+	
+	@RequestMapping(value = "/getFundReceiptNo.acl")
+	@ResponseBody
+	public String getFundReceiptNo(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+	System.out.println("这里测试一下=============================");
+		try{
+            String number="No."+createFundReceiptNum();
+			return number;
+		}catch (Exception e) {
+			return "调用失败!["+e.getMessage()+"]";
+		}
+		
+	
+	}
+	
+	private synchronized String createFundReceiptNum() throws Exception {
+		try{			
+			String year=DateUtil.getSystemDate().substring(0, 4);
+			String month=DateUtil.getSystemDate().substring(5, 7);
+			//String day=DateUtil.getSystemDate().substring(8, 10);
+			List<Map<String,Object>> numberlist=this.tableService.queryListBySql("select * from T_SERIAL_NUMBER where type_='租金收据号' ");
+			if(numberlist!=null&&numberlist.size()>0){
+				if(new BigDecimal(year).compareTo(new BigDecimal(numberlist.get(0).get("year_").toString()))!=0){
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set year_=?, month_=?, order_number_=? where  type_='租金收据号' ", Integer.parseInt(year),Integer.parseInt(month),0001);
+					return year+"0001";
+				}else{
+					BigDecimal number=new BigDecimal(numberlist.get(0).get("order_number_").toString()).add(BigDecimal.ONE) ;
+					String format=new DecimalFormat("0000").format(number);
+					this.tableService.updateBySql("update T_SERIAL_NUMBER set  order_number_=? where  type_='租金收据号' ", Integer.parseInt(format));
+					return year+format;
+				}
+			}else{
+				this.tableService.updateBySql("insert into T_SERIAL_NUMBER ( id_,type_,year_,month_,order_number_) values(sys_guid(),'租金收据号',?,?,?)", Integer.parseInt(year),Integer.parseInt(month),0001);
+				return year+"0001";
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+	}
+}

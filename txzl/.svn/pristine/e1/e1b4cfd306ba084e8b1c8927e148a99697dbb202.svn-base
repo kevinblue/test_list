@@ -1,0 +1,1427 @@
+package com.tenwa.leasing.entity.proj;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.reckon.entity.proj.ProjCashDetail;
+import com.reckon.entity.proj.ProjCondition;
+import com.reckon.entity.proj.ProjFinaCashDetail;
+import com.reckon.entity.proj.ProjFinaRentPlan;
+import com.reckon.entity.proj.ProjFundFundPlan;
+import com.reckon.entity.proj.ProjFundRentPlan;
+import com.reckon.entity.proj.ProjPaymentPremiseCondition;
+import com.reckon.entity.proj.ProjSpecialRulesBean;
+import com.tenwa.business.entity.Department;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.proj.invoice.ProjInvoiceType;
+import com.tenwa.leasing.entity.trade.TradeBasedTransactions;
+import com.tenwa.leasing.entity.factoring.ChangeReasonType;
+import com.tenwa.leasing.entity.factoring.FactoringChangeExplain;
+
+/**
+ * ProjInfo entity. @author MyEclipse Persistence Tools
+ */
+@Entity
+@FieldName(name = "1.1项目基本信息")
+@Table(name = "PROJ_INFO")
+public class ProjInfo implements java.io.Serializable {
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	@GenericGenerator(name = "generator", strategy = "uuid")
+	@GeneratedValue(generator = "generator")
+	@FieldName(name="标识符")
+	@Column(name = "ID", nullable = false, length = 64)
+	private String id;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_DEPT")
+	@FieldName(name="出单部门")
+	private Department department;
+	
+	@Column(name = "DEPT_ROUTE", length=32)
+	@FieldName(name="部门路径")
+	private String deptroute;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_SCALE")
+	@FieldName(name="项目规模")
+	private DictionaryData projScale;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "INDUSTRY_TYPE")
+	@FieldName(name="内部行业")
+	private DictionaryData industryType;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "SUB_CUST_KIND")
+	@FieldName(name="子行业")
+	private DictionaryData subCustKind;
+	
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_MANAGE")
+	@FieldName(name="项目经理")
+	private User projManage;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_ASSIST")
+	@FieldName(name="项目协办")
+	private User projAssist;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_IMPOTER")
+	@FieldName(name="项目导入人")
+	private User projImpoter;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_TYPE")
+	@FieldName(name="项目类型")
+	private DictionaryData projType;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_SOURCE")
+	@FieldName(name="项目来源")
+	private DictionaryData projSource;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "CUST_ID")
+	@FieldName(name="承租人")
+	private CustInfo custInfo;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "LEAS_FORM")
+	@FieldName(name="租赁形式")
+	private DictionaryData leasForm;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "LEAS_TYPE")
+	@FieldName(name="固定资产")
+	private DictionaryData leasType;
+
+	@Column(name = "PROJ_ID", length = 100)
+	@FieldName(name="项目编号")
+	private String projId;
+
+	@Column(name = "PROJ_DATE", length = 40)
+	@FieldName(name="项目日期")
+	private String projDate;
+
+	@Column(name = "PROJECT_NAME", length = 510)
+	@FieldName(name="项目名称")
+	private String projectName;
+
+
+	@Column(name = "PROJ_STATUS", precision = 10, scale = 0)
+	@FieldName(name="项目状态")
+	private Integer projStatus;
+
+	@Column(name = "REPEAL_DATE", length = 40)
+	@FieldName(name="项目撤销时间")
+	private String repealDate;
+  
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "REPEAL_REASON_TYPE")
+	@FieldName(name="撤销原因分类")
+	private DictionaryData RepealReasonType;
+	
+	@Column(name = "REPEAL_REASON", length = 510)
+	@FieldName(name="撤销原因")
+	private String repealReason;
+	
+	@Column(name = "CHANGE_DATE", length = 40)
+	@FieldName(name="项目变更时间")
+	private String changeDate;
+	
+	@Column(name = "CHANGE_MEMO", length = 2000)
+	@FieldName(name="变更原因")
+	private String changeMemo;
+	
+	@Column(name = "APPROVE_CONCLUSION", length = 510)
+	@FieldName(name="信审结论")
+	private String approveConclusion;
+
+	@Column(name = "APPROVE_DATE", length = 40)
+    @FieldName(name="信审通过日期")
+	private String approveDate;
+	
+	@FieldName(name="业务合同编号")
+	@Column(name = "CONTRACT_ORDER", precision = 10, scale = 0)
+	private Long contractOrder;
+
+	@FieldName(name = "其它商务条件")
+	@Column(name = "OTHER_CONDITION", length = 2000)
+	private String otherCondition;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "CREATOR_")
+	@FieldName(name="创建人")
+	private User creator;
+	
+	@Column(name = "CREATE_DATE", length = 40)
+	@FieldName(name="创建时间")
+	private String createDate;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@FieldName(name="修改人")
+	@JoinColumn(name = "MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name="修改时间")
+	@Column(name = "MODIFY_DATE", length = 40)
+	private String modifyDate;
+	
+	@FieldName(name = "租赁物件列表")
+	@OneToMany(mappedBy = "projInfo", fetch = FetchType.LAZY)
+	private Set<ProjEquip> projEquips = new HashSet<ProjEquip>();
+
+	@FieldName(name = "项目担保方式")
+	@OneToMany(mappedBy = "projInfo", fetch = FetchType.LAZY)
+	private Set<ProjGuaranteeMethod> projGuaranteeMethods = new HashSet<ProjGuaranteeMethod>();
+
+	@FieldName(name = "项目抵质押物件列表")
+	@OneToMany(mappedBy = "projInfo", fetch = FetchType.LAZY)
+	private Set<ProjGuaranteeEquip> projGuaranteeEquips = new HashSet<ProjGuaranteeEquip>();
+	
+	
+	//租金测算相关
+	@FieldName(name="项目现金流")
+	//mappedBy 中指定的值时实体类中的字段名 不是数据库的名字
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjCashDetail>  projCashDetails=new HashSet<ProjCashDetail>();
+	
+	
+	@FieldName(name = "合同前提条件")
+	@OneToMany(mappedBy = "projId", fetch = FetchType.LAZY)
+	private Set<ProjPremiseCondition> projPremiseConditions = new HashSet<ProjPremiseCondition>();
+	
+	@FieldName(name="项目会计现金流")
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjFinaCashDetail>  projFinaCashDetails=new HashSet<ProjFinaCashDetail>();
+	
+	@FieldName(name="合同租金计划")
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjFundRentPlan> projFundRentPlans=new HashSet<ProjFundRentPlan>();
+	
+	@FieldName(name="合同租金计划")
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjFinaRentPlan> projFinaRentPlans=new HashSet<ProjFinaRentPlan>();
+
+	@FieldName(name="合同资金计划")
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjFundFundPlan> projFundFundPlans=new HashSet<ProjFundFundPlan>();
+	
+	@FieldName(name="分段配置")
+	@OneToMany(mappedBy="projId", fetch=FetchType.LAZY)
+	private Set<ProjSpecialRulesBean> projSpecialRulesBeans=new HashSet<ProjSpecialRulesBean>();
+	
+	@FieldName(name="商务条件")
+	@OneToOne(mappedBy="projId",fetch=FetchType.LAZY) 
+	private ProjCondition projCondition =new ProjCondition();
+	
+	@FieldName(name="贸易基础交易情况")
+	@OneToOne(mappedBy="projId",fetch=FetchType.LAZY) 
+	private TradeBasedTransactions tradeBasedTransactions =new TradeBasedTransactions();
+	
+	// 一对一的表	
+	@FieldName(name="项目发票信息")
+	@OneToOne(mappedBy="projId",fetch=FetchType.LAZY) 
+	private ProjInvoiceType projInvoiceType ;
+	
+	
+	// 一对一的表	
+	@FieldName(name="保理项目变更说明")
+	@OneToOne(mappedBy="projId",fetch=FetchType.LAZY) 
+	private FactoringChangeExplain factoringChangeExplain ;
+	
+	
+	@FieldName(name="项目下属合同")
+	@OneToMany(mappedBy="projId",fetch=FetchType.LAZY) 
+	private Set<ContractInfo> contractInfos = new HashSet<ContractInfo>();
+	
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "FUND_USE")
+	@FieldName(name="资金用途")
+	private DictionaryData fundUse;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "BUSINESS_TYPE")
+	@FieldName(name="业务类型")
+	private DictionaryData businessType;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "FACTORING_TYPE")
+	@FieldName(name="保理类型")
+	private DictionaryData factoringType;
+	
+	@Column(name = "RECOURSE_RIGHT",length = 10)
+	@FieldName(name="追索权")
+	private String recourseRight;
+	
+	@Column(name = "COMPETITORS" ,length = 100)
+	@FieldName(name="主要竞争对手")
+	private String competitors;
+	
+	@Column(name = "EQUIPINFO" ,length = 2000)
+	@FieldName(name="租赁物概况描述")
+	private String equipinfo;
+	
+	@Column(name = "EXPECT_PUT_DATE", length = 40)
+	@FieldName(name="预计投放时间")
+	private String expectPutDate;
+	
+	@Column(name = "EXPECT_APPROVE_DATE", length = 40)
+	@FieldName(name="预计出具时间")
+	private String expectApproveDate;
+
+	@Column(name = "EXPECT_SIGN_DATE", length = 40)
+	@FieldName(name="预计签约时间")
+	private String expectSignDate;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "EQUIP_SOURCE")
+	@FieldName(name="设备来源")
+	private DictionaryData equipSource;
+	
+//	@Column(name = "CUST_INCOME" ,length = 20)
+//	@FieldName(name="【客户描述】收入(万元)")
+//	private String custIncome;
+//	
+//	@Column(name = "CUST_LEVEL" ,length = 20)
+//	@FieldName(name="【客户描述】等级")
+//	private String custLevel;
+//	
+//	@Column(name = "CUST_BED_NUM" ,length = 20)
+//	@FieldName(name="【客户描述】实际开放床位")
+//	private String custBedNum; 
+//	
+//	@Column(name = "CUST_PROFIT" ,length = 20)
+//	@FieldName(name="【客户描述】利润(万元)")
+//	private String custProfit;
+//	
+//	@Column(name = "DEBT_RATIO" ,length = 20)
+//	@FieldName(name="【客户描述】资产负债率")
+//	private String debtRatio;
+//	
+//	@Column(name = "CUST_DEBT" ,length = 20)
+//	@FieldName(name="【客户描述】刚性负债(万元)")
+//	private String custDebt;
+	
+	@Column(name = "CUST_MEMO" ,length = 2000)
+	@FieldName(name="【客户描述】备注")
+	private String custMemo;
+
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	@JoinColumn(name = "AGENT_SOURCE")
+//	@FieldName(name="【代理商】项目来源")
+//	private DictionaryData agentSource;
+//	
+//	@Column(name = "AGENT_COMPANY" ,length = 100)
+//	@FieldName(name="【代理商】公司")
+//	private String agentCompany;
+//	
+//	@Column(name = "AGENT_NAME" ,length = 20)
+//	@FieldName(name="【代理商】姓名")
+//	private String agentName;
+//	
+//	@Column(name = "AGENT_JOB" ,length = 20)
+//	@FieldName(name="【代理商】职位")
+//	private String agentJob;
+//
+//	@Column(name = "AGENT_PHONE" ,length = 20)
+//	@FieldName(name="【代理商】手机")
+//	private String agentPhone;
+//
+//	@Column(name = "GOV_GDP" ,length = 20)
+//	@FieldName(name="【政府】GDP")
+//	private String govGDP;
+//	
+//	@Column(name = "GOV_INCOME" ,length = 20)
+//	@FieldName(name="【政府】财政收入")
+//	private String govIncome;
+//	
+//	@Column(name = "GOV_POPULATION" ,length = 20)
+//	@FieldName(name="【政府】人口")
+//	private String govPopulation;
+	
+	@Column(name = "IS_VETO" ,length = 20)
+	@FieldName(name="是否一票否决")
+	private String isVeto;
+	
+	@Column(name = "TRANSFER_CREDIT_DATE", length = 40)
+	@FieldName(name="提交信审员日期")
+	private String transferCreditDate;
+	
+	@Column(name = "ADJUSTLEVEL" ,length = 100)
+	@FieldName(name="我司评估登记")
+	private String adjustlevel;
+	
+	@Column(name = "PAYMENT_TYPE" ,length = 100)
+	@FieldName(name="租金支付类型")
+	private String paymenttype;
+	
+	@Column(name = "PAY_MONEY" ,length = 100)
+	@FieldName(name="租金")
+	private String paymoney;
+	
+	@Column(name = "EFFECTIVECONDITION" ,length = 2000)
+	@FieldName(name="合同生效前提")
+	private String effectivecondition;
+	
+	@Column(name = "EXPIRATION_DATE" ,length = 200)
+	@FieldName(name="信审有效期")
+	private String expirationdate;
+	
+	@Column(name = "APPROVALCONDITION" ,length = 2000)
+	@FieldName(name="合同审批或签约前提")
+	private String approvalcondition;
+	
+	@Column(name = "ASSETOPINION" ,length = 2000)
+	@FieldName(name="资产管理建议")
+	private String assetopinion;
+	
+	@Column(name = "LESSEENATURE" ,length = 200)
+	@FieldName(name="承租人性质")
+	private String lesseenature;
+	
+	@Column(name = "SPECIAL" ,length = 2000)
+	@FieldName(name="是否有特殊事项需要在信审会后流程确认")
+	private String special;
+	
+	@Column(name = "OTHERMEMP" ,length = 2000)
+	@FieldName(name="风控补充其他")
+	private String othermemo;
+	
+	@Column(name = "IS_MANY_BOND" ,length = 200)
+	@FieldName(name="是否涉及多家设备商提供保证金")
+	private String ismanybond;
+	
+	@Column(name = "PAYMENT_MODE" ,length = 2000)
+	@FieldName(name="支付方式")
+	private String paymentmode;
+	
+	@Column(name = "PAYMENT_RHYTHM" ,length = 2000)
+	@FieldName(name="付款节奏")
+	private String paymentrhythm;
+	
+	@Column(name = "PAYMENT_PREMISE" ,length = 2000)
+	@FieldName(name="付款前提")
+	private String paymentpremise;
+
+	
+	@FieldName(name="是否是额度[0 or null:项目;1:额度]")
+	@Column(name = "IS_LIMIT",length = 10)
+	private String isLimit;  
+	
+	@Column(name = "INDENT_AMOUNT" ,length = 100)
+	@FieldName(name="与金凤年订单量")
+	private String indentamount;
+
+	@Column(name = "CREDIT_BALANCE" ,length = 100)
+	@FieldName(name="应收账款余额")
+	private String creditbalance;
+	
+	
+	@Column(name = "ESTABLISH_DATE" ,length = 100)
+	@FieldName(name="成立时间")
+	private String establishdate;
+	
+	@Column(name = "OWNERSHIP_NAME" ,length = 100)
+	@FieldName(name="资产负债率")
+	private String ownershipname;
+	
+	@Column(name = "CUSTSCALE_NAME" ,length = 100)
+	@FieldName(name="企业规模")
+	private String custscalename;
+	
+	@Column(name = "GRADERESULT" ,length = 32)
+	@FieldName(name="金凤评级")
+	private String graderesult;
+	
+	
+	@Column(name = "OPERATEMASTER" ,length = 2000)
+	@FieldName(name="主营业务")
+	private String operatemaster;
+	
+	@Column(name = "PROPORTION" ,length = 100)
+	@FieldName(name="供应商在金风融资的总比例")
+	private String proportion;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "TRANSFER_DATE")
+	@FieldName(name="应收账款转让通知时间")
+	private DictionaryData transferdate;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PAYMENT_WAY")
+	@FieldName(name="买方付款方式")
+	private DictionaryData paymentway;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@FieldName(name="风电项目主键")
+	@JoinColumn(name = "DEVELOP_ID")
+	private ProjDevelopInfo developid;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PRESENT_DEPT")
+	@FieldName(name="经办人所属部门")
+	private Department presentdept;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PRESENT_NAME")
+	@FieldName(name="经办人")
+	private User presentname;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PROJ_CHANGE_TYPE")
+	@FieldName(name="项目变更类型")
+	private DictionaryData projchangetype;
+	
+	@Column(name = "PROJ_CHANGE_EXPLAIN", length = 400)
+	@FieldName(name="项目变更说明")
+	private String projchangeexplain;
+	
+
+	@FieldName(name="保理变更说明")
+	@OneToOne(mappedBy="projId",fetch=FetchType.LAZY) 
+	private FactoringChangeExplain factoringchangeexplain;
+	
+	
+	
+	@FieldName(name = "付款前提条件")
+	@OneToMany(mappedBy = "projId", fetch = FetchType.LAZY)
+	private Set<ProjPaymentPremiseCondition> projPayments = new HashSet<ProjPaymentPremiseCondition>();
+	
+	
+	@FieldName(name = "变更原因类型")
+	@OneToMany(mappedBy = "projId", fetch = FetchType.LAZY)
+	private Set<ChangeReasonType> changeReasonType;
+	
+	@Column(name = "CREDIT_IMPORT_DATE", length = 40)
+	@FieldName(name="信审导入日期")
+	private String creditImportDate;
+
+	@Column(name = "FILE_ADD_NAME", length = 400)
+	@FieldName(name="补充资料名称")
+	private String fileAddName;
+	
+	@Column(name = "FILE_ADD_DATE", length = 400)
+	@FieldName(name="补充资料日期")
+	private String fileAddDate;
+	
+	@Column(name = "FILE_ADD_EXPLAIN", length = 400)
+	@FieldName(name="补充资料说明")
+	private String fileAddExplain;
+	
+	public String getFileAddName() {
+		return fileAddName;
+	}
+
+	public void setFileAddName(String fileAddName) {
+		this.fileAddName = fileAddName;
+	}
+
+	public String getFileAddDate() {
+		return fileAddDate;
+	}
+
+	public void setFileAddDate(String fileAddDate) {
+		this.fileAddDate = fileAddDate;
+	}
+
+	public String getFileAddExplain() {
+		return fileAddExplain;
+	}
+
+	public void setFileAddExplain(String fileAddExplain) {
+		this.fileAddExplain = fileAddExplain;
+	}
+
+	public FactoringChangeExplain getFactoringChangeExplain() {
+		return factoringChangeExplain;
+	}
+
+	public void setFactoringChangeExplain(
+			FactoringChangeExplain factoringChangeExplain) {
+		this.factoringChangeExplain = factoringChangeExplain;
+	}
+
+	public String getEstablishdate() {
+		return establishdate;
+	}
+
+	public void setEstablishdate(String establishdate) {
+		this.establishdate = establishdate;
+	}
+
+	public String getOwnershipname() {
+		return ownershipname;
+	}
+
+	public void setOwnershipname(String ownershipname) {
+		this.ownershipname = ownershipname;
+	}
+
+	public String getCustscalename() {
+		return custscalename;
+	}
+
+	public void setCustscalename(String custscalename) {
+		this.custscalename = custscalename;
+	}
+
+	public String getGraderesult() {
+		return graderesult;
+	}
+
+	public void setGraderesult(String graderesult) {
+		this.graderesult = graderesult;
+	}
+
+	public String getOperatemaster() {
+		return operatemaster;
+	}
+
+	public void setOperatemaster(String operatemaster) {
+		this.operatemaster = operatemaster;
+	}
+
+	public ProjDevelopInfo getDevelopid() {
+		return developid;
+	}
+
+	public void setDevelopid(ProjDevelopInfo developid) {
+		this.developid = developid;
+	}
+
+	public String getProportion() {
+		return proportion;
+	}
+	
+	public Set<ProjPaymentPremiseCondition> getProjPayments() {
+		return projPayments;
+	}
+
+	public void setProjPayments(Set<ProjPaymentPremiseCondition> projPayments) {
+		this.projPayments = projPayments;
+	}
+
+	public void setProportion(String proportion) {
+		this.proportion = proportion;
+	}
+
+	public String getIndentamount() {
+		return indentamount;
+	}
+
+	public void setIndentamount(String indentamount) {
+		this.indentamount = indentamount;
+	}
+
+	public String getCreditbalance() {
+		return creditbalance;
+	}
+
+	public void setCreditbalance(String creditbalance) {
+		this.creditbalance = creditbalance;
+	}
+
+	public DictionaryData getTransferdate() {
+		return transferdate;
+	}
+
+	public void setTransferdate(DictionaryData transferdate) {
+		this.transferdate = transferdate;
+	}
+
+	public DictionaryData getPaymentway() {
+		return paymentway;
+	}
+
+	public void setPaymentway(DictionaryData paymentway) {
+		this.paymentway = paymentway;
+	}
+
+	public String getCreditImportDate() {
+		return creditImportDate;
+	}
+
+	public void setCreditImportDate(String creditImportDate) {
+		this.creditImportDate = creditImportDate;
+	}
+
+	public DictionaryData getProjchangetype() {
+		return projchangetype;
+	}
+
+	public void setProjchangetype(DictionaryData projchangetype) {
+		this.projchangetype = projchangetype;
+	}
+
+	public String getProjchangeexplain() {
+		return projchangeexplain;
+	}
+
+	public void setProjchangeexplain(String projchangeexplain) {
+		this.projchangeexplain = projchangeexplain;
+	}
+
+	public Department getPresentdept() {
+		return presentdept;
+	}
+
+	public void setPresentdept(Department presentdept) {
+		this.presentdept = presentdept;
+	}
+
+	public User getPresentname() {
+		return presentname;
+	}
+
+	public void setPresentname(User presentname) {
+		this.presentname = presentname;
+	}
+
+
+	public String getPaymentmode() {
+		return paymentmode;
+	}
+
+	public void setPaymentmode(String paymentmode) {
+		this.paymentmode = paymentmode;
+	}
+
+	public String getPaymentrhythm() {
+		return paymentrhythm;
+	}
+
+	public void setPaymentrhythm(String paymentrhythm) {
+		this.paymentrhythm = paymentrhythm;
+	}
+
+	public String getPaymentpremise() {
+		return paymentpremise;
+	}
+
+	public void setPaymentpremise(String paymentpremise) {
+		this.paymentpremise = paymentpremise;
+	}
+
+	public String getId() {
+		return this.id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public Department getDepartment() {
+		return department;
+	}
+
+	public void setDepartment(Department department) {
+		this.department = department;
+	}
+
+	public DictionaryData getProjScale() {
+		return projScale;
+	}
+
+	public void setProjScale(DictionaryData projScale) {
+		this.projScale = projScale;
+	}
+
+	public DictionaryData getIndustryType() {
+		return industryType;
+	}
+
+	public void setIndustryType(DictionaryData industryType) {
+		this.industryType = industryType;
+	}
+
+
+	public User getProjManage() {
+		return projManage;
+	}
+
+	public void setProjManage(User projManage) {
+		this.projManage = projManage;
+	}
+
+	public User getProjAssist() {
+		return projAssist;
+	}
+
+	public void setProjAssist(User projAssist) {
+		this.projAssist = projAssist;
+	}
+
+	public DictionaryData getProjType() {
+		return projType;
+	}
+
+	public void setProjType(DictionaryData projType) {
+		this.projType = projType;
+	}
+
+	public DictionaryData getProjSource() {
+		return projSource;
+	}
+
+	public void setProjSource(DictionaryData projSource) {
+		this.projSource = projSource;
+	}
+
+	public CustInfo getCustInfo() {
+		return custInfo;
+	}
+
+	public void setCustInfo(CustInfo custInfo) {
+		this.custInfo = custInfo;
+	}
+
+	public DictionaryData getLeasForm() {
+		return leasForm;
+	}
+
+	public void setLeasForm(DictionaryData leasForm) {
+		this.leasForm = leasForm;
+	}
+
+	public DictionaryData getLeasType() {
+		return leasType;
+	}
+
+	public void setLeasType(DictionaryData leasType) {
+		this.leasType = leasType;
+	}
+
+	public String getProjId() {
+		return projId;
+	}
+
+	public void setProjId(String projId) {
+		this.projId = projId;
+	}
+
+	public String getProjDate() {
+		return projDate;
+	}
+
+	public void setProjDate(String projDate) {
+		this.projDate = projDate;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public Integer getProjStatus() {
+		return projStatus;
+	}
+
+	public void setProjStatus(Integer projStatus) {
+		this.projStatus = projStatus;
+	}
+
+	public String getRepealDate() {
+		return repealDate;
+	}
+
+	public void setRepealDate(String repealDate) {
+		this.repealDate = repealDate;
+	}
+
+	public DictionaryData getRepealReasonType() {
+		return RepealReasonType;
+	}
+
+	public void setRepealReasonType(DictionaryData repealReasonType) {
+		RepealReasonType = repealReasonType;
+	}
+
+	public String getRepealReason() {
+		return repealReason;
+	}
+
+	public void setRepealReason(String repealReason) {
+		this.repealReason = repealReason;
+	}
+
+	public String getApproveConclusion() {
+		return approveConclusion;
+	}
+
+	public void setApproveConclusion(String approveConclusion) {
+		this.approveConclusion = approveConclusion;
+	}
+
+	public String getApproveDate() {
+		return approveDate;
+	}
+
+	public void setApproveDate(String approveDate) {
+		this.approveDate = approveDate;
+	}
+
+	public Long getContractOrder() {
+		return contractOrder;
+	}
+
+	public void setContractOrder(Long contractOrder) {
+		this.contractOrder = contractOrder;
+	}
+	
+	public String getOtherCondition() {
+		return otherCondition;
+	}
+
+	public void setOtherCondition(String otherCondition) {
+		this.otherCondition = otherCondition;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public Set<ProjEquip> getProjEquips() {
+		return projEquips;
+	}
+
+	public void setProjEquips(Set<ProjEquip> projEquips) {
+		this.projEquips = projEquips;
+	}
+
+	public Set<ProjGuaranteeMethod> getProjGuaranteeMethods() {
+		return projGuaranteeMethods;
+	}
+
+	public void setProjGuaranteeMethods(
+			Set<ProjGuaranteeMethod> projGuaranteeMethods) {
+		this.projGuaranteeMethods = projGuaranteeMethods;
+	}
+
+	public Set<ProjGuaranteeEquip> getProjGuaranteeEquips() {
+		return projGuaranteeEquips;
+	}
+
+	public void setProjGuaranteeEquips(Set<ProjGuaranteeEquip> projGuaranteeEquips) {
+		this.projGuaranteeEquips = projGuaranteeEquips;
+	}
+
+	public Set<ProjCashDetail> getProjCashDetails() {
+		return projCashDetails;
+	}
+
+	public void setProjCashDetails(Set<ProjCashDetail> projCashDetails) {
+		this.projCashDetails = projCashDetails;
+	}
+
+	public Set<ProjFinaCashDetail> getProjFinaCashDetails() {
+		return projFinaCashDetails;
+	}
+
+	public void setProjFinaCashDetails(Set<ProjFinaCashDetail> projFinaCashDetails) {
+		this.projFinaCashDetails = projFinaCashDetails;
+	}
+
+	public Set<ProjFundRentPlan> getProjFundRentPlans() {
+		return projFundRentPlans;
+	}
+
+	public void setProjFundRentPlans(Set<ProjFundRentPlan> projFundRentPlans) {
+		this.projFundRentPlans = projFundRentPlans;
+	}
+
+	public Set<ProjFinaRentPlan> getProjFinaRentPlans() {
+		return projFinaRentPlans;
+	}
+
+	public void setProjFinaRentPlans(Set<ProjFinaRentPlan> projFinaRentPlans) {
+		this.projFinaRentPlans = projFinaRentPlans;
+	}
+
+	public Set<ProjFundFundPlan> getProjFundFundPlans() {
+		return projFundFundPlans;
+	}
+
+	public void setProjFundFundPlans(Set<ProjFundFundPlan> projFundFundPlans) {
+		this.projFundFundPlans = projFundFundPlans;
+	}
+
+	public ProjCondition getProjCondition() {
+		return projCondition;
+	}
+
+	public void setProjCondition(ProjCondition projCondition) {
+		this.projCondition = projCondition;
+	}
+
+	public ProjInvoiceType getProjInvoiceType() {
+		return projInvoiceType;
+	}
+
+	public void setProjInvoiceType(ProjInvoiceType projInvoiceType) {
+		this.projInvoiceType = projInvoiceType;
+	}
+
+	public Set<ContractInfo> getContractInfos() {
+		return contractInfos;
+	}
+
+	public void setContractInfos(Set<ContractInfo> contractInfos) {
+		this.contractInfos = contractInfos;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public DictionaryData getSubCustKind() {
+		return subCustKind;
+	}
+
+	public void setSubCustKind(DictionaryData subCustKind) {
+		this.subCustKind = subCustKind;
+	}
+
+	public DictionaryData getFundUse() {
+		return fundUse;
+	}
+
+	public void setFundUse(DictionaryData fundUse) {
+		this.fundUse = fundUse;
+	}
+
+	public DictionaryData getBusinessType() {
+		return businessType;
+	}
+
+	public void setBusinessType(DictionaryData businessType) {
+		this.businessType = businessType;
+	}
+
+	public DictionaryData getFactoringType() {
+		return factoringType;
+	}
+
+	public void setFactoringType(DictionaryData factoringType) {
+		this.factoringType = factoringType;
+	}
+
+	public String getRecourseRight() {
+		return recourseRight;
+	}
+
+	public void setRecourseRight(String recourseRight) {
+		this.recourseRight = recourseRight;
+	}
+
+	public String getCompetitors() {
+		return competitors;
+	}
+
+	public void setCompetitors(String competitors) {
+		this.competitors = competitors;
+	}
+
+	public String getChangeDate() {
+		return changeDate;
+	}
+
+	public void setChangeDate(String changeDate) {
+		this.changeDate = changeDate;
+	}
+
+	public String getChangeMemo() {
+		return changeMemo;
+	}
+
+	public void setChangeMemo(String changeMemo) {
+		this.changeMemo = changeMemo;
+	}
+
+	public String getEquipinfo() {
+		return equipinfo;
+	}
+
+	public void setEquipinfo(String equipinfo) {
+		this.equipinfo = equipinfo;
+	}
+
+	public String getExpectApproveDate() {
+		return expectApproveDate;
+	}
+
+	public void setExpectApproveDate(String expectApproveDate) {
+		this.expectApproveDate = expectApproveDate;
+	}
+
+	public String getExpectSignDate() {
+		return expectSignDate;
+	}
+
+	public void setExpectSignDate(String expectSignDate) {
+		this.expectSignDate = expectSignDate;
+	}
+
+//	public String getCustIncome() {
+//		return custIncome;
+//	}
+//
+//	public void setCustIncome(String custIncome) {
+//		this.custIncome = custIncome;
+//	}
+//
+//	public String getCustProfit() {
+//		return custProfit;
+//	}
+//
+//	public void setCustProfit(String custProfit) {
+//		this.custProfit = custProfit;
+//	}
+//
+//	public String getDebtRatio() {
+//		return debtRatio;
+//	}
+//
+//	public void setDebtRatio(String debtRatio) {
+//		this.debtRatio = debtRatio;
+//	}
+
+	public String getCustMemo() {
+		return custMemo;
+	}
+
+	public void setCustMemo(String custMemo) {
+		this.custMemo = custMemo;
+	}
+
+//	public DictionaryData getAgentSource() {
+//		return agentSource;
+//	}
+//
+//	public void setAgentSource(DictionaryData agentSource) {
+//		this.agentSource = agentSource;
+//	}
+//
+//	public String getAgentCompany() {
+//		return agentCompany;
+//	}
+//
+//	public void setAgentCompany(String agentCompany) {
+//		this.agentCompany = agentCompany;
+//	}
+//
+//	public String getAgentName() {
+//		return agentName;
+//	}
+//
+//	public void setAgentName(String agentName) {
+//		this.agentName = agentName;
+//	}
+//
+//	public String getAgentJob() {
+//		return agentJob;
+//	}
+//
+//	public void setAgentJob(String agentJob) {
+//		this.agentJob = agentJob;
+//	}
+//
+//	public String getAgentPhone() {
+//		return agentPhone;
+//	}
+//
+//	public void setAgentPhone(String agentPhone) {
+//		this.agentPhone = agentPhone;
+//	}
+//
+//	public String getGovGDP() {
+//		return govGDP;
+//	}
+//
+//	public void setGovGDP(String govGDP) {
+//		this.govGDP = govGDP;
+//	}
+//
+//	public String getGovIncome() {
+//		return govIncome;
+//	}
+//
+//	public void setGovIncome(String govIncome) {
+//		this.govIncome = govIncome;
+//	}
+//
+//	public String getGovPopulation() {
+//		return govPopulation;
+//	}
+//
+//	public void setGovPopulation(String govPopulation) {
+//		this.govPopulation = govPopulation;
+//	}
+
+	public String getExpectPutDate() {
+		return expectPutDate;
+	}
+
+	public void setExpectPutDate(String expectPutDate) {
+		this.expectPutDate = expectPutDate;
+	}
+
+//	public String getCustLevel() {
+//		return custLevel;
+//	}
+//
+//	public void setCustLevel(String custLevel) {
+//		this.custLevel = custLevel;
+//	}
+//
+//	public String getCustBedNum() {
+//		return custBedNum;
+//	}
+//
+//	public void setCustBedNum(String custBedNum) {
+//		this.custBedNum = custBedNum;
+//	}
+//
+//	public String getCustDebt() {
+//		return custDebt;
+//	}
+//
+//	public void setCustDebt(String custDebt) {
+//		this.custDebt = custDebt;
+//	}
+
+	public DictionaryData getEquipSource() {
+		return equipSource;
+	}
+
+	public void setEquipSource(DictionaryData equipSource) {
+		this.equipSource = equipSource;
+	}
+
+	public String getIsVeto() {
+		return isVeto;
+	}
+
+	public void setIsVeto(String isVeto) {
+		this.isVeto = isVeto;
+	}
+
+	public String getTransferCreditDate() {
+		return transferCreditDate;
+	}
+
+	public void setTransferCreditDate(String transferCreditDate) {
+		this.transferCreditDate = transferCreditDate;
+	}
+
+	public Set<ProjPremiseCondition> getProjPremiseConditions() {
+		return projPremiseConditions;
+	}
+
+	public void setProjPremiseConditions(Set<ProjPremiseCondition> projPremiseConditions) {
+		this.projPremiseConditions = projPremiseConditions;
+	}
+
+	public String getDeptroute() {
+		return deptroute;
+	}
+
+	public void setDeptroute(String deptroute) {
+		this.deptroute = deptroute;
+	}
+
+	public String getAdjustlevel() {
+		return adjustlevel;
+	}
+
+	public void setAdjustlevel(String adjustlevel) {
+		this.adjustlevel = adjustlevel;
+	}
+
+	public String getEffectivecondition() {
+		return effectivecondition;
+	}
+
+	public void setEffectivecondition(String effectivecondition) {
+		this.effectivecondition = effectivecondition;
+	}
+
+	public String getExpirationdate() {
+		return expirationdate;
+	}
+
+	public void setExpirationdate(String expirationdate) {
+		this.expirationdate = expirationdate;
+	}
+
+	public String getApprovalcondition() {
+		return approvalcondition;
+	}
+
+	public void setApprovalcondition(String approvalcondition) {
+		this.approvalcondition = approvalcondition;
+	}
+
+	public String getAssetopinion() {
+		return assetopinion;
+	}
+
+	public void setAssetopinion(String assetopinion) {
+		this.assetopinion = assetopinion;
+	}
+
+	public String getLesseenature() {
+		return lesseenature;
+	}
+
+	public void setLesseenature(String lesseenature) {
+		this.lesseenature = lesseenature;
+	}
+
+	public String getSpecial() {
+		return special;
+	}
+
+	public void setSpecial(String special) {
+		this.special = special;
+	}
+
+	public String getOthermemo() {
+		return othermemo;
+	}
+
+	public void setOthermemo(String othermemo) {
+		this.othermemo = othermemo;
+	}
+
+	public User getProjImpoter() {
+		return projImpoter;
+	}
+
+	public void setProjImpoter(User projImpoter) {
+		this.projImpoter = projImpoter;
+	}
+
+	public String getIsLimit() {
+		return isLimit;
+	}
+
+	public void setIsLimit(String isLimit) {
+		this.isLimit = isLimit;
+	}
+
+	public String getPaymenttype() {
+		return paymenttype;
+	}
+
+	public void setPaymenttype(String paymenttype) {
+		this.paymenttype = paymenttype;
+	}
+
+	public String getPaymoney() {
+		return paymoney;
+	}
+
+	public void setPaymoney(String paymoney) {
+		this.paymoney = paymoney;
+	}
+
+	public String getIsmanybond() {
+		return ismanybond;
+	}
+
+	public void setIsmanybond(String ismanybond) {
+		this.ismanybond = ismanybond;
+	}
+	
+
+	public FactoringChangeExplain getFactoringchangeexplain() {
+		return factoringchangeexplain;
+	}
+
+	public void setFactoringchangeexplain(
+			FactoringChangeExplain factoringchangeexplain) {
+		this.factoringchangeexplain = factoringchangeexplain;
+	}
+
+	public Set<ChangeReasonType> getChangeReasonType() {
+		return changeReasonType;
+	}
+
+	public void setChangeReasonType(Set<ChangeReasonType> changeReasonType) {
+		this.changeReasonType = changeReasonType;
+	}
+
+	public Set<ProjSpecialRulesBean> getProjSpecialRulesBeans() {
+		return projSpecialRulesBeans;
+	}
+
+	public void setProjSpecialRulesBeans(
+			Set<ProjSpecialRulesBean> projSpecialRulesBeans) {
+		this.projSpecialRulesBeans = projSpecialRulesBeans;
+	}
+
+	public TradeBasedTransactions getTradeBasedTransactions() {
+		return tradeBasedTransactions;
+	}
+
+	public void setTradeBasedTransactions(TradeBasedTransactions tradeBasedTransactions) {
+		this.tradeBasedTransactions = tradeBasedTransactions;
+	}
+
+	
+
+}

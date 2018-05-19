@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			  SELECT BM.ID AS ID,
+			  BMT.ID AS BID,
+			  PI.PROJECT_NAME AS PROJECTNAME,
+			  BM.MSG_TITLE AS MSGTITLE,
+			  BM.SEND_DATE AS SENDDATE,
+			  (CASE BMT.READ_STATUS WHEN '1' THEN '未读' WHEN '0' THEN '已读' ELSE ' ' END)  AS READSTATUS,
+			  TU.REALNAME_ REALNAME
+			  FROM BASE_MESSAGE_TO_USER BMT
+			  LEFT JOIN BASE_MESSAGE BM ON BM.ID = BMT.MSG_ID
+			  LEFT JOIN T_USERS TU ON TU.ID_ = BM.FROMUSER
+			  left join proj_info pi on pi.id=BM.proj_id
+		      WHERE 1=1 AND BMT.READ_USER = '{USER_ID}'
+		      /~MSG_TYPE: AND BM.MSG_TYPE = '{MSG_TYPE}'~/	      
+		      <EXTRACTEND> order by READSTATUS DESC,SENDDATE DESC<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,269 @@
+html,body {
+	padding: 0 0 0 0;
+	margin: 0 0 0 0;
+	overflow: hidden;
+}
+
+.main_topbg {
+	text-align: center;
+	width: 100%;
+	background: #263849 url(../../images/topbg.png) repeat-x;
+	border-bottom: 1px solid #16222C;
+	color: #DDD;
+	float:left;
+}
+
+.main_logo {
+	position: relative;
+	float: left;
+	width: 150px;
+	height: 100%;
+	top: 12px;
+	left: 20px;
+	background: url(../../images/TLSv45.gif) no-repeat;
+}
+
+.main_logo a {
+	float: left;
+	padding-top: 3px;
+	padding-left: 75px;
+	font: bold 30px/120% "黑体";
+	width: 500px;
+}
+
+.main_logo a  font.font_cls {
+	font-size: 20px
+}
+
+.main_logo_img {
+	position: relative;
+	float: left;
+	height: 100%;
+}
+
+.main_time {
+	position: absolute;
+	right: 20px;
+	font-size: 12px;
+	line-height: 200%;
+	margin-top: 8px;
+	text-align: right;
+}
+
+.main_time a {
+	color: #FFF;
+	text-decoration: none;
+}
+
+.main_time a:hover {
+	color: #F90;
+	text-decoration: underline;
+}
+
+.menu-container {
+	overflow: hidden;
+	word-break: keep-all;
+	white-space: nowrap;
+	float:left;
+}
+.scroll-container{
+	float: left;
+	line-height: 75px;
+	height: 75px;
+	width: 14px;
+	color: #82001F;
+	background: #263849 url(../../images/topbg.png)  repeat-x;
+}
+.scroll-left {
+	float: left;
+	line-height: 80px;
+	height: 80px;
+	width: 14px;
+	text-decoration: none;
+	color:#FFFFFF;
+	/*background: url(../../images/btn_bg.gif) repeat;*/
+}
+a.scroll-left:hover{
+	color:#FFFFFF;
+}
+.scroll-right {
+	float: left;
+	line-height: 80px;
+	height: 80px;
+	width: 14px;
+	text-decoration: none;
+	color:#FFFFFF;
+	/*background: url(../../images/btn_bg.gif) repeat;*/
+}
+a.scroll-right:hover{
+	color:#FFFFFF;
+}
+#id_loadMaskContainer {
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+}
+
+.menuInfo_value input,menuInfo_value textarea {
+	width: 200px;
+}
+
+.adviseButton {
+	border-right: #7b9ebd 1px solid;
+	padding-right: 2px;
+	border-top: #7b9ebd 1px solid;
+	padding-left: 2px;
+	font-size: 12px;
+	FILTER: progid : DXImageTransform.Microsoft.Gradient ( GradientType = 0,
+		StartColorStr = #ffffff, EndColorStr = #cecfde );
+	border-left: #7b9ebd 1px solid;
+	cursor: hand;
+	color: black;
+	padding-top: 2px;
+	border-bottom: #7b9ebd 1px solid;
+}
+/* #id_loadMaskContainer{ position:absolute; left:0; top:0; width:100%; height:100%; z-index:20000; 
+			 background:#FFFFFF;
+			 opacity:0.6;
+			 filter:alpha(opacity=20) 
+			-moz-opacity:0.4;
+			opacity:0.4;
+		 }
+		 #loading{position:absolute;left:45%;top:40%;padding:2px;z-index:20001;height:auto;background-color:#FFFFFF;}
+		 #loading img {margin-bottom:0px;}
+		 #loading .loading-indicator{background:white;color:#808080;font:normal 12px tahoma,arial,helvetica;padding:10px;margin:0;text-align:center;height:auto;}
+	     */
+/*a.l-btn {
+	color: #000000;
+	font-size: 13px;
+	text-decoration: none;
+	display: inline-block;
+	font-weight: BOLD;
+	zoom: 1;
+	height: 24px;
+	padding-right: 5px;
+	cursor: pointer;
+	outline: none;
+}
+
+.toolbar-menu a.l-btn-plain {
+	border: 1px solid transparent;
+	_padding: 0px 0px 0px 0px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	color: #FFF;
+	text-align: center;
+	margin: 0px;
+}
+
+a:hover.l-btn-plain,a.m-btn-plain-active {
+	border: 1px solid #1C2B37;
+	background: #263849;
+	background: -moz-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3C4C5B),
+		color-stop(100%, #263849) );
+	background: -webkit-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -o-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -ms-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	filter: progid : DXImageTransform.Microsoft.gradient ( startColorstr =
+		'#3C4C5B', endColorstr = '#263849' );
+	-ms-filter:
+		"progid:DXImageTransform.Microsoft.gradient(startColorstr='#3C4C5B', endColorstr='#263849')";
+	-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	_padding: 0px 0px 0px 0px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	color: #F90;
+	margin: 0px;
+}
+
+a.menu-item-selected {
+	border: 1px solid #1C2B37;
+	background: #263849;
+	background: -moz-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3C4C5B),
+		color-stop(100%, #263849) );
+	background: -webkit-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -o-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: -ms-linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	background: linear-gradient(top, #3C4C5B 0%, #263849 100%);
+	filter: progid : DXImageTransform.Microsoft.gradient ( startColorstr =
+		'#3C4C5B', endColorstr = '#263849' );
+	-ms-filter:
+		"progid:DXImageTransform.Microsoft.gradient(startColorstr='#3C4C5B', endColorstr='#263849')";
+	-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	_padding: 0px 0px 0px 0px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	color: #F90;
+	margin: 0px;
+}
+
+a:hover.l-btn-plain span,a.m-btn-plain-active span,a.menu-item-selected span {
+	color: #F90;
+}
+
+.menu-icon {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	top: 3px;
+	left: 2px;
+}*/
+
+a.x-div-menu-separator-image {
+	/* background:url(../../images/m_line.gif) 2px repeat-y;*/
+	height: 20px;
+	position: relative;
+	width: 1px;
+	line-height: 30px;
+}
+
+.scroll-menu {
+	overflow-x: auto;
+	overflow-y: hidden;
+	width: 100%;
+}
+
+.scroll-content {
+	height: 20px;
+}
+
+.foot-above {
+	height: 5px;
+}
+
+.foot {
+	background: #263849;
+	border-top: 1px solid #1C2B37;
+	height: 30px;
+	position: relative;
+	z-index: 2;
+	color: #DDD;
+	background-position: 0px -2px;
+	height: 40px;
+}
+
+.foot .copyRight {
+	text-align: right;
+	position: absolute;
+	right: 130px;
+	20
+	px;
+}
+
+.logoMark {
+	/*background:url(../../images/login/logoMark.png) right 3px no-repeat;*/
+	width: 130px;
+	height: 100%;
+	float: right;
+}
+
+.copyRight {
+	font: 400 12px/18px Tahoma;
+}

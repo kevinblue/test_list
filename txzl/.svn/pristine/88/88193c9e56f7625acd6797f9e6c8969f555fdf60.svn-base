@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		    select vvv.id, 
+      sum(vvv.TempeRature) value1 ,
+     sum(vvv.electricdate) value2,
+     sum(vvv.billreceivable) value3,
+     sum(vvv.powerrationing) value4,
+     
+     sum(vvv.TempeRature2) value5,
+     sum(vvv.electricdate2) value6,
+     sum(vvv.billreceivable2) value7,
+     sum(vvv.powerrationing2) value8,
+     
+     round(avg(vvv.TempeRature),2) value9,
+     round(avg(vvv.electricdate),2) value10,
+     round(avg(vvv.billreceivable),2) value11,
+     round(avg(vvv.powerrationing),2) value12,
+     
+     round(avg(vvv.TempeRature2),2) value13,
+     round(avg(vvv.electricdate2),2) value14,
+     round(avg(vvv.billreceivable2),2) value15,
+    round( avg(vvv.powerrationing2),2) value16
+     
+ from (select *
+  from (select rownum lastyearnum,
+               ci.id id,
+               tao.Tempe_Rature TempeRature,
+               tao.Electric_Date electricdate,
+               round(pdi.Internet_Price * tao.Tempe_Rature, 2) billreceivable,
+               round(tao.Limit_Loss /
+                     (tao.Limit_Loss + tao.Tempe_Rature * 10000),
+                     2) powerrationing
+          from contract_info ci
+          left join T_GLOBAL_CONTRACT_MESSAGE tgcm
+            on tgcm.orapro_id = ci.wind_machine
+          left join T_ANNUAL_OPERATION tao
+            on tao.wf_id = tgcm.wf_id   
+            and tao.report_type = '2'
+            and tao.report_date like '%{powerGenerationStatistics_2.lastyear}%'
+          left join proj_info pi
+            on pi.id = ci.proj_id
+          left join proj_develope_info pdi
+            on pi.develop_id = pdi.id
+         where ci.id = '{powerGenerationStatistics_2.contractidselect}'
+         order by tao.report_date) lastyear
+  left join (select rownum thisyearnum,
+                    tao.Tempe_Rature TempeRature2,
+                    tao.Electric_Date electricdate2,
+                    round(pdi.Internet_Price * tao.Tempe_Rature, 2) billreceivable2,
+                    round(tao.Limit_Loss /
+                          (tao.Limit_Loss + tao.Tempe_Rature * 10000),
+                          2) powerrationing2
+               from contract_info ci
+               left join T_GLOBAL_CONTRACT_MESSAGE tgcm
+                 on tgcm.orapro_id = ci.wind_machine
+               left join T_ANNUAL_OPERATION tao
+                 on tao.wf_id = tgcm.wf_id
+                 and tao.report_type = '2'
+                 and tao.report_date like '%{powerGenerationStatistics_2.thisyear}%'
+               left join proj_info pi
+                 on pi.id = ci.proj_id
+               left join proj_develope_info pdi
+                 on pi.develop_id = pdi.id
+              where ci.id = '{powerGenerationStatistics_2.contractidselect}'
+              order by tao.report_date) thisyear
+    on thisyear.thisyearnum = lastyear.lastyearnum
+ where 1 = 1) vvv
+ 
+ group by  vvv.id
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

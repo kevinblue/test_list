@@ -1,0 +1,42 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<script type="text/javascript">
+jQuery(function(){
+	//获取父页面中保存在hidden域的值
+	var showTools = true;
+	if('<mini:param name="isView"/>' == 'true'){showTools = false;}
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+		id: "contract_change",
+		renderTo: "id_contract_change",
+		width : '100%',
+		height :'100%',
+		isClickLoad:false,
+		title: "合同变更历史",
+		remoteOper : false,
+		showPager: true,
+		showToolbar: showTools,
+		xmlFileName:"eleasing/workflow/rent/rent_income/contract_change_his.xml",
+		params : {
+			contract_id:'<mini:param name="contractid"/>'
+				 
+		},
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			{field: 'contract_id', header: '合同编号' },
+			{field: 'change_date', header: '变更时间',dateFormat:'yyyy-MM-dd'},
+			{field: 'before_change_content', header: '变更前内容'},
+			{field: 'after_change_content', header: '变更后内容'},
+			{field: 'change_instruction', header: '变更说明'},
+			{field: 'realname_', header: '创建人'},
+			{field: 'create_date', header: '创建时间',dateFormat:'yyyy-MM-dd'},
+		]
+	});
+	});
+	 
+});
+</script>
+
+<div id="id_contract_change" style="width:100%;height:100%"></div>

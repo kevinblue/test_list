@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审清单列表
+ projid	项目编号
+ custname   承租人
+ dept  出单部门
+ projsource  内部行业
+ projmanager  项目经理
+ lixdate  立项时间
+ projstatus   项目状态
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	          SELECT PI.ID           id,
+	             CUST.DRAFT_ draft,
+                 BCS.STATUS_NAME projstatus,
+                 PI.PROJ_DATE    projdate,
+                 PI.PROJ_ID      projid,
+                 PI.PROJECT_NAME projectname,
+                 CUST.CUST_NAME  custname,
+                 TD.NAME_ dept,
+                 tdd.name_       projsource,
+                 U.REALNAME_     projmanager,
+                 pi.PROJ_MANAGE projmanage,
+                 pi.PROJ_DEPT projdept
+                ,company.id companyid 
+                ,company.person_idcard 
+				,company.maila_ddress
+				,company.tax_reg_type
+				,company.tax_reg_code
+				,company.tax_bank
+				,company.tax_acc
+				,company.invoice_add
+				,company.invoice_phone,
+				pdi.RZZL_AMOUNT  as rzzlamount,
+				d1.name_  as leasformname,
+        tgcm.id globalcontractmessageid
+				
+            FROM PROJ_INFO PI
+              left join T_DICTS_DATAS d1 on PI.leas_form=d1.id_ 
+              
+            left join PROJ_DEVELOPE_INFO pdi on pi.PROJECT_NAME=pdi.PROJ_NAME||'项目'
+           
+            LEFT JOIN BASE_CONTRACT_STATUS BCS
+              ON BCS.STATUS_CODE = PI.PROJ_STATUS
+            LEFT JOIN CUST_INFO CUST
+              ON CUST.ID = PI.CUST_ID
+            left join T_DICTS_DATAS tdd
+              on tdd.id_ = pi.proj_source
+            left join T_USERS U
+              ON U.ID_ = PI.Proj_Manage
+             LEFT JOIN T_DEPTS  TD ON TD.ID_ = PI.PROJ_DEPT
+             LEFT JOIN CUST_INFO_COMPANY company on company.cust_id = pi.cust_id
+             left join contract_info ci on ci.proj_id = pi.id
+             left join T_GLOBAL_CONTRACT_MESSAGE tgcm on tgcm.orapro_id = ci.wind_machine
+             WHERE   pi.INDUSTRY_TYPE = 'photovoltaic' or pi.INDUSTRY_TYPE = 'wind_power'
+              --and  PI.PROJ_STATUS >=31 and PI.PROJ_STATUS <100 
+              /~custname: and  CUST.CUST_NAME like '%{custname}%' ~/
+              /~projid: and PI.PROJ_ID like '%{projid}%' ~/
+              /~projmanager: and  U.REALNAME_ like '%{projmanager}%' ~/
+              /~projmanage: and  PI.PROJ_MANAGE like '%{projmanage}%' ~/
+              /~projectname: and PI.PROJECT_NAME  like '%{projectname}%' ~/
+              /~projectname: and PI.PROJECT_NAME like '%{projectname}%' ~/
+              <EXTRACTEND>order by projid desc<EXTRACTEND>
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>   
+      <show_sql>true</show_sql>
+       <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

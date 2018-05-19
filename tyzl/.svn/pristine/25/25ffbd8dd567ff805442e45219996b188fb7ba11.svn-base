@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+	        
+	         select * from(
+           select
+           fn_getpenalty_by_contract(ci.id,'{enddate}') as faximony ,
+           '{date_enddate}' enddate,      
+          -- notice.id,
+         cust.cust_name custname,
+     
+         -- to_char(sysdate,'yyyy"年"mm"月"dd"日"') systemdate,--当前日期
+           ci.contract_id contract_id,--合同编号
+        --   contractoutlist.inc_rent,--剩余租金
+           (select  wmsys.wm_concat(ss.RENTLIST) from vi_contract_fund_rent_plan ss where to_date(contractoutlist.plan_date,'yyyy-mm-dd')<=to_date(to_char(sysdate,'yyyy-mm-dd'),'yyyy-mm-dd')
+           and currentoverage>0 and ss.CONTRACTID=ci.ID) rentlist,--逾期租期
+           contractoutlist.plan_date plandate,--计划日期
+           contractoutlist.out_list outlist,--剩余租期
+           plan_.overduerent,  --租金金额
+           contract_penalty.penalty,--违约金
+           to_char(to_date(contractcondition.start_date,'yyyy-mm-dd') ,'yyyy"年"mm"月"dd"日"') startdate,--签约日期
+        -- contractcondition.start_date startdate,--签约日期
+         info.own_name--卖方公司
+            from contract_info ci 
+            left join cust_info cust 
+             on ci.cust_id=cust.id
+            left join OVERDUE_DUNNING_Notice notice 
+             on ci.id=notice.contract_id
+            left join vi_contract_out_list contractoutlist
+             on ci.id = contractoutlist.contract_id
+            left join (select sum(CURRENTOVERAGE) overduerent,currentoverage,contractid from vi_contract_fund_rent_plan vi where plandate <to_char(sysdate,'yyyy-mm-dd') group by contractid,currentoverage )plan_
+             on plan_.contractid = ci.id 
+            left join (select sum(penalty) penalty,contract_id from vi_contract_penalty contract_penalty group by contract_id ) contract_penalty
+             on contract_penalty.contract_id = ci.id 
+            left join CONTRACT_CONDITION contractcondition
+             on ci.id = contractcondition.contract_id
+             left join own_info info on ci.id=info.id
+        ) menutemp
+            where 1=1
+		        /~id: AND menutemp.contract_id = '{id}' ~/
+		        
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        	select * from(
+			        	select top 1 acc_name accname,acc_number accnumber,acc_bank accbank,
+			        	info.own_name ownname,Datename(year,GetDate())+'年'+Datename(month,GetDate())+'月'+Datename(day,GetDate())+'日' systemdate 
+			        	from OWN_ACCOUNT acc
+						left join own_info info on acc.own_id = info.id
+						
+		        ) menutemp
+		        where 1=1
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

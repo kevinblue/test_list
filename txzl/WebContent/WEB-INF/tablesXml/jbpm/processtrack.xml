@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        SELECT TTTT.* FROM(
+		              SELECT    WI.approval                                           AS APPROVAL,
+		                        WI.JBPM4_DEPLOYMENT_DBID_                             AS DEPLOYID,
+		                        WI.WORKFLOW_NAME_                                     AS WORKFLOWNAME,
+		                        HP.DBID_                                              AS PROCESSINSTANCEDBID,
+		                        HP.ID_                                                AS PROCESSINSTANCEID,
+		                        TO_CHAR(HP.START_,'YYYY-MM-DD HH24:MI:SS')            AS PROCESSSTART,
+		                        TO_CHAR(HP.END_  ,'YYYY-MM-DD HH24:MI:SS')            AS PROCESSEND, 
+		                        WI.KEY_ONE_                                           AS SERIALNO, 
+		                        WI.KEY_TWO_                                           AS PROJECTNAME, 
+		                        WM_CONCAT(HAC.HTASK_)                                 AS TASKID,
+		                        WM_CONCAT(HAC.HTASK_||'@@_@@'||TJAD.ACTIVITY_NAME_)   AS TASKNAME,
+		                        case when HP.END_ is null then 'Pending[进行中]'
+	                               when HP.END_ is not null then 'Finish[结束]'
+	                              	else '全部'
+	                                end processstatus
+		              FROM(
+		                 SELECT 
+                           tu.realname_ approval,T_JBPM_WORKFLOW_INFO.ID_,KEY_ONE_,KEY_TWO_,KEY_THREE_,KEY_FOUR_,KEY_FIVE_,KEY_SIX_,KEY_SEVEN_,
+                           KEY_EIGHT_,KEY_NINE_,KEY_TEN_,PROCESS_FORM_PATH_,PROCESS_FORM_TITLE_,
+                           WORKFLOW_NAME_,WORKFLOW_DISPLAY_NAME_,DRAFT_UUID_,PROCESSINSTANCE_STATE_,
+                           PROCESSDEFINITION_ID_,REQUEST_INITIATOR_,REQUEST_INITIATOR_REAL_NAME_,
+                           FROM_BUTTONTEXT_TO_COME_,JBPM4_HIST_ACTINST_DBID_,PREV_JBPM4_HIST_ACTINST_DBID_,
+                           JBPM4_HIST_PROCINST_DBID_,JBPM4_DEPLOYMENT_DBID_,
+                            REQUEST_INITIATOR_ID_,ACTIVITY_DETAIL_ID_,JBPM4_HIST_ACTINST_LAST_DBID_,HISTORY_ACTIVITY_NAME_
+                     FROM T_JBPM_WORKFLOW_INFO
+                     left outer join t_users tu on tu.id_=T_JBPM_WORKFLOW_INFO.REQUEST_INITIATOR_ID_
+                     WHERE JBPM4_HIST_ACTINST_DBID_ IS NULL 
+                     /~requestInitiatorUserId: and REQUEST_INITIATOR_ID_='{requestInitiatorUserId}'~/
+                      /~deployedIds: AND JBPM4_DEPLOYMENT_DBID_ IN(<<deployedIds>>)~/
+		              )WI 
+		              LEFT JOIN(
+		                 SELECT 
+		                  	DBID_, DBVERSION_, ID_, PROCDEFID_, KEY_, START_, END_, 
+				            DURATION_, STATE_, ENDACTIVITY_, NEXTIDX_  
+		                 FROM JBPM4_HIST_PROCINST
+		              )HP ON   HP.DBID_ = WI.JBPM4_HIST_PROCINST_DBID_
+		              LEFT JOIN(
+		                 SELECT 
+							DBID_, CLASS_, DBVERSION_, HPROCI_, TYPE_, 
+							EXECUTION_, ACTIVITY_NAME_, START_, END_, 
+							DURATION_, TRANSITION_, NEXTIDX_, HTASK_, 
+							PROCI_HISTORY_INFO_ID_, ACTIVED_PROCI_HISTORY_INFO_ID_, 
+							TASK_HISTORY_INFO_ID_, FIRSTED_HISTORY_INFO_ID_
+		                 FROM JBPM4_HIST_ACTINST 
+		              )HAC ON HAC.HPROCI_ = WI.JBPM4_HIST_PROCINST_DBID_
+		              LEFT JOIN T_JBPM_ACTIVITY_DETAIL TJAD ON TJAD.ACTIVITY_KEY_ = HAC.ACTIVITY_NAME_  AND TJAD.Jbpm4_Deployment_Dbid_ = WI.JBPM4_DEPLOYMENT_DBID_
+		              WHERE ( HAC.END_ IS NULL OR HAC.DBID_  = WI.JBPM4_HIST_ACTINST_LAST_DBID_ )
+		              GROUP BY WI.approval, WI.JBPM4_DEPLOYMENT_DBID_ ,WI.WORKFLOW_NAME_, HP.DBID_,HP.ID_,HP.START_,HP.END_,WI.KEY_ONE_,WI.KEY_TWO_
+		              ORDER BY HP.START_ DESC
+	            )TTTT
+	            WHERE 1=1
+			      /~queryText: 
+			           AND( 
+				             UPPER(TTTT.TASKNAME)     LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.WORKFLOWNAME) LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.SERIALNO )    LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.PROJECTNAME ) LIKE '%{queryText}%' 
+				       )
+				  ~/
+				  /~globalQueryText: 
+			           AND( 
+				             UPPER(TTTT.TASKNAME)     LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.WORKFLOWNAME) LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.SERIALNO )    LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.PROJECTNAME ) LIKE '%{globalQueryText}%' 
+				       )
+				  ~/
+				   /~serialno: AND TTTT.SERIALNO like '%{serialno}%'~/
+				   /~approval: AND TTTT.APPROVAL like '%{approval}%'~/
+				    /~projectname: AND TTTT.PROJECTNAME like '%{projectname}%'~/
+				     /~workflowname: AND  TTTT.WORKFLOWNAME like '%{workflowname}%'~/
+				   /~processstatus: AND TTTT.processstatus = '{processstatus}'~/
+				    /~processsta: <<processsta>>~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+             SELECT TTTT.* FROM(
+		              SELECT    WI.approval                                           AS APPROVAL,
+		                        WI.JBPM4_DEPLOYMENT_DBID_                             AS DEPLOYID,
+		                        WI.WORKFLOW_NAME_                                     AS WORKFLOWNAME,
+		                        HP.DBID_                                              AS PROCESSINSTANCEDBID,
+		                        HP.ID_                                                AS PROCESSINSTANCEID,
+		                        CONVERT(varchar(100),HP.START_,20)            AS PROCESSSTART,
+		                        CONVERT(varchar(100),HP.END_  ,20)            AS PROCESSEND, 
+		                        WI.KEY_ONE_                                           AS SERIALNO, 
+		                        WI.KEY_TWO_                                           AS PROJECTNAME,
+		                        [TASKID]=stuff((select ','+CONVERT(varchar(100),[HTASK_]) from JBPM4_HIST_ACTINST t
+		                            where HPROCI_=WI.JBPM4_HIST_PROCINST_DBID_ for xml path('')), 1, 1, ''),
+		                        [TASKNAME]=stuff((select ','+[ONETASKNAME] from (
+		                            SELECT CONVERT(varchar(100),HAC.HTASK_)+'@@_@@'+TJAD.ACTIVITY_NAME_ ONETASKNAME,HPROCI_ FROM 
+		                            JBPM4_HIST_ACTINST HAC
+		                            LEFT JOIN T_JBPM_ACTIVITY_DETAIL TJAD ON 
+		                            TJAD.ACTIVITY_KEY_ = HAC.ACTIVITY_NAME_  ) T
+		                            where HPROCI_=WI.JBPM4_HIST_PROCINST_DBID_ for xml path('')), 1, 1, '')
+		              FROM(
+		                 SELECT 
+                           tu.realname_ approval,T_JBPM_WORKFLOW_INFO.ID_,KEY_ONE_,KEY_TWO_,KEY_THREE_,KEY_FOUR_,KEY_FIVE_,KEY_SIX_,KEY_SEVEN_,
+                           KEY_EIGHT_,KEY_NINE_,KEY_TEN_,PROCESS_FORM_PATH_,PROCESS_FORM_TITLE_,
+                           WORKFLOW_NAME_,WORKFLOW_DISPLAY_NAME_,DRAFT_UUID_,PROCESSINSTANCE_STATE_,
+                           PROCESSDEFINITION_ID_,REQUEST_INITIATOR_,REQUEST_INITIATOR_REAL_NAME_,
+                           FROM_BUTTONTEXT_TO_COME_,JBPM4_HIST_ACTINST_DBID_,PREV_JBPM4_HIST_ACTINST_DBID_,
+                           JBPM4_HIST_PROCINST_DBID_,JBPM4_DEPLOYMENT_DBID_,
+                            REQUEST_INITIATOR_ID_,ACTIVITY_DETAIL_ID_,JBPM4_HIST_ACTINST_LAST_DBID_,HISTORY_ACTIVITY_NAME_
+                     FROM T_JBPM_WORKFLOW_INFO
+                     left outer join t_users tu on tu.id_=T_JBPM_WORKFLOW_INFO.REQUEST_INITIATOR_ID_
+                     WHERE JBPM4_HIST_ACTINST_DBID_ IS NULL 
+                    /~requestInitiatorUserId: and REQUEST_INITIATOR_ID_='{requestInitiatorUserId}'~/
+                     /~deployedIds: AND JBPM4_DEPLOYMENT_DBID_ IN({deployedIds})~/
+		              )WI 
+		              LEFT JOIN JBPM4_HIST_PROCINST HP ON   HP.DBID_ = WI.JBPM4_HIST_PROCINST_DBID_
+		              LEFT JOIN  JBPM4_HIST_ACTINST HAC ON HAC.HPROCI_ = WI.JBPM4_HIST_PROCINST_DBID_
+		              LEFT JOIN T_JBPM_ACTIVITY_DETAIL TJAD ON TJAD.ACTIVITY_KEY_ = HAC.ACTIVITY_NAME_  AND TJAD.Jbpm4_Deployment_Dbid_ = WI.JBPM4_DEPLOYMENT_DBID_
+		              WHERE ( HAC.END_ IS NULL OR HAC.DBID_  = WI.JBPM4_HIST_ACTINST_LAST_DBID_ )
+		              GROUP BY WI.approval,WI.JBPM4_HIST_PROCINST_DBID_, WI.JBPM4_DEPLOYMENT_DBID_ ,WI.WORKFLOW_NAME_, HP.DBID_,HP.ID_,HP.START_,HP.END_,WI.KEY_ONE_,WI.KEY_TWO_
+		            
+	            )TTTT
+	            WHERE 1=1
+			        /~queryText: 
+			           AND( 
+				             UPPER(TTTT.TASKNAME)     LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.WORKFLOWNAME) LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.SERIALNO )    LIKE '%{queryText}%' 
+				          OR UPPER(TTTT.PROJECTNAME ) LIKE '%{queryText}%' 
+				       )
+				  ~/
+				  /~globalQueryText: 
+			           AND( 
+				             UPPER(TTTT.TASKNAME)     LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.WORKFLOWNAME) LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.SERIALNO )    LIKE '%{globalQueryText}%' 
+				          OR UPPER(TTTT.PROJECTNAME ) LIKE '%{globalQueryText}%' 
+				       )
+				  ~/
+			<EXTRACTEND>order by  PROCESSSTART DESC<EXTRACTEND>	  
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

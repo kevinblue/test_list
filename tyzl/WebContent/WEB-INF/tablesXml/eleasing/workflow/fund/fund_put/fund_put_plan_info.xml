@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 筛选： 1 设备款未投放完毕       2 合同审批通过 状态 >=21  <31
+ 字段说明：
+ 未收资金合计 = 应收资金合计 - 已收资金合计 - 调整资金合计
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 				 select 
+             pln.id
+            ,case when chag.fact_money is null then 0
+                else chag.fact_money end factmoney
+             ,case when chag.fact_money is null then pln.plan_money-0
+			 else pln.plan_money-chag.fact_money end wtmoney
+            ,pln.payment_id paymentid
+            ,pln.plan_date plandate 
+            ,pln.plan_money planmoney
+            ,pln.pay_obj payobj
+            ,pln.PAY_CUST AS PAYCUST,
+            CUST.CUST_NAME AS PAYCUSTNAME
+            ,pln.fpnote
+            ,pln.contract_id
+            ,pln.fee_type feetype
+            ,pln.settle_method  settlemethod
+            ,pln.pay_type paytype
+            ,dict.name_  feetypename
+            ,dict2.name_ settlemethodname
+            ,dict3.name_ paytypename
+             from contract_fund_fund_plan pln 
+            left join t_dicts_datas dict on pln.fee_type=dict.id_
+            left join t_dicts_datas dict2 on pln.settle_method=dict2.id_
+            left join t_dicts_datas dict3 on pln.pay_type=dict3.id_
+             LEFT JOIN CUST_INFO CUST ON CUST.ID = pln.PAY_CUST
+            left join (select sum(chag.fact_money) fact_money,chag.contract_id  from contract_fund_fund_charge chag 
+	            where chag.fee_type='feetype10'
+	            group by chag.contract_id 
+            )chag
+            on chag.contract_id =pln.contract_id
+             
+            
+            where 1=1	
+            and	pln.fee_type='feetype10'
+            and pln.contract_id='{contractid}'
+				
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

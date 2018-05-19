@@ -1,0 +1,209 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="/WEB-INF/tlds/spring.tld"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title><spring:message code="CustomerCodingMaintenance" text="客户编码维护"/></title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript">
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id : 'table_paymentlog',
+				renderTo : "table_paymentlog_table1",
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : 'CBS付款日志信息',
+				iconCls : 'icon-node',
+				//editRemoteOperUrl:getRootPath()+"/acl/editVoucherCust.acl",
+				multiSelect : false,
+				hiddenQueryArea : false,//是否将查询区域折叠起来
+				queryButtonNewLine:true,
+				queryButtonColSpan:6,
+				showPager:true,
+				remoteOper: true,
+				lazyLoad:false,
+				loadMode:'ajax',
+				params:{},
+				entityClassName : 'com.tenwa.leasing.entity.fund.ContractFundPaymentInterfaceLog',
+				xmlFileName : '/eleasing/jsp/fund/fund_payment/payment_interface_log.xml',
+				tools : ['edit','-',						
+				         {
+  		   				html:'传输数据',
+  		 					plain : true,
+  		 					handler : function(miniTable, buttonText) {
+  		 						var row = miniTable.getSelected();
+  		 						var  logid=row.id;
+  		 						var message='';
+  		 						if(row.paymentstatus=="S"){
+  		 							mini.alert("付款已成功，不允许再次发送！");//sendPaymentDate.acl
+  		 							return false;
+  		 						}
+  		 						if(row.paymentstatus=="A"){
+  		 							mini.alert("传输已成功，不允许再次发送！");//sendPaymentDate.acl
+  		 							return false;
+  		 						}
+  		 						if(row.paymentstatus=="F"){
+  		 							mini.alert("付款失败，不允许再次发送！请线下联系。");//sendPaymentDate.acl
+  		 							return false;
+  		 						}
+  		 						var depositbanktype=getMiniEditFormField("table_paymentlog.depositbanktype").getValue();
+  		 					   if(getLength(depositbanktype)>5){
+  		 							  mini.alert("银行简称不能超过5个字符或2个汉字");
+  		 					 	 return false;
+  		 				  		} 
+  		 					   var banknumber=getMiniEditFormField("table_paymentlog.banknumber").getValue();
+  		 				       if(getLength(banknumber)>10){
+	 							  mini.alert("收款方银行号不能超过10个字符");
+	 					 	     return false;
+	 				  		   } 
+  		 						
+  		 				     
+  		 						
+  		 						$.ajax({
+  									url : getRootPath()+ "/eleasing/sendPaymentDate.acl",
+  									type : "post",
+  									cache : false,
+  									data : {logid:logid},
+  									async : false,
+  									success : function(data) {
+  										message=data;
+  									}
+  									});
+  		 						mini.alert(message);
+  		 						miniTable.reload();
+  		 						
+  		 					}
+  		 					
+  		 				},'-',
+  		 				 {
+  	  		   				html:'更新付款状态',
+  	  		 					plain : true,
+  	  		 					handler : function(miniTable, buttonText) {
+  	  		 					var row = miniTable.getSelected();//updatePaymentStatus
+  	  		 					var message='';
+  	  		 				$.ajax({
+									url : getRootPath()+ "/eleasing/updatePaymentStatus.acl",
+									type : "post",
+									cache : false,
+									data : {},
+									async : false,
+									success : function(data) {
+										message=data;
+									}
+									});
+  	  		 					mini.alert(message);
+  	  		 				miniTable.reload();
+  	  		 				}
+  		 				
+  		 				}
+				         ],
+				columns : [ 
+				    {type : 'indexcolumn'},
+				   	{type : 'checkcolumn'},  
+				   	{field : 'id',header : 'id',visible:false},
+				   	{field : 'erppaymentid',header : 'erppaymentid',visible:false},
+				   	{field : 'projname',header : '项目名称',formEditorConfig:{readOnly:true},queryConfig:{}},
+				   	{field : 'paymentcontractid',header : '合同编号',formEditorConfig:{readOnly:true},queryConfig:{}},
+				   	{field : 'paymentprocessid',header : '流程编号',formEditorConfig:{readOnly:true,fieldVisible:false}},
+				   	{field : 'paymentmethodtypeid',header : '结算方式',formEditorConfig:{readOnly:true,fieldVisible:false}},
+				   	{field : 'amount',header : '交易金额',formEditorConfig:{readOnly:true,newLine:true}},
+				   	{field : 'paymenttypeid',header : '付款合同类型',visible:false},
+				   	{field : 'paymenttypeidname',header : '合同类型',formEditorConfig:{fieldVisible:false},
+				   	queryConfig:{
+				   		showNullItem:true,
+						visible:true,
+						type:'combobox',
+						textField:'text',
+						valueField:'id',
+						data:[{id:'保理',text:'保理'},{id:'租赁',text:'租赁'}]
+				   	}
+				   	
+				   	},
+				   	{field : 'paymentstatus',header : '付款状态标识符',visible:false,formEditorConfig:{readOnly:true,newLine:false,fieldVisible:false}},
+				   	{field : 'paymentstatusname',header : '付款状态',formEditorConfig:{readOnly:true,newLine:false}},
+				   	{field : 'errorreason',header : '错误原因',formEditorConfig:{readOnly:true,newLine:true}},
+	
+				   	{field : 'feetypename',header : '费用类型',formEditorConfig:{readOnly:true,newLine:false}},
+				   	{field : 'paymentaccounts',header : '付款方银行账号',formEditorConfig:{newLine:true}},
+				   	
+				  	{field : 'depositbankname',header : '收款方开户行',formEditorConfig:{newLine:false},queryConfig:{newLine:true}},
+				   	{field : 'depositaccountsname',header : '收款方银行账户名称',formEditorConfig:{newLine:true},queryConfig:{newLine:false}},
+				   	{field : 'depositaccounts',header : '收款方银行账号',formEditorConfig:{newLine:false}},
+				   	{field : 'depositbanktype',header : '收款方银行简称',formEditorConfig:{newLine:true}},
+				   	{field : 'depositprovince',header : '收款方开户行省',formEditorConfig:{newLine:false}},
+				   	{field : 'depositcity',header : '收款方开户行市',formEditorConfig:{newLine:true}},
+				   	
+				  	{field : 'priorityflag',header : '加急标识',formEditorConfig:{newLine:false},
+						queryConfig:{
+							showNullItem:true,
+							visible:true,
+							type:'combobox',
+							textField:'text',
+							valueField:'id',
+							data:[{id:'Y',text:'Y'},{id:'N',text:'N'}]
+						}
+				   	},
+				   	{field : 'banknumber',header : '收款方银行号',formEditorConfig:{newLine:true}},
+				   	{field : 'unionbanknumber',header : '收款方联行号',formEditorConfig:{newLine:false}},
+			
+				   	{field : 'creator',header : '发起人ID',visible:false},
+				   	{field : 'creatorid',header : '付款发起人',formEditorConfig:{readOnly:true,newLine:true}},
+				   	{field : 'createdate',header : '发起时间',
+				   		dateFormat : "yyyy-MM-dd HH:mm:ss",
+						formEditorConfig : {
+							newLine : false,
+							readOnly:true,
+							type : 'date',
+							readOnly : true,
+							labelWidth : 100,
+							width : '100%',
+							format : 'yyyy-MM-dd HH:mm:ss',
+							required : false
+						}},					
+				   	{field : 'modificator',header : '修改人',visible:false},
+				   	{field : 'modificatorid',header : '修改人',formEditorConfig:{readOnly:true,newLine:true}},
+				   	{field : 'modifydate',header : '修改时间',
+				   		dateFormat : "yyyy-MM-dd HH:mm:ss",
+						formEditorConfig : {
+							newLine : false,
+							readOnly:true,
+							type : 'date',
+							readOnly : true,
+							labelWidth : 100,
+							width : '100%',
+							format : 'yyyy-MM-dd HH:mm:ss',
+							required : false
+						}}
+				   	
+				]
+			});
+		});
+	});
+	
+function getLength(str)   
+{  
+    var realLength = 0;  
+    for (var i = 0; i < str.length; i++)   
+    {  
+        charCode = str.charCodeAt(i);  
+        if (charCode >= 0 && charCode <= 128)   
+        realLength += 1;  
+        else   
+        realLength += 2;  
+    }  
+    return realLength;  
+}
+</script>
+</head>
+<body>
+	<div id="mini_test_form">
+	        <div id="table_paymentlog_table1"></div>
+	</div>
+
+</body>
+</html>

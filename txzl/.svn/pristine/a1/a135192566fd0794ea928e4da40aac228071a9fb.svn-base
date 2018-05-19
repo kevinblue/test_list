@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select
+rem.id as id,
+pi.ID as projnameid,
+pi.PROJECT_NAME as projectname,
+rem.MORTGAGOR as mortgagor,
+rem.REGISTER_COMPANY as registercompany,
+rem.REGISTER_NUMBER as registerNumber,
+tdd.ID_ as typeid,
+tdd.NAME_ as typename,
+rem.AMOUNT as amount,
+rem.MORTGAGE_BEGIN as mortgagebegin,
+rem.MORTGAGE_END as mortgageend,
+rem.DEBT_BEGIN as debtbegin,
+rem.DEBT_END as debtend
+from REAL_ESTATE_MORTGAGE rem 
+left join PROJ_INFO pi on rem.PROJ_NAME_ID=pi.ID
+left join T_DICTS_DATAS tdd on rem.TYPE_ID=tdd.ID_	
+	       			where 1=1
+	       		/~projectname: and PI.PROJECT_NAME like '%{projectname}%' ~/     	
+				/~mortgagor: and rem.MORTGAGOR like '%{mortgagor}%'~/
+				
+				
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

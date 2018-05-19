@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE
+  (ID,
+   MSG_TITLE,
+   SUBJECT_,
+   SEND_DATE,
+   CREATE_DATE,
+   MSG_TYPE,
+   FROMUSER,
+   CREATOR_)
+ select sys_guid(),
+       '租后现场巡视提醒',
+       to_char(SYSTIMESTAMP + 30, 'yyyy') || '年' ||
+       to_char(SYSTIMESTAMP + 30, 'mm') || '月' || ci.project_name ||
+       '项目需要进行租后巡视' || '',
+       to_char(SYSTIMESTAMP, 'yyyy-mm-dd'),
+       to_char(SYSTIMESTAMP, 'yyyy-mm-dd hh:mm:ss'),
+       'msgtype.1',
+       'Administrator',
+       'Administrator'
+  from contract_info ci
+ where ci.contract_status > 31
+   and not exists
+ (select 1
+          from BASE_MESSAGE b
+         where instr(to_char(b.subject_),
+                     to_char(SYSTIMESTAMP + 30, 'mm') || '月' ||
+                     ci.project_name || '项目需要进行租后巡视' || '') > 0)
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

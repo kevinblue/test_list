@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select nvl(b.mindate,cc.start_date) MINPLANDATE ,a.maxdate MAXPLANDATE from (
+			select min(plan_date) mindate, max(plan_date) maxdate,contract_id
+			from contract_fund_rent_plan
+			where 1=1  /~contract_id: AND CONTRACT_ID ='{contract_id}'~/
+			group by contract_id
+			)a
+			left  outer join (
+			select  max(plandate) mindate ,contractid contract_id from vi_contract_fund_rent_plan
+		    where  CURRENTOVERAGE=0 /~contract_id: AND CONTRACTID ='{contract_id}'~/
+			group by contractid
+			)b
+			on a.contract_id=b.contract_id
+			left outer join 
+			contract_condition cc 
+			on a.contract_id=cc.contract_id
+			where 1=1  /~contract_id: AND cc.CONTRACT_ID ='{contract_id}'~/
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

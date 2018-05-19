@@ -1,0 +1,69 @@
+package com.tenwa.leasing.controller.contract;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.tenwa.business.service.TableService;
+import com.tenwa.leasing.entity.contract.ContractEquipTmp;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeEquipTmp;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeMethodTmp;
+import com.tenwa.leasing.entity.proj.ContractNumberSettingTmp;
+import com.tenwa.leasing.entity.proj.ProjEquip;
+@Controller(value = "ContractMarkDelect")
+@RequestMapping(value = "/**/acl")
+public class ContractMarkDelect {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@RequestMapping(value = "/ContractMarkDelect.acl")
+	@ResponseBody
+	public int ContractMarkDelect(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		try{
+			String mark = request.getParameter("mark");
+			if("1".equals(mark)){
+				String num= request.getParameter("id");
+				String arrayid[]=num.split(",");
+				List<ContractEquipTmp> cet = this.tableService.findEntityByIDArray(ContractEquipTmp.class, arrayid);
+				for(ContractEquipTmp cc:cet){
+					cc.setSaveStatus("删除");
+					this.tableService.updateEntity(cc);
+				}
+				return 1;
+			}else if("2".equals(mark)){
+				String num = request.getParameter("id");
+				ContractGuaranteeMethodTmp cgmt = this.tableService.findEntityByID(ContractGuaranteeMethodTmp.class, num);
+				cgmt.setSaveStatus("删除");
+				this.tableService.updateEntity(cgmt);
+				return 1;
+			}else if("3".equals(mark)){
+				String num = request.getParameter("id");
+				ContractGuaranteeEquipTmp cget = this.tableService.findEntityByID(ContractGuaranteeEquipTmp.class, num);
+				cget.setSaveStatus("删除");
+				this.tableService.updateEntity(cget);
+				return 1;
+			}else{
+				String num = request.getParameter("id");
+				ContractNumberSettingTmp cnst = this.tableService.findEntityByID(ContractNumberSettingTmp.class, num);
+				cnst.setSaveStatus("删除");
+				this.tableService.updateEntity(cnst);
+				return 1;
+			}
+			
+		}catch (Exception e) {
+			return 2;
+		}
+		
+		
+		
+	}
+	
+}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      <!-- -->
+	        <![CDATA[
+	 select lfp.id,
+      lfp.loan_id as loanid, 
+      lfp.plan_list planlist,
+      lci.loan_contract_id loancontractid,
+      lfp.plan_date as plandate,      
+      lfp.interest,
+      lfp.currency,
+      tdd.name_ as currencyname
+     from loan_rent_plan_to_interest lfp 
+     left join t_dicts_datas tdd on tdd.id_=lfp.currency 
+	left join loan_account lci on lci.id=lfp.loan_id
+           where 1=1
+			and lfp.loan_id='{loanid}'
+     order by lfp.plan_date
+	        ]]> 
+    </table_sql>
+    </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

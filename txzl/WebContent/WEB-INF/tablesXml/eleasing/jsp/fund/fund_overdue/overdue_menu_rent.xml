@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+		      select 
+		        vicontractinfo.ID id,   --合同id
+		        p.proj_id projid,		        
+		          vicontractinfo.contract_id contractid,
+		          vicontractinfo.contract_number contractnumber,
+		          vicontractinfo.CONTRACTSTATUS contractstatus,
+		          '第' ||RENTLIST || '期' as rentlist,
+		          PLANDATE plandate,
+		            trim(to_char(round(nvl(RENT,0),2),'999,999,999,999,990.99')) rent,
+		             trim(to_char(round(nvl(CORPUS,0),2),'999,999,999,999,990.99')) corpus,
+		             trim(to_char(round(nvl(INTEREST,0),2),'999,999,999,999,990.99')) interest,
+		             trim(to_char(round(nvl(CURRENTINCOME,0),2),'999,999,999,999,990.99')) currentincome,
+		         trim(to_char(round(nvl(CURCORPUSINCOME,0),2),'999,999,999,999,990.99')) curcorpusincome,
+		         trim(to_char(round(nvl(CURINTERESTINCOME,0),2),'999,999,999,999,990.99')) curinterestincome,
+		         trim(to_char(round(nvl(CURRENTOVERAGE,0),2),'999,999,999,999,990.99')) currentoverage,
+		         trim(to_char(round(nvl(CURCORPUSOVERAGE,0),2),'999,999,999,999,990.99')) curcorpusoverage,
+		         trim(to_char(round(nvl(CURINTERESTADJUSTINCOME,0),2),'999,999,999,999,990.99')) cuinterestadjustincome,
+		         trim(to_char(round(nvl(CURINTERESTOVERAGE,0),2),'999,999,999,999,990.99')) curinterestoverage,
+		         trim(to_char(round(nvl(CURPENALTYINCOME,0),2),'999,999,999,999,990.99')) curpenaltyincome,
+		         trim(to_char(round(nvl(CURPENALTYADJUSTINCOME,0),2),'999,999,999,999,990.99')) curpenaltyadjustincome,
+		        trim(to_char(round(nvl(pena.penalty,0),2),'999,999,999,999,990.99')) penalty,
+		        trim(to_char(round(nvl(pena.plan_penalty,0),2),'999,999,999,999,990.99')) planpenalty,
+		         cust.id custid,
+		         cust.cust_name custname,		         
+		         cust.cust_class custclass,
+		         p.project_name  projname,
+		        vcic.rawValue_province province,
+		        vcic.areaname districtname,
+		        plan.ID planid,
+		        vcam.dunning_id dunningid,
+		        vcam.dunning_name dunningname,
+		     nvl(odr.coun,0) coun,
+		     contract_info.special_requirement specialrequirement
+		        from 
+		          vi_contract_info vicontractinfo
+		          inner join vi_contract_fund_rent_plan plan
+		          on vicontractinfo.id= plan.contractid
+		          left join (select sum(penalty) penalty,sum(plan_penalty) plan_penalty,contract_id from VI_CONTRACT_PENALTY  group by contract_id) pena
+		          on vicontractinfo.id = pena.contract_id    
+		         left join contract_info on vicontractinfo.contract_id=contract_info.contract_id
+		         left join cust_info cust on cust.id=contract_info.cust_id 
+		          LEFT JOIN proj_info p on p.id=vicontractinfo.Proj_Id
+		         left join(
+		         select id,areaname,rawvalue_province from   vi_cust_info_company 
+		         union  
+		         select id,areaname,rawvalue_province from   vi_cust_info_person)
+		         vcic on cust.id=vcic.id 
+		         left join (select plan_id planid,count(id) coun from overdue_dunning_record group by plan_id) odr
+		         on  plan.ID=odr.planid
+		        left join vi_contract_assets_manager vcam on contract_info.id=vcam.id
+		          where  vicontractinfo.CONTRACT_STATUS in (31,103)
+		          and CURRENTOVERAGE>0
+		          /~projname: and p.project_name like '%{projname}%' ~/
+		          /~plandateStart: and plan.PLANDATE    >= '{plandateStart}' ~/ 
+         		/~plandateEnd: and plan.PLANDATE    <= '{plandateEnd}' ~/ 
+		           /~extendsql: <<extendsql>>~/
+				/~custname: AND cust.cust_name like '%{custname}%' ~/
+				/~province: AND vcic.rawValue_province like '%{province}%' ~/
+				/~districtname: AND vcic.areaname ='{districtname}' ~/
+			       /~planid: AND plan.ID ='{planid}' ~/  
+			        order by plan.PLANDATE asc
+       		]]> 
+    </table_sql>
+    </alldb>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

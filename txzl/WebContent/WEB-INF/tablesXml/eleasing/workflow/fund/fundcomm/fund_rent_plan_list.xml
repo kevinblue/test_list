@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+资金计划表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select 
+			cfrp.contract_id contractid,
+			cfrp.rent_list rentlist,
+			cfrp.plan_date plandate,
+			cfrp.corpus,
+			cfrp.corpus_business corpusbusiness,
+			cfrp.interest,
+			cfrp.interest_business interestbusiness,
+			cfrp.rent,
+			cfrp.id
+			from contract_fund_rent_plan cfrp
+			where cfrp.rent_list<=(
+			select max(cs.end_list) list from contract_special_rules_bean cs where cs.regular_settlemethod='special_regular.beforeinterest' and cs.contract_id='<<contractid>>'
+			)
+			and cfrp.contract_id='<<contractid>>'
+			<EXTRACTEND>order by rentlist<EXTRACTEND>
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

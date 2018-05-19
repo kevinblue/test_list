@@ -1,0 +1,138 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true'||isViewHistoryTask==true){showTools = false;};
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "contract_back",
+			renderTo: "id_table_contract_back_present",
+			width: globalClientWidth - 30,
+			height:360,
+			//title:'合同归档',
+			iconCls:'icon-node',
+			multiSelect:true,
+			hiddenQueryArea:false,//是否将查询区域折叠起来
+			queryButtonColSpan:2,
+			queryButtonNewLine:false,
+			showPager:false,
+			showToolbar: showTools,
+			afterShowWindowCallBack : function(miniTable, miniForm,
+					operFlag) {
+					var borrowingstatus = mini.getbyName("borrowingstatus").getValue();
+					mini.getbyName("borrowingstatus").setText(borrowingstatus);
+					mini.getbyName("backman").setValue("${sessionScope.loginUser.realname}");
+					mini.getbyName("backdate").setValue(mini.formatDate(new Date(),"yyyy-MM-dd"));
+					
+			},
+			data: JsonUtil.decode('${empty json_contract_back_str ? "[]" : json_contract_back_str }'),
+			tools : ['edit'],
+			columns:[ 
+			    {type:'indexcolumn'},
+			    {type : 'checkcolumn'},
+			   	{field:'id',header:'id',visible:false},
+			   	{field:'docname',header:'档案名称',formEditorConfig : {readOnly:true,required:true}},
+			   	{field:'docsubname',header:'子合同编号',formEditorConfig :{readOnly:true}},
+				{field:'docnumber',header:'档案编号',formEditorConfig : {readOnly:true,newLine:true}},
+			   	{field:'borrow',header:'借阅人',formEditorConfig :{readOnly:true}},
+			 	/* {field:'filestatus',header:'借阅状态',formEditorConfig : {newLine:true,required:true}}, */
+			   
+			 	{field : 'borrowdate',
+					header : '借阅时间',
+					headerAlign : 'center',
+					visible : true,
+					width : 100,
+					dateFormat : "yyyy-MM-dd",
+					formEditorConfig : {
+						readOnly:true,
+						newLine : true,
+						type : 'date',
+						defaultValue : mini.formatDate(new Date(),
+								"yyyy-MM-dd"),
+						labelWidth : 100,
+						width : '100%',
+						format : 'yyyy-MM-dd',
+					}
+				},
+			   	{field : 'borrowingtype',header : '借阅类型',formEditorConfig : {readOnly:true,newLine : true}},
+				/* {field : 'borrowingstatusname',header : '借阅状态',formEditorConfig : {
+					fieldVisible : true}}, */
+			   	{field : 'borrowingstatus',header : '借阅状态',visible : true ,formEditorConfig : {
+					type:'combobox',
+					textField : 'name',
+					valueField : 'value',
+					data : [ {
+						name : "借出",
+						value : "借出"
+					}, {
+						name : "归还",
+						value : "归还"
+					}],
+					required : true}},
+				{
+					field : 'memoborrow',
+					header : '借阅备注',
+					formEditorConfig : {
+						readOnly:true,
+						newLine : true,
+						colspan : 3,
+						width : "100%",
+						type : 'textarea'
+					}
+				},
+				{
+					field : 'backman',
+					header : '归还人',
+					visible : true,
+					formEditorConfig : {
+						defaultValue :'${sessionScope.loginUser.realname}',
+						newLine : true,
+						type : 'text',
+						labelWidth : 110,
+						width : '100%',
+						required : false,
+						readonly : false
+					}
+				},
+				{field : 'backdate',
+					header : '归还时间',
+					headerAlign : 'center',
+					visible : true,
+					width : 100,
+					dateFormat : "yyyy-MM-dd",
+					formEditorConfig : {
+						required : true,
+						newLine : false,
+						type : 'date',
+						defaultValue : mini.formatDate(new Date(),
+								"yyyy-MM-dd"),
+						labelWidth : 100,
+						width : '100%',
+						format : 'yyyy-MM-dd',
+					}
+				},
+				{
+					field : 'memoback',
+					header : '归还备注',
+					formEditorConfig : {
+						newLine : true,
+						colspan : 3,
+						width : "100%",
+						type : 'textarea'
+					}
+				}
+			]
+		});
+	});
+});
+
+/* //格式化日期
+function onDateFormatRenderer(e){
+	var value = e.value;
+    if (value) return mini.formatDate(mini.parseDate(value), 'yyyy-MM-dd');
+    return "";
+} */
+
+
+</script>
+<div id="id_table_contract_back_present"></div>

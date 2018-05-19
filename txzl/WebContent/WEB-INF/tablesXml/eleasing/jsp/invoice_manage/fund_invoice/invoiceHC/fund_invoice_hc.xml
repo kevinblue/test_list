@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select tab.*,fid.invoice_no as oldinvoiceno from (
+	        --计划开票信息
+		        select
+		        ci.leas_form LEAS_FORM,
+		        ci.id as cid,
+		        fdinfo.out_no outno,
+	            ci.contract_id contractid,
+	            CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+	            cinfo.cust_name custname,
+	            tds.name_ feetype,
+	            cffp.plan_date cdate,
+	            cffp.plan_money money,
+	            tds1.name_   taxlevel,
+	            fdinfo.invoice_no invoiceno,
+	            fdinfo.invoice_money invoicemoney,
+	            fdinfo.invoice_date invoicedate,
+	            fdinfo.tax_money as taxmoney,
+	            fdinfo.tax_rate as taxrate,
+	            fdinfo.tax_bank taxbank,
+	            fdinfo.tax_acc taxacc,
+	            fdinfo.tax_tel taxphone,
+	            fdinfo.TAX_REG_CODE taxregcode,
+	            fdinfo.tax_addr taxregadd,
+	            fdinfo.ems_no emsno,
+	            fdinfo.send_date sentdate,
+	            case  nvl(fdinfo.hc_status,0) when '0' then '正常' when '1' then '被红冲' when '-1' then '红冲' end hcstatus,
+	            fdinfo.exp_user as exportperson,
+	            TDD2.NAME_        AS LEASEFORM
+	            from fund_invoice_download_info fdinfo
+	            left join fund_invoice_info fii on fdinfo.fund_invoice_id=fii.id
+	            left join contract_fund_fund_plan cffp on fii.cffp_id=cffp.id
+	            left join t_dicts_datas tds on cffp.fee_type=tds.id_
+	            left join contract_info ci on cffp.contract_id=ci.id
+	            left join contract_invoice_type cit on ci.id=cit.contract_id
+	            left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+	            LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+	            left join cust_info cinfo on ci.cust_id=cinfo.id
+	            where fii.cffp_id is not null
+	            --红冲记录
+                and nvl(fdinfo.hc_status,0)=-1
+	            
+	            union
+	          --实收开票信息
+	            select
+	            ci.leas_form LEAS_FORM,
+	            ci.id as cid,
+	            fdinfo.out_no outno,
+	            ci.contract_id contractid,
+	            CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+	            cinfo.cust_name custname,
+	            tds.name_ feetype,
+	            cffc.fact_date cdate,
+	            cffc.fact_money money,
+	            tds1.name_   taxlevel,
+	            fdinfo.invoice_no invoiceno,
+	            fdinfo.invoice_money invoicemoney,
+	            fdinfo.invoice_date invoicedate,
+	            fdinfo.tax_money as taxmoney,
+	            fdinfo.tax_rate as taxrate,
+	            fdinfo.tax_bank taxbank,
+	            fdinfo.tax_acc taxacc,
+	            fdinfo.tax_tel taxphone,
+	            fdinfo.TAX_REG_CODE taxregcode,
+	            fdinfo.tax_addr taxregadd,
+	            fdinfo.ems_no emsno,
+	            fdinfo.send_date sentdate,
+	            case  nvl(fdinfo.hc_status,0) when '0' then '正常' when '1' then '被红冲' when '-1' then '红冲' end hcstatus,
+	            fdinfo.exp_user as exportperson,
+	            TDD2.NAME_        AS LEASEFORM
+	            from fund_invoice_download_info fdinfo
+	            left join fund_invoice_info fii on fdinfo.fund_invoice_id=fii.id
+	            left join contract_fund_fund_charge cffc on fii.cffc_id=cffc.id
+	            left join t_dicts_datas tds on cffc.fee_type=tds.id_
+	            left join contract_info ci on cffc.contract_id=ci.id
+	            left join contract_invoice_type cit on ci.id=cit.contract_id
+	            left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+	            LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+	            left join cust_info cinfo on ci.cust_id=cinfo.id
+	            where fii.cffc_id is not null
+	            --红冲记录
+                and nvl(fdinfo.hc_status,0)=-1
+	        
+	        
+	        ) tab
+	        left join fund_invoice_download_info fid on tab.outno=fid.out_no and nvl(fid.hc_status,0)=1
+            where 1=1
+            /~contractid: and tab.contractid like '%{contractid}%' ~/
+            /~contractnumber: AND tab.CONTRACTNUMBER LIKE '%{contractnumber}%' ~/
+			/~custname: and tab.custname like '%{custname}%' ~/
+			/~cdateStart: and tab.cdate >='{cdateStart}' ~/
+            /~cdateEnd: and tab.cdate <='{cdateEnd}' ~/
+            /~feetype: and tab.feetype = '{feetype}' ~/
+            /~leaseform: AND tab.LEAS_FORM = '{leaseform}' ~/
+          
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			    SELECT T1.ID        as id,
+			         T2.REALNAME_   as sendid,
+			         T1.SEND_TIME as sendtime,
+			         T1.CONTENT_  as content
+			    from T_STATION_MESSAGE T1
+			    LEFT JOIN T_USERS T2
+			    ON T1.SEND_ID = T2.ID_
+			   WHERE 1 = 1
+
+			   /~userId :AND T1.REC_ID = {userId}~/
+			  <EXTRACTEND>	ORDER BY SENDTIME<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- 出险项目情况表指示
+     -->
+      <table_sql>   
+	        <![CDATA[
+	        select 
+	        	overdue.id id,
+	          	vi1.id contractid,
+				vi1.project_name projectname,
+	          	vi1.contract_id contractid1,
+	          	vi1.contract_number contractnumber,
+	          	vi1.cust_name custname,
+	          	condition.CLEAN_LEASE_MONEY cleanleasemoney,
+	          	overdue.CORPUS_OVERAGE corpusoverage,
+	          	overdue.DANGER_DATE dangerdate,
+                overdue.PROCESSING_STATE processingstate,
+                d1.name_ rawValue_processingstate,
+	          	vi1.department department,
+	          	tusers.realname_ realname
+			    from vi_contract_info vi1 
+	            left join contract_condition condition
+	            on vi1.id = condition.CONTRACT_ID
+	        	left join overdue_project overdue
+	            on vi1.id = overdue.contract_id
+	        	left join contract_info contract
+	            on vi1.id =contract.id
+	        	left join T_USERS tusers
+	            on contract.PROJ_REGISTRAR = tusers.id_
+	        	LEFT JOIN T_DICTS_DATAS D1 
+			    ON overdue.PROCESSING_STATE=D1.ID_
+		    	where 1=1
+				/~contractid: AND overdue.contract_id = '{contractid}' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

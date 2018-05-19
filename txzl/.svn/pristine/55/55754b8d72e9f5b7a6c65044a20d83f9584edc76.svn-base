@@ -1,0 +1,44 @@
+package com.tenwa.leasing.serviceImpl.Proj.projAddFile;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.AppStaticUtil;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+import com.tenwa.leasing.service.Proj.proComm.ProCommService;
+import com.tenwa.leasing.service.Proj.projAddFile.ProjAddFileService;
+
+
+@Service(value = "projAddFileService")
+public class ProjAddFileServiceImpl implements ProjAddFileService {
+
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "proCommService")
+	private ProCommService proCommService;
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Override
+	public void saveProjectInfo(Map<String, String> variablesMap) throws Exception {
+		
+		variablesMap.remove("proj_info.projcondition");
+	//	ProjInfo projinfo=proCommService.saveProjInfo(variablesMap, AppStaticUtil.PROJ_APPROVAL);
+
+	  //  String proj_id = variablesMap.get("proj_info.projid");
+	    String id=variablesMap.get("proj_info.id");
+		Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();	
+		//queryMainObjectMap.put("projId", proj_id);
+		queryMainObjectMap.put("projId", id);
+		ProjInfo projInfo = (ProjInfo)this.tableService.updateMainEntity(ProjInfo.class, queryMainObjectMap, variablesMap,null, "proj_info");
+		this.tableService.saveOrUpdateEntity(projInfo);
+	}
+}

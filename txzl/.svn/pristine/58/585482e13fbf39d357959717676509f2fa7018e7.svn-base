@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+      <alldb>
+	      <table_sql> 
+		        <![CDATA[
+	                    SELECT
+	                      WII.JBPM4_DEPLOYMENT_DBID_                  AS DEPLOYID,
+	                      WII.WORKFLOW_NAME_                          AS WORKFLOWNAME,
+	                      WII.WORKFLOW_DISPLAY_NAME_                  AS WORKFLOWDISPLAYNAME,
+	                      HP.ID_                                      AS PROCESSINSTANCEID,
+	                      HP.DBID_                                    AS PROCESSINSTANCEDBID,
+	                      TO_CHAR(HP.START_,'YYYY-MM-DD HH24:MI:SS')  AS PROCESSSTART,
+	                      WIU.ID_                                     AS ACTORID,  
+	                      HAC.HTASK_                                  AS TASKID,
+	                      TJAD.ACTIVITY_NAME_                         AS TASKNAME,
+					      WIU.TASKTYPE                                AS TASKTYPE,
+					      decode(WIU.TASKTYPE,'pending','待办任务','delegate','委托任务','signature','会签任务','read','传阅任务') TASKTYPENAME,
+	                      WIU.TASKTIME                                AS TASKSTART,
+	                      WII.from_buttontext_to_come_                as TaskButton,
+	                      NVL(WII.KEY_THREE_,WII.KEY_ONE_)            AS SERIALNO,
+	                      WII.KEY_TWO_                                AS PROJECTNAME,
+	                      WII.KEY_THREE_                              AS CONTRACTID   
+					            FROM(
+	                            --待办任务和任务指派
+	                            SELECT 
+	                               ID_,
+	                               JBPMWORKFLOWHISTORYINFO_ID_, 
+	                               CASE 
+	                                 WHEN ASSIGN_ACTOR_USER_ID_ IS NOT NULL AND ASSIGNED_ACTOR_USER_ID_ IS NULL     THEN 'assignmentPending' 
+	                                 WHEN ASSIGN_ACTOR_USER_ID_ IS NOT NULL AND ASSIGNED_ACTOR_USER_ID_ IS NOT NULL THEN 'assignmentCompleted' 
+	                                  --WHEN IS_COOPERATE  = 1      THEN 'cooperation' 
+	                                 ELSE 'pending' 
+	                               END  AS TASKTYPE,
+	                                Start_Time_ AS TASKTIME
+	                            FROM T_JBPM_WORKFLOW_INFOS_USERS 
+	                            WHERE END_TIME_ IS NULL 
+	                            /~USERID:  AND PLAN_ACTOR_USER_ID_ = '{USERID}' ~/
+	                            /~isRead:  AND nvl(IS_READED_,0) = 0 ~/  
+	                            /~PENDING:
+	                            --委托任务
+	                            UNION ALL
+	                            SELECT 
+	                               JIU.ID_,
+	                               JIU.JBPMWORKFLOWHISTORYINFO_ID_,
+	                               'delegate' AS TASKTYPE,
+	                               JIU.START_TIME_ AS TASKTIME
+	                            FROM(
+	                               SELECT 
+	                                   GRANT_USER_ID_,
+	                                   DEPLOYMENT_ID_ 
+	                               FROM  T_JBPM_GRANT_DELEGATE_USERS 
+	                               WHERE 
+	                                    START_DATE_ <= TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS')
+	                               AND  END_DATE_   >= TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS') 
+	                               /~USERID: AND DELEGATE_USER_ID_ = '{USERID}'  ~/ 
+	                            )GDU    
+	                            INNER JOIN(
+	                               SELECT 
+	                                 ID_,
+	                                 PLAN_ACTOR_USER_ID_,
+	                                 JBPMWORKFLOWHISTORYINFO_ID_,
+	                                 JBPM4_DEPLOYMENT_DBID_ ,
+	                                 START_TIME_
+	                               FROM T_JBPM_WORKFLOW_INFOS_USERS 
+	                               WHERE END_TIME_ IS NULL  
+	                               /~USERID: AND PLAN_ACTOR_USER_ID_ != '{USERID}' ~/ 
+	                            )JIU ON JIU.PLAN_ACTOR_USER_ID_ = GDU.GRANT_USER_ID_  AND  GDU.DEPLOYMENT_ID_ = JIU.JBPM4_DEPLOYMENT_DBID_ 
+	                            --会签任务
+	                            UNION ALL
+	                            SELECT  
+	                              ID_,
+	                              JBPMWORKFLOWHISTORYINFO_ID_, 
+	                              'signature',
+	                              START_TIME_ AS TASKTIME
+	                            FROM T_JBPM_SIGNATURE_USERS  
+	                            WHERE END_TIME_ IS  NULL 
+	                            /~USERID: AND SIGNATURED_ACTOR_USER_ID_ = '{USERID}' ~/ 
+	                           
+	                            ~/
+	                       )WIU
+	                       INNER JOIN(
+					          SELECT 
+					           ID_,KEY_ONE_,KEY_TWO_,KEY_THREE_,KEY_FOUR_,KEY_FIVE_,KEY_SIX_,KEY_SEVEN_,
+						       KEY_EIGHT_,KEY_NINE_,KEY_TEN_,PROCESS_FORM_PATH_,PROCESS_FORM_TITLE_,
+						       WORKFLOW_NAME_,WORKFLOW_DISPLAY_NAME_,DRAFT_UUID_,PROCESSINSTANCE_STATE_,
+						       PROCESSDEFINITION_ID_,REQUEST_INITIATOR_,REQUEST_INITIATOR_REAL_NAME_,
+						       FROM_BUTTONTEXT_TO_COME_,JBPM4_HIST_ACTINST_DBID_,PREV_JBPM4_HIST_ACTINST_DBID_,
+						       JBPM4_HIST_PROCINST_DBID_,JBPM4_DEPLOYMENT_DBID_,
+						       REQUEST_INITIATOR_ID_,ACTIVITY_DETAIL_ID_,JBPM4_HIST_ACTINST_LAST_DBID_ 
+					          FROM T_JBPM_WORKFLOW_INFO WHERE JBPM4_HIST_ACTINST_DBID_ IS NOT NULL
+					          /~NOTPROCESSINSTANCESTATE: AND PROCESSINSTANCE_STATE_!='{NOTPROCESSINSTANCESTATE}' ~/
+					          /~PROCESSINSTANCESTATE:    AND PROCESSINSTANCE_STATE_='{PROCESSINSTANCESTATE}' ~/
+					       )WII ON WII.ID_ = WIU.JBPMWORKFLOWHISTORYINFO_ID_
+					       LEFT JOIN T_JBPM_ACTIVITY_DETAIL TJAD ON TJAD.ID_ = WII.ACTIVITY_DETAIL_ID_
+	                       LEFT JOIN /*(
+					          SELECT 
+								DBID_, CLASS_, DBVERSION_, HPROCI_, TYPE_, 
+								EXECUTION_, ACTIVITY_NAME_, START_, END_, 
+								DURATION_, TRANSITION_, NEXTIDX_, HTASK_, 
+								PROCI_HISTORY_INFO_ID_, ACTIVED_PROCI_HISTORY_INFO_ID_, 
+								TASK_HISTORY_INFO_ID_, FIRSTED_HISTORY_INFO_ID_
+					          FROM JBPM4_HIST_ACTINST 
+					       )*/ 
+					       JBPM4_HIST_ACTINST HAC ON HAC.DBID_ = WII.JBPM4_HIST_ACTINST_DBID_
+					       LEFT JOIN(
+					          SELECT 
+					              DBID_, DBVERSION_, ID_, PROCDEFID_, KEY_, START_, END_, 
+					              DURATION_, STATE_, ENDACTIVITY_, NEXTIDX_ 
+					          FROM JBPM4_HIST_PROCINST 
+					       )HP ON HAC.HPROCI_ = HP.DBID_
+					       WHERE  (HAC.END_ IS  NULL OR WIU.TASKTYPE='read' OR WIU.TASKTYPE='signature')
+					       /~globalQueryText: 
+					            AND( 
+					                  UPPER(HAC.ACTIVITY_NAME_) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.WORKFLOW_NAME_) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_ONE_ ) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_TWO_ ) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_THREE_ ) LIKE '%{globalQueryText}%' 
+					            )
+					       ~/
+					       ORDER BY HAC.START_  DESC
+				 ]]> 
+		  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	    <table_sql><![CDATA[
+	                     SELECT
+	                      WII.JBPM4_DEPLOYMENT_DBID_                  AS DEPLOYID,
+	                      WII.WORKFLOW_NAME_                          AS WORKFLOWNAME,
+	                      HP.ID_                                      AS PROCESSINSTANCEID,
+	                      HP.DBID_                                    AS PROCESSINSTANCEDBID,
+	                      CONVERT(varchar(100),HP.START_,20)  AS PROCESSSTART,
+	                      WIU.ID_                                     AS ACTORID,  
+	                      HAC.HTASK_                                  AS TASKID,
+	                      TJAD.ACTIVITY_NAME_                         AS TASKNAME,
+					      WIU.TASKTYPE                                AS TASKTYPE,
+	                      WIU.TASKTIME AS TASKSTART,
+	                       WII.from_buttontext_to_come_                as TaskButton,
+	                      isnull(WII.KEY_THREE_,WII.KEY_ONE_)            AS SERIALNO,
+	                      WII.KEY_TWO_                                AS PROJECTNAME,
+	                      WII.KEY_THREE_                              AS CONTRACTID   
+					            FROM(
+	                            --待办任务和任务指派
+	                            SELECT 
+	                               ID_,
+	                               JBPMWORKFLOWHISTORYINFO_ID_, 
+	                               CASE 
+	                                 WHEN ASSIGN_ACTOR_USER_ID_ IS NOT NULL AND ASSIGNED_ACTOR_USER_ID_ IS NULL     THEN 'assignmentPending' 
+	                                 WHEN ASSIGN_ACTOR_USER_ID_ IS NOT NULL AND ASSIGNED_ACTOR_USER_ID_ IS NOT NULL THEN 'assignmentCompleted' 
+	                                 ELSE 'pending' 
+	                               END  AS TASKTYPE,
+	                               Start_Time_ AS TASKTIME
+	                            FROM T_JBPM_WORKFLOW_INFOS_USERS 
+	                            WHERE END_TIME_ IS NULL 
+	                            /~USERID:  AND PLAN_ACTOR_USER_ID_ = '{USERID}' ~/ 
+	                           /~PENDING:
+	                            --委托任务
+	                            UNION ALL
+	                            SELECT 
+	                               JIU.ID_,
+	                               JIU.JBPMWORKFLOWHISTORYINFO_ID_,
+	                               'delegate' AS TASKTYPE,
+	                               JIU.START_TIME_ AS TASKTIME
+	                            FROM(
+	                               SELECT 
+	                                   GRANT_USER_ID_,
+	                                   DEPLOYMENT_ID_
+	                               FROM  T_JBPM_GRANT_DELEGATE_USERS 
+	                               WHERE 
+	                                    START_DATE_ <= CONVERT(varchar(100),GETDATE(),20)
+	                               AND  END_DATE_   >= CONVERT(varchar(100),GETDATE(),20)
+	                             --  /~USERID: AND DELEGATE_USER_ID_ = '{USERID}'  ~/ 
+	                            )GDU    
+	                            INNER JOIN(
+	                               SELECT 
+	                                 ID_,
+	                                 PLAN_ACTOR_USER_ID_,
+	                                 JBPMWORKFLOWHISTORYINFO_ID_,
+	                                 JBPM4_DEPLOYMENT_DBID_,
+	                                  START_TIME_
+	                               FROM T_JBPM_WORKFLOW_INFOS_USERS 
+	                               WHERE END_TIME_ IS NULL  
+	                               --/~USERID: AND PLAN_ACTOR_USER_ID_ != '{USERID}' ~/ 
+	                            )JIU ON JIU.PLAN_ACTOR_USER_ID_ = GDU.GRANT_USER_ID_  AND  GDU.DEPLOYMENT_ID_ = JIU.JBPM4_DEPLOYMENT_DBID_ 
+	                            --会签任务
+	                            UNION ALL
+	                            SELECT  
+	                              ID_,
+	                              JBPMWORKFLOWHISTORYINFO_ID_, 
+	                              'signature',
+	                              START_TIME_ AS TASKTIME
+	                            FROM T_JBPM_SIGNATURE_USERS  
+	                            WHERE END_TIME_ IS  NULL 
+	                           /~USERID: AND SIGNATURED_ACTOR_USER_ID_ = '{USERID}' ~/ 
+	                            --传阅任务
+	                            UNION ALL
+	                            SELECT 
+	                              ID_,
+	                              JBPMWORKFLOWHISTORYINFO_ID_, 
+	                              'read' ,
+	                              START_TIME_ TASKTIME
+	                            FROM T_JBPM_READ_USERS  
+	                            WHERE END_TIME_ IS  NULL 
+	                           /~USERID: AND READED_ACTOR_USER_ID_ = '{USERID}' ~/ 
+	                           ~/
+	                       )WIU
+	                       INNER JOIN(
+					          SELECT 
+					           ID_,KEY_ONE_,KEY_TWO_,KEY_THREE_,KEY_FOUR_,KEY_FIVE_,KEY_SIX_,KEY_SEVEN_,
+						       KEY_EIGHT_,KEY_NINE_,KEY_TEN_,PROCESS_FORM_PATH_,PROCESS_FORM_TITLE_,
+						       WORKFLOW_NAME_,WORKFLOW_DISPLAY_NAME_,DRAFT_UUID_,PROCESSINSTANCE_STATE_,
+						       PROCESSDEFINITION_ID_,REQUEST_INITIATOR_,REQUEST_INITIATOR_REAL_NAME_,
+						       FROM_BUTTONTEXT_TO_COME_,JBPM4_HIST_ACTINST_DBID_,PREV_JBPM4_HIST_ACTINST_DBID_,
+						       JBPM4_HIST_PROCINST_DBID_,JBPM4_DEPLOYMENT_DBID_,
+						       REQUEST_INITIATOR_ID_,ACTIVITY_DETAIL_ID_,JBPM4_HIST_ACTINST_LAST_DBID_
+					          FROM T_JBPM_WORKFLOW_INFO WHERE JBPM4_HIST_ACTINST_DBID_ IS NOT NULL
+					          /~NOTPROCESSINSTANCESTATE: AND PROCESSINSTANCE_STATE_!='{NOTPROCESSINSTANCESTATE}' ~/
+					         /~PROCESSINSTANCESTATE:    AND PROCESSINSTANCE_STATE_='{PROCESSINSTANCESTATE}' ~/
+					       )WII ON WII.ID_ = WIU.JBPMWORKFLOWHISTORYINFO_ID_
+					       LEFT JOIN T_JBPM_ACTIVITY_DETAIL TJAD ON TJAD.ID_ = WII.ACTIVITY_DETAIL_ID_
+	                       LEFT JOIN /*(
+					          SELECT 
+								DBID_, CLASS_, DBVERSION_, HPROCI_, TYPE_, 
+								EXECUTION_, ACTIVITY_NAME_, START_, END_, 
+								DURATION_, TRANSITION_, NEXTIDX_, HTASK_, 
+								PROCI_HISTORY_INFO_ID_, ACTIVED_PROCI_HISTORY_INFO_ID_, 
+								TASK_HISTORY_INFO_ID_, FIRSTED_HISTORY_INFO_ID_
+					          FROM JBPM4_HIST_ACTINST 
+					       )*/ 
+					       JBPM4_HIST_ACTINST HAC ON HAC.DBID_ = WII.JBPM4_HIST_ACTINST_DBID_
+					       LEFT JOIN(
+					          SELECT 
+					              DBID_, DBVERSION_, ID_, PROCDEFID_, KEY_, START_, END_, 
+					              DURATION_, STATE_, ENDACTIVITY_, NEXTIDX_ 
+					          FROM JBPM4_HIST_PROCINST 
+					       )HP ON HAC.HPROCI_ = HP.DBID_
+					       WHERE  (HAC.END_ IS  NULL OR WIU.TASKTYPE='read' OR WIU.TASKTYPE='signature')
+					       /~globalQueryText: 
+					            AND( 
+					                  UPPER(HAC.ACTIVITY_NAME_) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.WORKFLOW_NAME_) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_ONE_ ) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_TWO_ ) LIKE '%{globalQueryText}%' 
+					               OR UPPER(WII.KEY_THREE_ ) LIKE '%{globalQueryText}%' 
+					            )
+					       ~/
+					    <EXTRACTEND> order by TASKSTART  DESC <EXTRACTEND>   
+				 ]]> 
+		  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

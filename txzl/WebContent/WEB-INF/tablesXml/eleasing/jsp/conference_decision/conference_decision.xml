@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	       select  cd.id              as id,
+			       cd.CONFER_NUMBER   as confernumber,
+			       cd.CONFER_NAME     as confername,
+			       cd.DECISION_POINT  as decisionpoint,
+			       cd.CONFER_ABSTRACT as conferabstract,
+			       cd.ORIGINATOR      as originator,
+			       cd.ORIGINATIME     as originatime,
+			       pi.project_name    as projname
+			  from CONFERENCE_DECISION cd
+			  left join proj_info pi
+			    on cd.proj_id = pi.id
+			 where 1 = 1
+	       	    /~projname: and pi.project_name like '%{projname}%' ~/     	
+	       	    /~confername: and cd.CONFER_NAME like '%{confername}%' ~/     	
+				/~conferabstract: and  cd.CONFER_ABSTRACT like '%{conferabstract}%'	   ~/
+				/~originator: and  cd.ORIGINATOR like '%{originator}%'	   ~/
+				/~originatimeStart: and cd.ORIGINATIME    >= '{originatimeStart}' ~/ 
+	       		/~originatimeEnd: and cd.ORIGINATIME    <= '{originatimeEnd}' ~/ 
+	           
+	        	       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

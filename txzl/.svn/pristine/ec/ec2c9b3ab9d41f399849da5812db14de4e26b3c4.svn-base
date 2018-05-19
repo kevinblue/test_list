@@ -1,0 +1,104 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>合同开票税率维护</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+	
+
+jQuery(function(){
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+		id:"contract_billing",
+		renderTo:"id_table_contract_billing_rate",
+		width:globalClientWidth,
+		height:globalClientHeight,
+		iconCls :'icon-node',
+		lazyLoad:false,
+		title:"合同开票税率维护",
+		remoteOper :true,
+		showPager:false,
+		pageSize:20,
+		entityClassName:'com.tenwa.leasing.entity.contract.ContractInvoiceType',
+		xmlFileName:'/eleasing/workflow/contract/contract_billing/contract_billing_rate_maintenance_list.xml',
+		tools:['edit','-','remove'],
+		columns:[
+			{type:'indexcolumn'},
+			{type:'checkcolumn'},
+			{field:'id', header:'id', visible:false},
+			{field:'projectname', header:'项目名称',visible:true,
+				formEditorConfig:{								
+		 	             type:'text',
+		        		 labelWidth:100,
+		            	 width:200,
+		            	 readOnly:true,
+		         		 required:true},
+				queryConfig:{width:150}},
+			{field:'contractnumber', header:'合同号',visible:true,
+					formEditorConfig:{
+		 	             type:'text',
+		        		 labelWidth:100,
+		            	 width:200,
+		            	 readOnly:true,
+		         		 required:true},
+					queryConfig:{width:150}},
+			{field:'leastype', header:'租赁类型',visible:true,
+						formEditorConfig:{
+							newLine:true,
+							 type:'text',
+			        		 labelWidth:100,
+			            	 width:200,
+			            	 readOnly:true,
+			         		 required:true},
+					queryConfig:{width:150}},
+			{field:'leasform',visible:true, header:'租赁形式',
+							formEditorConfig:{
+								 type:'text',
+				        		 labelWidth:100,
+				            	 width:200,
+				            	 readOnly:true,
+				         		 required:true},
+						queryConfig:{width:150}},
+			{field:'corpusinvoiceratio', header:'本金开票税率',visible:true,
+								formEditorConfig:{
+									newLine:true,
+					 	             type:'text',
+					        		 labelWidth:100,
+					            	 width:200,
+					         		 required:true}},
+			{field:'interestinvoiceratio', header:'利息开票税率',visible:true,
+								formEditorConfig:{
+					 	             type:'text',
+					        		 labelWidth:100,
+					            	 width:200,
+					         		 required:true}},
+			{field:'handlingchargeinvoiceratio', header:'手续费开票税率',visible:true,
+					         	formEditorConfig:{
+					         		newLine:true,
+							 	      type:'text',
+							          labelWidth:100,
+							          width:200,
+							          required:true}},					         			
+			{field:'managementinvoiceratio', header:'咨询费开票税率',visible:true,
+							    formEditorConfig:{								
+								 	  type:'text',
+								      labelWidth:100,
+								      width:200,
+								      required:true}}   	  
+							        	  
+		]
+	});
+});
+});
+</script>
+</head>
+<body>
+<div id="id_table_contract_billing_rate" style="height:100%;"></div>
+</body>
+</html>

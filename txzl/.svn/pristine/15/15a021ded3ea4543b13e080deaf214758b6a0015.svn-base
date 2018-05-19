@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同变更
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+    			SELECT 
+                  info.ID id,
+            info.SELLER seller,
+            info.SELLER_LEGAL_PERSON sellerlegalperson,
+            info.SELLER_LINKMAN sellerlinkman,
+            info.SELLER_REGISTER_ADDR sellerregisteraddr,
+            info.SELLER_ADDR selleraddr,
+            info.SELLER_POSTCODE sellerpostcode,
+            info.SELLER_TEL sellertel,
+            info.SELLER_FAX sellerfax,
+            info.SELLER_EMAIL selleremail,
+            info.SELLER_ACC_NUMBER selleraccnumber,
+            info.SELLER_ACC_NUMBER selleraccnumbername,
+            info.SELLER_ACC_BANK selleraccbank,
+            info.SELLER_ACC_NAME selleraccname,
+            info.ATTACH_CONDTION attachcondtion,
+            info.CONTRACT_ID contractid,
+            cust.cust_name SELLERNAME,
+            info.vndr_type vndrtype,
+            DICT.NAME_ AS VNDRTYPENAME,
+            cust.cust_class custclass
+            
+                  
+        FROM 
+            CONTRACT_SUPPLIER_INFO info
+            LEFT JOIN CUST_INFO cust
+            on info.SELLER = cust.id
+            LEFT JOIN T_DICTS_DATAS DICT
+            ON info.vndr_type = DICT.ID_
+				where info.CONTRACT_ID = '{contract_id}'
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	           SELECT pdi.id             pdiid,
+       pdi.proj_name      pdiname,
+       pi.id              piid,
+       pi.project_name    piname,
+       ci.id              ciid,
+       ci.contract_number cinumber,
+       ci.project_name    ciname
+  FROM proj_info pi
+  LEFT JOIN contract_info ci
+    on ci.proj_id = pi.id
+  LEFT JOIN proj_develope_info pdi
+    on pdi.id = pi.develop_id
+where 1=1
+             
+          	/~piname: AND pi.project_name like '%{piname}%' ~/
+          	/~cinumber: AND ci.contract_number like '%{cinumber}%' ~/       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

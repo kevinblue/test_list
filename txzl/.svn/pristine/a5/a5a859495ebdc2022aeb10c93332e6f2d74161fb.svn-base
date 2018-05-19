@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审清单列表
+ projid	项目编号
+ custname   承租人
+ dept  出单部门
+ projsource  内部行业
+ projmanager  项目经理
+ lixdate  立项时间
+ projstatus   项目状态
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	         select distinct ci.project_name projectname,
+          cu.cust_name custname,
+     vpi.provincename||'-'||vpi.cityname place,
+     tgcm.wfx wfx,
+     tgcm.wfy wfy,
+     vpi.fantype fantype,
+     vpi.fansum fansum,
+     vpi.windtopographyname windtopographyname
+  from T_ANNUAL_OPERATION tao 
+    left join t_global_contract_message tgcm on tgcm.wf_id= tao.wf_id
+    left join contract_info ci on tgcm.orapro_id =  ci.wind_machine
+    left join proj_info pi on pi.id = ci.proj_id
+    left join cust_info cu on cu.id = ci.cust_id
+    left join (select 
+             p.projid projid,
+            p.provincename provincename,
+            p.cityname cityname,
+            p.windtopographyname windtopographyname,
+            p.fantype fantype,
+            p.fansum fansum,
+            p.projname projname
+            
+       from VI_PROJ_DEVELOPE_INFO  p  
+           where 1=1
+           and p.type = 1) vpi
+               on vpi.projid =pi.develop_id
+           where 1=1
+           and tao.report_type = '3'
+           and tao.report_date like  '%{reportdate}%'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>   
+      <show_sql>true</show_sql>
+      
+    </data>
+  </table>
+</table-root>

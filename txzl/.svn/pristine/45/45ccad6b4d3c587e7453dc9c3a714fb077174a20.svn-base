@@ -1,0 +1,79 @@
+package com.tenwa.leasing.action.contract.sign;
+
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Component;
+
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.kernal.utils.AppStaticUtil;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.service.contract.contractChange.ContractChangeService;
+import com.tenwa.leasing.service.contractcomm.ContractCommService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+@WorkflowAction(name = "contractSignEndAction", description = "流程结束动作", workflowName = "合同签约流程")
+@Component(value = "contractSignEndAction")
+public class ContractSignEndAction implements JbpmBaseAction {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "contractCommService")
+	private ContractCommService contractCommService;
+	
+	@Override
+	public void back(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+		String doc_id = jbpmWorkflowHistoryInfo.getHistoryProcessInstanceImpl().getDbid()+"";
+		variablesMap.put("docId", doc_id);
+		WorkflowUtil.deleteWorkFlowConflict(this.baseService, variablesMap);
+		//保存签约信息
+		ContractInfo contract=contractCommService.saveContractInfo(variablesMap, AppStaticUtil.CONTRACT_APPROVAL);
+		String contractid = variablesMap.get("contract_id");
+		ContractInfo contractinfo = this.tableService.findEntityByID(ContractInfo.class, contractid);
+		 //回租发票数量
+		 String invoicenum = variablesMap.get("contract_info.leasinginvoicenum");
+		 //划拨设备数量
+		 String equipnum = variablesMap.get("contract_info.leasingequipnum");
+		 //中登网查询的设备数量
+		 String registernum = variablesMap.get("contract_info.leasingregisternum");
+		 //发票验证查询
+		 String invoicecheck = variablesMap.get("contract_info.leasinginvoicecheck");
+		 contractinfo.setLeasingInvoiceNum(invoicenum);
+		 contractinfo.setLeasingEquipNum(equipnum);
+		 contractinfo.setLeasingRegisterNum(registernum);
+		 contractinfo.setLeasingInvoiceCheck(invoicecheck);
+		 this.tableService.updateEntity(contractinfo);
+	}
+
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+}

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	     
+				select				
+				
+					ci.id,cinfo.cust_name custname,
+					-- pi.project_name  projectname,
+					pi.proj_id projid,
+					t_depts.name_ projdept,t_users.realname_ projmanager,
+	                   ci.contract_number contractnumber,ci.contract_status contractstatus,status.status_name contractstatusname  
+	                   ,sumrent.allcorpus,nvl(virent.out_list,0) overlist,virent.rent-virent.inc_rent overrent,sumrent.allrent-nvl(virent.rent,0) lastrent
+	                   ,(planpenalty- incomepenalty) overpenalty
+                   from contract_info ci 
+                   left outer join proj_info pi on ci.proj_id=pi.id
+                   left outer join t_depts on t_depts.id_=ci.proj_dept
+                   left outer join t_users on t_users.id_=ci.proj_manage
+                   left outer join base_contract_status status
+                   on ci.contract_status = status.status_code
+                   left outer join(
+                      select contract_id,sum(rent) allrent,sum(corpus) allcorpus from contract_fund_rent_plan
+                      group by contract_id
+                   ) sumrent on sumrent.contract_id=ci.id
+	               left outer join cust_info cinfo on cinfo.id=ci.cust_id
+	               left outer join vi_contract_out_list virent on virent.contract_id=ci.id
+	               left outer join 
+		               (select contract_id, sum(plan_penalty) planpenalty,sum(income_penalty)incomepenalty from 
+		                 vi_contract_penalty group by contract_id  ) vipenalty  on  vipenalty.contract_id=ci.id
+                 	where  (ci.contract_status = '21' or ci.contract_status = '31' or ci.contract_status = '103')
+                	/~custid:  and ci.cust_id= '{custid}'~/ 
+                 
+                	 union all
+                 
+                	 select '-','-' ,'合计','-','-','-',0,'-',sum(allcorpus),nvl(sum(overlist),0),sum(overrent)
+	                 	,sum(lastrent),sum(overpenalty) 
+	                 from (	                 
+		                 select ci.id,cinfo.cust_name,pi.proj_id,t_depts.name_ projdept,t_users.realname_ projmanger,
+		                 ci.contract_number contractnumber,ci.contract_status contractstatus,status.status_name contractstatusname  
+		                 ,sumrent.allcorpus,virent.out_list overlist,virent.rent-virent.inc_rent overrent,sumrent.allrent-nvl(virent.rent,0) lastrent
+		                 ,planpenalty- incomepenalty overpenalty
+                		 from contract_info ci 
+			                 left outer join proj_info pi on ci.proj_id=pi.id
+			                 left outer join t_depts on t_depts.id_=ci.proj_dept
+			                 left outer join t_users on t_users.id_=ci.proj_manage
+			                 left outer join base_contract_status status
+			                 on ci.contract_status = status.status_code
+			                 left outer join(
+			                   select contract_id,sum(rent) allrent,sum(corpus) allcorpus from contract_fund_rent_plan
+			                   group by contract_id) sumrent on sumrent.contract_id=ci.id
+			                 left outer join cust_info cinfo on cinfo.id=ci.cust_id
+			                 left outer join vi_contract_out_list virent on virent.contract_id=ci.id
+			                 left outer join 
+				                 (select contract_id, sum(plan_penalty) planpenalty,sum(income_penalty)incomepenalty,sum(penalty) overpenalty from 
+				                 vi_contract_penalty group by contract_id  )vipenalty on vipenalty.contract_id=ci.id
+			                  where  (ci.contract_status = '21' or ci.contract_status = '31' or ci.contract_status = '103')
+			                  /~custid: and ci.CUST_ID = '{custid}'~/
+			                  )
+				  
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	         
+	        select * from (
+			select ci.id,cinfo.cust_name custname,pi.proj_id projid,t_depts.name_ projdept,t_users.realname_ projmanager,
+                   ci.contract_number contractnumber,ci.contract_status contractstatus,status.status_name contractstatusname  
+                   ,sumrent.allcorpus,isnull(virent.out_list,0) overlist,virent.rent-virent.inc_rent overrent,sumrent.allrent-isnull(virent.rent,0) lastrent
+                   ,planpenalty- incomepenalty overpenalty
+                   from contract_info ci 
+                   left outer join proj_info pi on ci.proj_id=pi.id
+                   left outer join t_depts on t_depts.id_=ci.proj_dept
+                   left outer join t_users on t_users.id_=ci.proj_manage
+                   left outer join base_contract_status status
+                   on ci.contract_status = status.status_code
+                   left outer join(
+                      select contract_id,sum(rent) allrent,sum(corpus) allcorpus from contract_fund_rent_plan
+                      group by contract_id
+                   ) sumrent on sumrent.contract_id=ci.id
+                  left outer join cust_info cinfo on cinfo.id=ci.cust_id
+                 left outer join vi_contract_out_list virent on virent.contract_id=ci.id
+                 left outer join 
+                 (select contract_id, sum(plan_penalty) planpenalty,sum(income_penalty)incomepenalty from 
+                 vi_contract_penalty group by contract_id  )vipenalty on vipenalty.contract_id=ci.id
+                 where  (ci.contract_status = '31' or ci.contract_status = '103')
+                  /~custid:  and ci.cust_id= '{custid}'~/ 
+                 union all
+                 select '-','-' ,'合计','-','-','-',0,'-',isnull(sum(allcorpus),0),isnull(sum(overlist),0),isnull(sum(overrent),0)
+                 ,isnull(sum(lastrent),0),isnull(sum(overpenalty),0) from (
+                 select ci.id
+                 ,sumrent.allcorpus,virent.out_list overlist,virent.rent-virent.inc_rent overrent,sumrent.allrent-isnull(virent.rent,0) lastrent
+                 ,planpenalty- incomepenalty overpenalty
+                 from contract_info ci 
+                 left outer join proj_info pi on ci.proj_id=pi.id
+                 left outer join t_depts on t_depts.id_=ci.proj_dept
+                 left outer join t_users on t_users.id_=ci.proj_manage
+                 left outer join base_contract_status status
+                 on ci.contract_status = status.status_code
+                 left outer join(
+                   select contract_id,sum(rent) allrent,sum(corpus) allcorpus from contract_fund_rent_plan
+                   group by contract_id) sumrent on sumrent.contract_id=ci.id
+                 left outer join cust_info cinfo on cinfo.id=ci.cust_id
+                 left outer join vi_contract_out_list virent on virent.contract_id=ci.id
+                 left outer join 
+                 (select contract_id, sum(plan_penalty) planpenalty,sum(income_penalty)incomepenalty,sum(penalty) overpenalty from 
+                 vi_contract_penalty group by contract_id  )vipenalty on vipenalty.contract_id=ci.id
+                  where  (ci.contract_status = '31' or ci.contract_status = '103')
+                 /~custid: and ci.CUST_ID = '{custid}'~/
+                  ) v)ttt
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+	  
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

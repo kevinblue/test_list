@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			 	select tt.* ,t3.handmoney from (
+			 	select nvl(FN_getPenalty_By_Contract('{contractid}','{adjustdate}'),0) penalty,
+          sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')  then t.remaincorpus else 0 end ) remaincorpus,
+           sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')   then t.remaininterest else 0 end ) remaininterest,
+           sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')  then t.corpus else 0 end ) remainfincorpus,
+           sum(case when to_date( t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')   then t.interest else 0 end ) remainfininterest,
+           sum(case when  to_date( t.plan_date,'YYYY-MM-DD') <= to_date('{adjustdate}','YYYY-MM-DD')   then t.overduerent else 0 end ) overduerent
+         from (
+         select 
+            t1.corpus_business-nvl(t2.sumincomecorpus,0) remaincorpus,
+            t1.interest_business - nvl(t2.sumincomeinterest,0) remaininterest,
+            t1.rent - nvl(t2.sumincomerent,0) overduerent,
+            t1.corpus,
+            t1.interest,
+            t1.plan_date,
+            t1.rent_list
+             from  (
+             select cfrp.plan_date,
+             cfrp.rent_list,
+             cfrp.rent,
+             cfrp.interest,
+             cfrp.corpus,
+             cfrp.corpus_business,
+             cfrp.interest_business,
+             cfrp.contract_id contractid
+             from Contract_Fund_Rent_Plan cfrp 
+            where cfrp.contract_id = '{contractid}'
+            ) t1
+            left join 
+            (select sum( cfri.corpus ) sumincomecorpus
+            ,sum(cfri.interest ) sumincomeinterest,
+            sum( cfri.rent ) sumincomerent,
+            min(cfri.contract_id) contractid,
+            cfri.plan_list
+             from  contract_fund_rent_income cfri 
+            where cfri.contract_id = '{contractid}'
+            group by cfri.plan_list
+            )t2 on t2.contractid = t1.contractid and t2.plan_list = t1.rent_list
+        ) t 
+        )tt
+        left join (
+         	select sum(money) handmoney from (
+                  select (nvl(cffp.PLAN_MONEY,0)-nvl(cffc.FACT_MONEY,0))money from contract_fund_fund_plan cffp
+                  left join contract_fund_fund_charge cffc
+                  on cffc.PAYMENT_ID = cffp.id
+                  where cffp.contract_id = '{contractid}'
+                  and cffp.FEE_TYPE = 'feetype1'
+                  and to_date(cffp.plan_date,'YYYY-MM-DD')>to_date('{adjustdate}','YYYY-MM-DD') --小于约定终止日
+	           )
+           )t3 on 1=1
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	   <sqlserver>
+	       <table_sql>
+	        <![CDATA[
+					select nvl([dbo].[FN_GETPENALTY_BY_CONTRACT]('{contractid}','{adjustdate}'),0) penalty,
+          sum(case when  CONVERT(datetime,t.plan_date) > CONVERT(datetime,'{adjustdate}') then t.remaincorpus else 0 end ) remaincorpus,
+           sum(case when  CONVERT(datetime,t.plan_date) >  CONVERT(datetime,'{adjustdate}')  then t.remaininterest else 0 end ) remaininterest,
+           sum(case when  CONVERT(datetime,t.plan_date)  >  CONVERT(datetime,'{adjustdate}')  then t.corpus else 0 end ) remainfincorpus,
+           sum(case when CONVERT(datetime,t.plan_date)  >  CONVERT(datetime,'{adjustdate}')  then t.interest else 0 end ) remainfininterest,
+           sum(case when  CONVERT(datetime,t.plan_date)  <=  CONVERT(datetime,'{adjustdate}')  then t.overduerent else 0 end ) overduerent
+         from (
+         select 
+            t1.corpus_business-nvl(t2.sumincomecorpus,0) remaincorpus,
+            t1.interest_business - nvl(t2.sumincomeinterest,0) remaininterest,
+            t1.rent - nvl(t2.sumincomerent,0) overduerent,
+            t1.corpus,
+            t1.interest,
+            t1.plan_date,
+            t1.rent_list
+             from  (
+             select cfrp.plan_date,
+             cfrp.rent_list,
+             cfrp.rent,
+             cfrp.interest,
+             cfrp.corpus,
+             cfrp.corpus_business,
+             cfrp.interest_business,
+             cfrp.contract_id contractid
+             from Contract_Fund_Rent_Plan cfrp 
+            where cfrp.contract_id = '{contractid}'
+            ) t1
+            left join 
+            (select sum( cfri.corpus ) sumincomecorpus
+            ,sum(cfri.interest ) sumincomeinterest,
+            sum( cfri.rent ) sumincomerent,
+            min(cfri.contract_id) contractid,
+            cfri.plan_list
+             from  contract_fund_rent_income cfri 
+            where cfri.contract_id = '{contractid}'
+            group by cfri.plan_list
+            )t2 on t2.contractid = t1.contractid and t2.plan_list = t1.rent_list
+        ) t 
+				 ]]> 
+	       </table_sql>
+	      </sqlserver> 
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

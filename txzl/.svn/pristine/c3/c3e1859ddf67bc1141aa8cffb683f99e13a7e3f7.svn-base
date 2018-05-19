@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			   select confact.id id,
+			   confact.contract_id contractid,
+		       coninfo.contract_number contractidname,
+		       coninfo.project_name entryname,
+		       confact.if_factoring iffactoring,
+		       confact.factoring_bank factoringbank,
+		       confact.factoring_money factoringmoney,
+		       confact.factoring_begin_date factoringbegindate,
+		       confact.factoring_end_date factoringenddate,
+		       confact.remark remark,
+		       custinfo.cust_name custname,
+		       cc.clean_lease_money financingamount,
+		       cc.lease_term leaseterm
+			   from contract_factoring confact
+			   left join contract_info coninfo on confact.contract_id = coninfo.id
+			   left join cust_info custinfo on coninfo.cust_id = custinfo.id
+			   left join contract_condition cc on confact.contract_id = cc.contract_id
+			   where 1=1
+			    /~contractidname:and coninfo.contract_number like '%{contractidname}%'~/
+                /~entryname:and coninfo.project_name like '%{entryname}%'~/
+                /~custname:and custinfo.cust_name like '%{custname}%'~/
+                /~factoringbank:and confact.factoring_bank like '%{factoringbank}%'~/
+               
+               
+                /~factoringbegindateStart: and confact.factoring_begin_date >= '{factoringbegindateStart}' ~/
+                /~factoringbegindateEnd: and confact.factoring_begin_date <= '{factoringbegindateEnd}' ~/
+                /~factoringenddateStart: and confact.factoring_end_date >= '{factoringenddateStart}' ~/
+                /~factoringenddateEnd: and confact.factoring_end_date <= '{factoringenddateEnd}' ~/     
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

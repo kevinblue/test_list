@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+        select 
+          CNST.ID as id,
+          custinfo.id as custid,
+          CNST.DOC_ID as docid,
+          CNST.mark mark,
+          CNST.CONTRACT_TYPE as contracttype,
+          CNST.SIGNING_TIME signingTime,
+         case when  (CNST.SIGNING_TIME IS NULL) then '未签约'
+           else '已签约' end as signstatus,
+          CNST.CONTRACTING_PLACE contractingPlace,
+          CNST.CONTRACT_PERSON contractPerson,  
+          tusers.realname_  contractPersonname,
+          tusers2.realname_  contractpersontwoname,
+          case CNST.CONTRACT_TYPE
+            when 'CONTRACT_TYPE.01' then '租赁合同'
+            when 'CONTRACT_TYPE.02' then '采购合同'
+            when 'CONTRACT_TYPE.03' then '担保合同'
+            when 'CONTRACT_TYPE.04' then '抵押合同'
+            when 'CONTRACT_TYPE.05' then '其他'
+            else '' 
+            end as contracttypename ,
+          CNST.CONTRACT_SUBJECT as contractsubject,
+          CNST.CONTRACT_NUMBER as contractnumber,
+          CNST.CONTRACT_NUMBER as oldcontnum,
+         v.fileaddress,
+         v.FILENAME,
+          v.REALNAME,
+           v.CREATEDATE,
+           v.fileid,
+           CNST.CONTRACT_NAME contractname
+   from  CONTRACT_NUMBER_SETTING CNST
+   LEFT JOIN
+         (select
+            A.file_key as cnsid,
+            wm_concat( A.file_address) as fileaddress,
+            wm_concat( A.FILE_NAME )   AS FILENAME,
+            wm_concat( A.CREATE_DATE)  AS CREATEDATE,
+            wm_concat(A.id)            as fileid,
+            wm_concat(U.REALNAME_  )   AS REALNAME
+         from base_file A
+         LEFT JOIN T_USERS U ON A.CREATOR_ = U.ID_
+         where A.file_key is not null
+         and A.invalid_ ='是'
+         group by A.file_key
+          ) v  on v.cnsid = CNST.id
+  left join cust_info custinfo on CNST.CUST_ID = custinfo.id
+   left join T_USERS tusers on CNST.CONTRACT_PERSON = tusers.id_
+   left join T_USERS tusers2 on CNST.CONTRACT_PERSONTWO = tusers2.id_
+   where 1=1  
+   and cnst.contract_id = '{conid}'
+  
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

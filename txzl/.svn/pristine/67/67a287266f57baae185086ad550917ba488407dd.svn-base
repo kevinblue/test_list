@@ -1,0 +1,20 @@
+package com.tenwa.hessian;
+
+import java.net.MalformedURLException;
+
+import com.caucho.hessian.client.HessianProxyFactory;
+import com.tenwa.hessian.service.TestService;
+
+
+public class ClientTest {
+	 public static String url = "http://localhost:8080/sinopharm/remoting/testService";
+	    public static void  main(String[] args){
+	        HessianProxyFactory factory = new HessianProxyFactory();
+	        try {
+	        	TestService service = (TestService) factory.create(TestService.class, url);
+	            System.out.println("客户端："+service.sayHello());
+	        } catch (MalformedURLException e) {
+	            e.printStackTrace();
+	        }
+	    }
+}

@@ -1,0 +1,275 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>租金支付通知书</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript">
+function importMiniTableCallBack(message,tableid){
+	 var info=eval("("+message+")");
+	 alert(info.message);
+     mini.get("id_minitableimport").hide();
+     mini.get(tableid).reload();
+}
+function showcustinfo(custid){
+	var params = "id="+custid+"&isView=true";
+	var url = getRootPath()+"/leasing/cust_info/cust_company/cust_company_detail.bi?"+params;
+	var sheight = window.screen.availHeight - 30;
+	var swidth = window.screen.availWidth - 10;
+	var winoption = "left=0px,top=0px,height=" + sheight + "px,width=" + swidth + "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+	window.open(url, '_blank', winoption);
+}
+
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				addRemoteOperUrl:getRootPath()+"/acl/addTaxRentHcInfo.acl",
+				remoteOper:true,
+				id : 'table_id1',
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : '租金支付通知书',
+				iconCls : 'icon-node',
+				multiSelect : false,
+				queryButtonColSpan : 6,
+				queryButtonNewLine: false,
+				showPager:true,
+				isRemoteStatistic: true,
+				frozenStartColumn:0,
+				frozenEndColumn:5,
+				xmlFileName : '/eleasing/jsp/invoice_manage/rent_invoice/rent_payment_notice.xml',
+				tools : [{
+					html : '生成租金支付通知书',
+					plain : true,
+					iconCls : 'icon-addfolder',
+					handler : function(miniTable, buttonText) {
+						debugger;
+						var checkedRowDatas = miniTable.getSelecteds();
+						if(0 == checkedRowDatas.length){
+							mini.alert("请选择要导出租金支付通知书的记录！！");
+							return;
+						}
+						
+						var row = checkedRowDatas[0];
+						var rent=row.rent;
+						if(rent==null){
+							mini.alert('计划金额不能为空');
+							return;
+						}
+						if(rent==''){
+							rent='0';
+						}
+						
+						var params = {};
+						//label:承租人,业务合同编号,当期租金计划日期
+						params['label.cust_name'] = row.cust_name;
+						params['label.contract_number'] = row.contract_number;
+						var date=tenwa.toDate(row.plandate,'yyyy年MM月dd日');
+						var plandate=tenwa.toChar(date,'yyyy 年 MM 月 dd 日');
+						params['label.plandate']=plandate;
+						
+						//rent_list:项目,期次,金额,备注金额
+						var rentListArr=new Array();
+						var rentList={};
+						rentList["projectname"]=row.projectname;
+						
+						if(row.rent_list){
+							rentList["rent_list"]='第'+row.rent_list+'期';
+						}else{
+							mini.alert("期次不能为空");
+							return;
+						}
+						rentList["rent"]=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+						if(rent==0){
+							//alert("租金为0时");
+							rentList["comment_rent"]='0.00';
+						}else{
+							rentList["comment_rent"]=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+						}
+						rentListArr.push(rentList);
+						params['rent_list']=JsonUtil.encode(rentListArr);
+						
+						//rent_list_total:总计,总计大写人民币
+						params['rent_list_total.total']=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+						if(rent==0){
+							params['rent_list_total.totalRMB']='零元零角零分';
+						}else{
+							params['rent_list_total.totalRMB']=tenwa.money2DX(rent);
+						}
+						
+						//comment:户名,开户行,账号
+						params['comment.lessor']=row.lessor;
+						params['comment.leaseaccbank']=row.leaseaccbank;
+						params['comment.leaseaccnumber']=row.leaseaccnumber;
+						
+						//date:当前时间
+						params['date.nowTime']= new Date().format("yyyy 年 MM 月 dd 日");
+						params["rent_list.contract_id"]=row.contract_id;//加的
+						params["rent_list.rent_list"]=row.rent_list;
+					  	var fileTeplate=new fileTemplateConfig({						
+							templateno : 'F-201612009',
+							/* tableid:miniTable.config.id,
+							modelname:miniTable.config.title,
+							returntype:'listtonewpage', */
+							tableid:'table_id1',
+							modelname:'租金催收通知函',
+							returntype:'file',
+							parames :params
+						});
+						fileTeplate.createFile();						
+				  	}
+				}],
+				columns : [ 
+				    {
+				    	type : 'indexcolumn'
+				    },
+				   	{
+				    	type : 'checkcolumn'
+				    },  
+				   	{
+				    	field : 'id',
+				    	header : 'id',
+				    	visible : false
+				    },
+				    {
+				    	field : 'contract_id',
+				    	header : '合同ID',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'contract_number',
+				    	header : '业务合同编号',
+				    	queryConfig : {},
+				    	width: 120,
+				    	renderer:function(e){
+							return "<a href='javascript:void(0);' onclick='showContractDetail(\""+e.record.id+"\")'>" + e.record.contract_number + "</a>";
+						}
+				    },
+					{
+				    	field : 'custid',
+				    	header : '客户id',
+				    	visible : false
+				    },
+				    {
+				    	field : 'cfrp_id',
+				    	header : '租金计划id',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'cust_name',
+				    	header : '客户名称',
+				    	width: 130,
+				    	queryConfig : {},
+						renderer:function(e){
+					   	    var row=e.record;
+					   		return "<a href='javascript: showcustinfo(\""+row.custid+"\")'>"+row.cust_name+"</a>";
+					   	}
+				    },
+				    {
+				    	field : 'projectname',
+				    	header : '项目名称',
+				    	visible : true,
+				    	queryConfig : {},
+				    },
+				   	{
+				    	field : 'rent_list',
+				    	header : '期次',
+				    	width: 70,
+				    	align:'center'
+				    },
+				   	{
+				    	field : 'plandate',
+				    	header : '计划日期',
+				    	width: 80,
+				    	queryConfig:{
+				    		newLine:true,
+				    		type:'date',
+				    		range:true
+				    	}
+				    },
+				   	{
+				    	field : 'rent',
+				    	header : '计划金额',
+				    	width: 80,
+				    	dataType: 'currency',summary:true
+				    },
+				   	{
+				    	field : 'penalty',
+				    	header : '罚息金额',
+				    	width: 80,
+				    	dataType: 'currency',summary:true
+				    },
+				   	{
+				    	field : 'lessor',
+				    	header : '出租人',
+				    	align:'center',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'leaseaccbank',
+				    	header : '租金回笼银行',
+				    	width: 100,
+				    	align:'center'
+				    },
+				   	{
+				    	field : 'leaseaccnumber',
+				    	header : '租金回笼账号',
+				    	width: 150
+				    },
+				   	{
+				    	field : 'export_state',
+				    	header : '导出状态',
+				    	width: 80,
+				    	align:'center',
+				    	queryConfig:{
+					   		type:'combobox',
+					   		showNullItem: true,
+					   		newLine: false,
+					   		data: [{name:"已导出",value:" record.ID IS NOT NULL"},{name:"未导出",value:" record.ID IS NULL"}],
+					   		textField:"name",
+					   		valueField:"value"
+				   		}
+				    },
+				   	{
+				    	field : 'export_times',
+				    	header : '导出次数',
+				    	width: 80,align:'center'
+				    },
+				   	{
+				    	field : 'proj_manage',
+				    	header : '项目经理',
+				    	width: 80,
+				    	align:'center',
+				    	queryConfig : {}
+				    },
+				   	{
+				    	field : 'proj_dept',
+				    	header : '业务部',
+				    	width: 100,
+				    	queryConfig:{newLine:true}
+				    },
+				   	{
+				    	field : 'offsetflag',
+				    	header : '是否抵扣',
+				    	visible:false
+				    }
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body></body>
+</html>
+<script>
+function showContractDetail(cid){
+	var url = getRootPath()+"/acl/queryContractInfoDetail.acl?contractid="+cid;
+	openFullScreenWindow(url);
+}
+
+
+</script>

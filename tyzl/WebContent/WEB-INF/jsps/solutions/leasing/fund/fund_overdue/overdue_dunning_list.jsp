@@ -1,0 +1,219 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>催款员负责合同页面列表</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript">
+var isMulti = false;
+jQuery(function() {
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id:'table_id8',
+			width:globalClientWidth,
+			height:globalClientHeight,
+			iconCls:'icon-node',
+			hiddenQueryArea:false,
+			multiSelect:true,
+			editFormPopupWindowWidth:700,
+			title:'催款员负责合同页面列表' ,
+			remoteOper:true,
+			pageSize:20,
+			showPager:true,
+			lazyLoad:false,
+			entityClassName:'com.tenwa.leasing.entity.fund.overdue.OverdueDunningInfo',
+			xmlFileName:'/eleasing/jsp/fund/fund_overdue/overdue_dunning_list.xml',
+			queryButtonColSpan:2,
+			beforeShowWindowCallBack:function(miniTable,miniForm, operType){
+				isMulti = false;
+				return true;
+			},
+			params:{},
+			tools:[ 'edit','-',
+					{
+				     html:'批量修改',
+				    plain:true,
+				  iconCls:'icon-edit', 
+				  handler:function(miniTable, buttonText) { 
+					var row = miniTable.getSelecteds();
+					if(row.length>0){
+						var multiform = new mini.Form("multiform");
+						var multieditWindow = mini.get("multieditWindow");
+						multieditWindow.show();
+						multiform.clear();
+						isMulti = true;
+					}else{
+						mini.alert("请至少选中一行！");
+					}
+				}
+			}],
+			validateForm:function(miniTable, miniForm, editFormItemOperFlag){
+				var partdept = mini.getbyName("partdept").getValue();
+				if("" == partdept){
+					mini.alert("请选择催款员！");
+					return;
+				}				
+				var dunningid = mini.getbyName("dunningid").getValue();
+				var contractid = mini.getbyName("id").getValue();			
+				$.ajax({
+			        url: getRootPath()+"/acl/saveOverdueDunningInfo.acl",
+			        type: "post",
+			        cache: false, 
+			        data :{ "id":dunningid , "contractid": contractid,"partdept":partdept},
+			        async:false,
+			        success: function (text) {
+			        	mini.alert("保存成功！");
+			        }
+			    });
+				mini.get("table_id8_editFormPopupWindow").hide();
+				mini.get("table_id8").load();
+				return false;
+			},
+			columns:[ 
+				{type:'indexcolumn'},
+			    {type:'checkcolumn'},
+			    {field:'id',header:'记录编号',headerAlign:'center',width:100,allowSort:true,visible:false,
+				        formEditorConfig:{
+					            readOnly:true,
+				 	        fieldVisible:false}},
+				{field:'dunningid',header:'催款员主键ID',headerAlign:'center',width:100,allowSort:true,visible:false,
+				        formEditorConfig:{
+					            readOnly:true,
+					        fieldVisible:false}},
+			    {field:'contractid',header:'合同号',headerAlign:'center',width:100,allowSort:true,
+				        formEditorConfig:{
+					             newLine:true,
+					                type:'text',
+					        fieldVisible:true,
+					            readOnly:true,
+				 	               width:200,
+					          labelWidth:100},
+				             queryConfig:{
+					               width:200}},
+			    {field:'contractnumber',header:'业务合同号',headerAlign:'center',width:100,allowSort:true,
+				        formEditorConfig:{
+					                type:'text',
+					        fieldVisible:true,
+					               width:200,
+					            readOnly:true,
+					          labelWidth:100},
+				             queryConfig:{
+					          labelWidth:100,
+				                   width:200}},
+			    {field:'custname',header:'承租人',headerAlign:'center',width:100,allowSort:true,
+				        formEditorConfig:{
+					             newLine:true,
+					                type:'text',
+					        fieldVisible:true,
+					               width:200,
+					            readOnly:true,
+					          labelWidth:100},
+				             queryConfig:{
+					               width:200}},
+			    {field:'department',header:'出单部门',headerAlign:'center',width:100,allowSort:true,
+				        formEditorConfig:{
+					                type:'text',
+					        fieldVisible:true,
+					               width:200,
+					            readOnly:true,
+					          labelWidth:100},
+				             queryConfig:{
+					             newLine:true,
+					          labelWidth:100,
+					                width:200}},
+			     {field:'projmanagename',header:'项目经理',headerAlign:'center',width:100,allowSort:true,
+				         formEditorConfig:{
+					              newLine:true,
+					                 type:'text',
+					         fieldVisible:true,
+					                width:200,
+					             readOnly:true,
+					           labelWidth:100},
+				              queryConfig:{
+					                width:200}},
+				 {field:'contractstatus',header:'合同状态',headerAlign:'center',width:100,allowSort:true,
+				         formEditorConfig:{
+					                 type:'text',
+					         fieldVisible:true,
+					                width:200,
+					             readOnly:true,
+					           labelWidth:100}},
+			     {field: 'partdeptname', header: '催款员', visible: true,
+					     formEditorConfig:{
+						     fieldVisible:false }},
+				{field: 'partdept', header: '催款员', visible: false,
+						 formEditorConfig:{
+					              newLine:true,
+					                width: 200,
+					                 type:'queryinput',
+					             required: true,
+					            textField: 'name',
+					           valueField: 'id',
+					           allowInput: false,
+					         fieldVisible: true,
+					               params: {xmlFileName: '/eleasing/jsp/fund/fund_overdue/query_all_users.xml'}}
+				}
+				]
+		});
+	});
+	tenwa.createQueryInput({
+		id:'id_dunninginfo',
+		label:'催款员',
+		windowWidth: 600,
+		windowHeight: 800,
+		textField: 'name',
+		valueField: 'id',
+		params: {
+			xmlFileName:'/eleasing/jsp/fund/fund_overdue/query_all_users.xml'
+		}
+	});
+});
+
+</script>
+</head>
+<body>
+	<div id="multieditWindow" class="mini-window" title="选择催款员" style="width:400px;height:100px;" showModal="true" allowResize="true" allowDrag="true">
+        <div id="multiform">
+            <table>
+                <tr>
+                    <td style="width:80px;">催款员：</td>
+                    <td >
+                        <input id="id_dunninginfo" name="dunninginfo" class="mini-buttonedit mini-queryinput" allowInput = "false" />
+                    </td>
+                    <td >
+                        <a class="mini-button " onclick="submitMultiData">&nbsp;&nbsp;确定&nbsp;&nbsp;</a>
+                    </td>
+                </tr>   
+            </table>
+        </div>
+	</div>
+</body>
+</html>
+<script>
+	function submitMultiData(e){
+		var dunninginfo = mini.get("id_dunninginfo").getValue();
+		if("" == dunninginfo){mini.alert("请选择催款员！");return false;}
+		var table_id8 = mini.get("table_id8");
+		var contractids = "";
+		var dunningids = "";
+		var rows = table_id8.getSelecteds();
+		for(var i=0;i<rows.length;i++){
+			contractids+=rows[i].id+",";
+			if("" != rows[i].dunningid){dunningids+=rows[i].dunningid+",";}
+		}
+		$.ajax({
+	        url: getRootPath()+"/acl/saveMultiOverdueDunningInfo.acl",
+	        type: "post",
+	        cache: false, 
+	        data :{ "dunningids":dunningids,"contractids": contractids,"partdept":dunninginfo},
+	        async:false,
+	        success: function (text) {mini.alert("保存成功！");}
+	    });
+		mini.get("multieditWindow").hide();
+		mini.get("table_id8").load();
+	}
+</script>

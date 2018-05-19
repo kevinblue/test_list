@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		SELECT CUST.CUST_NAME   AS SELLERNAME,
+		       CUST.ID          AS SELLER,
+		       CP.PERSON_REP    AS SELLERLEGALPERSON,
+		       CRP.PERSON_NAME_ AS SELLERLINKMAN,
+		       CP.OFTEN_ADDR    AS SELLERLINK,
+		       CP.MAIL_ADD      AS SELLERADDR,
+		       CP.POST_CODE     AS SELLERPOSTCODE,
+		       CP.PHONE_        AS SELLERTEL,
+		       CP.FAX_NUMBER    AS SELLERFAX
+		  FROM CUST_INFO CUST
+		  LEFT JOIN (
+		    SELECT CIP.CUST_ID,'' AS PERSON_REP,CIP.OFTEN_ADDR,CIP.MAIL_ADD,CIP.POST_CODE,CIP.PHONE_,CIP.FAX_NUMBER FROM CUST_INFO_PERSON CIP
+		    UNION ALL
+		    SELECT CIC.CUST_ID,CIC.PERSON_REP,CIC.REG_ADDRESS,CIC.MAILA_DDRESS,CIC.POST_CODE,CIC.PHONE,CIC.FAX FROM CUST_INFO_COMPANY CIC
+		  ) CP ON CUST.ID = CP.CUST_ID
+		  LEFT JOIN (select * from CUST_RELATED_PERSON  where MAIN_PERSON_FLAG = '是') CRP ON CUST.ID = CRP.CUST_ID 
+		  LEFT JOIN CUST_TYPE_INFO CTI ON CUST.ID = CTI.CUST_ID
+		  WHERE CTI.CUST_TYPE = 'cust_type.vndr' 
+      		AND NVL(CUST.INVALID_,'否')='否'
+      		/~custidstr: AND CUST.ID not in ({custidstr})~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

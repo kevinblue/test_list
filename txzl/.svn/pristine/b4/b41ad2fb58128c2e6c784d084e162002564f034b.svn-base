@@ -1,0 +1,140 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@include file="/base/mini.jsp"%>
+ <script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+	var fundtypejson=${param.fundtypejson};
+	var result="";
+	for(var i=0;i<fundtypejson.length;i++){
+		if(i==fundtypejson.length-1){
+			result+=fundtypejson[i];
+		}else{
+			result+=fundtypejson[i]+",";
+		}
+	}
+	var showTools = true;
+	if('${param.isView}' == 'true'){showTools = false;}
+  		jQuery(function() {	
+  			seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) { 								
+  				new ApTable({ 					
+  					id:'premise_condition_openlist',					
+  					renderTo:'id_premise_condition_openlist',
+  					width:globalClientWidth,
+  					height:globalClientHeight,					 															
+  					iconCls:'icon-node',
+  					multiSelect: true,
+  					showToolbar: showTools,//是否显示表格按钮行
+  					remoteOper:false,//是否每次操作都交给后台，为true 时必须定义  entityClassName
+  					pageSize:15,
+  					showPager:true,
+  					lazyLoad:false, 	
+  					xmlFileName:'/eleasing/workflow/contract/contract_condition/contract_condition_query.xml', 
+  					params:{"payment_category":result},
+  					tools:[{
+  					    html : '确 认',
+  						plain : true,
+  						iconCls : 'icon-redo',
+  						handler : function(miniTable, buttonText) {
+  							var paymentjson=${param.paymentjson};//被选中资金收付计划传递过来的json数组对象
+  	  					    var parentdata=window.parent.mini.get("payment_premise_condition");//获取付款前提条件对象
+  	  					    var checkparentdata=window.parent.mini.get("payment_premise_condition").getData();
+  							var rows = miniTable.getSelecteds();
+  							if (rows.length > 0) {
+  								var arrayobj = [];
+  								for (var i = 0; i < paymentjson.length; i++) {//资金收付计划传递过来的JSON数组
+  									var temp = 0;
+  									var numObj = {};
+  									var strfundtypename=paymentjson[i].fundtypename
+  									for (var j = 0; j < rows.length; j++) {//弹出窗口中的结果集
+  										if(strfundtypename==rows[j].paymentcategory){
+  											var fundplan = {};
+  	  										fundplan.docid = paymentjson[i].docid;
+  	  										fundplan.projnumber = paymentjson[i].contractid==""?window.parent.mini.get("contract_id").getValue():paymentjson[i].contractid;  
+  	  										fundplan.feetype = paymentjson[i].fundtype;
+  	  										fundplan.feetypename =strfundtypename;//paymentjson[i].feetypename;feetypename中文乱码，天信需求显示fundname
+  	  										fundplan.paymentid = "第" + paymentjson[i].paymentid+ "笔";
+  	  										fundplan.conditionname = rows[j].conditionname;
+  	  										fundplan.devicenamename = paymentjson[i].devicenamename;
+  	  										fundplan.devicename = paymentjson[i].devicename;
+  	  										fundplan.paymentnode = getPayNum(paymentjson[i], checkparentdata, numObj);
+  	  										arrayobj.push(fundplan);
+  										}
+  									}
+  								}
+  								parentdata.addRows(arrayobj, 0);
+  							} else {
+  								mini.alert("请选中要操作的数据！");
+  							}
+  							window.parent.$("#id_json_payment_premise_condition_str").val(mini.encode(window.parent.mini.get("payment_premise_condition").getData()));
+  					        CloseWindow(); //关闭当前页面
+  					    }
+  					}],     
+  					columns:[ 
+						{type:'checkcolumn'},
+  					    {type:'indexcolumn',header:'序号'},
+  						{field:'id',header:'id',headerAlign:'center',visible:false},	
+  						{field:'conditionname',header:'条件名称',  								
+  								headerAlign:'center',
+  								 width:150,
+  								 allowSort:true,
+  							    formEditorConfig:{								
+							         type:'textarea',								
+							     	width:200
+ 							           }},  	
+  						 {field:'contracttype',header:'合同类型',
+  							      headerAlign:'center',
+  							      width:50,
+  							      allowSort:true,
+  							    formEditorConfig:{
+							         type:'combobox',
+							         width:200,
+							         valueField:'id', 
+							         textField:'text',
+									  data:[{id:'租赁合同',text:'租赁合同'},{id:'采购合同',text:'采购合同'}]
+ 							           } }, 	  			  						  			     
+  			  			{field:'paymentcategory',header:'款项节点',
+	  			  				    	headerAlign:'center',
+	  			  				    	width:150,
+	  			  				    	allowSort:true, 
+	  			  				    	formEditorConfig:{
+	  			  				    		newLine:true,
+	  			  				    		type:'textarea',								
+								     		width:200
+	  		  							           }},  
+  			  			 {field:'conditiontype',header:'条件类型',
+  			  			  		  			 headerAlign:'center',
+  			  			  		  			 width:50,
+  			  			  		  			 allowSort:true,
+  			  			  		  	    formEditorConfig:{		
+  									         type:'combobox',
+  									       headerAlign:'center',
+  									    	 width:200,
+  									    	 valueField:'id', 
+  								         		textField:'text',
+  												data:[{id:'前置',text:'前置'},{id:'后置',text:'后置'}]
+  		  							           }} 
+  					]					
+  				});
+  			});
+  		});
+  		//参数1、资金收付计划json对象，2、付款前提条件结果集，3，定于个对象
+  		function getPayNum(paymentjson, checkparentdata, numObj){
+  			var num = 1;
+  			var keyTemp =paymentjson.devicename+"_"+paymentjson.fundtype + "_" + paymentjson.paymentid;
+  			if(numObj.keyTemp){
+  				num = numObj.keyTemp + 1;
+  			}else{
+  				for(var i = 0;i < checkparentdata.length; i++){
+  		  			var paymentid=checkparentdata[i].paymentid.replace(/[^0-9]/ig,"");//去除所有字符串只取数字
+  					if(paymentjson.devicename==checkparentdata[i].devicename&&paymentjson.fundtype == checkparentdata[i].feetype
+  					   && paymentjson.paymentid ==paymentid){
+  						num = num +1;
+  					}
+  				}
+  			}
+  			numObj.keyTemp = num;
+  			return num;
+  		}		
+	</script>
+<div id='id_premise_condition_openlist' style="width:300px;height:200px;" ></div>

@@ -1,0 +1,223 @@
+package com.tenwa.leasing.entity.badassets;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+
+@Entity
+@FieldName(name = "不良资产报送页签信息")
+@Table(name = "BADASSETS_INFO")
+public class BadAssetsInfo {
+
+	@Id
+	@GeneratedValue(generator = "paymentableGenerator")
+	@GenericGenerator(name = "paymentableGenerator", strategy = "uuid")
+	@Column(length = 32)
+	private String id;
+
+	@FieldName(name = "合同编号")
+	@JoinColumn(name="CONTRACT_ID")
+	@OneToOne
+	private ContractInfo contractId;
+
+	@FieldName(name = "融资金额")
+	@Column(name = "FINANCING_AMOUNT", length = 50)
+	private String financingAmount;
+	
+	
+	@FieldName(name = "融资余额")
+	@Column(name = "FINANCING_BALANCE", length = 50)
+	private String financingBalance;
+
+	@FieldName(name = "应收款总额")
+	@Column(name = "RECEIVE_AMOUNT", length = 100)
+	private String receiveAmount;
+
+	@FieldName(name = "已收款总额")
+	@Column(name = "PAYMENT_AMOUNT", length = 100)
+	private String paymentAmount;
+
+	@FieldName(name = "资产分类等级")
+	@Column(name = "CLASSIFY_LEVEL", length = 50)
+	private String classifyLevel;
+	
+	@FieldName(name = "基本情况")
+	@Column(name = "BASIC_SITUATION", length = 3000)
+	private String basicSituation;
+	
+	@FieldName(name = "已采取的清收措施")
+	@Column(name = "COLL_MEASURES", length = 3000)
+	private String collMeasures;
+	
+	@FieldName(name = "不良资产产生的原因")
+	@Column(name = "BAD_ASSETS", length = 3000)
+	private String badAssets;
+	
+	@FieldName(name = "建议处置措施")
+	@Column(name = "TREATMENT_SCHEMA", length = 3000)
+	private String treatmentSchema;
+	
+	@FieldName(name = "改进建议")
+	@Column(name = "IMP_SUGGESTION", length = 3000)
+	private String impSuggestion;
+
+	@ManyToOne
+	@FieldName(name = "创建人")
+	@JoinColumn(name = "CREATOR_")
+	private User creator;
+
+	@FieldName(name = "创建时间")
+	@Column(name = "CREATE_DATE", length = 20)
+	private String createDate;
+
+	@ManyToOne
+	@FieldName(name = "修改人")
+	@JoinColumn(name = "MODIFICATOR_")
+	private User modificator;
+
+	@FieldName(name = "修改时间")
+	@Column(name = "MODIFY_DATE", length = 20)
+	private String modifyDate;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
+	public ContractInfo getContractId() {
+		return contractId;
+	}
+
+	public void setContractId(ContractInfo contractId) {
+		this.contractId = contractId;
+	}
+
+	public String getFinancingAmount() {
+		return financingAmount;
+	}
+
+	public void setFinancingAmount(String financingAmount) {
+		this.financingAmount = financingAmount;
+	}
+
+	public String getFinancingBalance() {
+		return financingBalance;
+	}
+
+	public void setFinancingBalance(String financingBalance) {
+		this.financingBalance = financingBalance;
+	}
+
+	public String getReceiveAmount() {
+		return receiveAmount;
+	}
+
+	public void setReceiveAmount(String receiveAmount) {
+		this.receiveAmount = receiveAmount;
+	}
+
+	public String getPaymentAmount() {
+		return paymentAmount;
+	}
+
+	public void setPaymentAmount(String paymentAmount) {
+		this.paymentAmount = paymentAmount;
+	}
+
+	public String getClassifyLevel() {
+		return classifyLevel;
+	}
+
+	public void setClassifyLevel(String classifyLevel) {
+		this.classifyLevel = classifyLevel;
+	}
+
+	public String getTreatmentSchema() {
+		return treatmentSchema;
+	}
+
+	public void setTreatmentSchema(String treatmentSchema) {
+		this.treatmentSchema = treatmentSchema;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public String getBasicSituation() {
+		return basicSituation;
+	}
+
+	public void setBasicSituation(String basicSituation) {
+		this.basicSituation = basicSituation;
+	}
+
+	public String getCollMeasures() {
+		return collMeasures;
+	}
+
+	public void setCollMeasures(String collMeasures) {
+		this.collMeasures = collMeasures;
+	}
+
+	public String getBadAssets() {
+		return badAssets;
+	}
+
+	public void setBadAssets(String badAssets) {
+		this.badAssets = badAssets;
+	}
+
+	public String getImpSuggestion() {
+		return impSuggestion;
+	}
+
+	public void setImpSuggestion(String impSuggestion) {
+		this.impSuggestion = impSuggestion;
+	}
+
+	
+}

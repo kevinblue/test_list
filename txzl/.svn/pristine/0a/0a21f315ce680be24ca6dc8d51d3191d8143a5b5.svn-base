@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 选择客户的银行 -->
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+	          select 
+	          bank_name                      clientbank,
+		       cust_account.deposit_bank_type depositbanktypeid,
+		       tdd.name_                       depositbanktype,
+		       account                        clientaccount,
+		       acc_number                     clientaccnumber,
+		       bank_no                        clientbankno,
+		       cust_account.union_bank_no     unionclientbankno,
+		        cust_account.province_         depositprovinceid,
+          	  td1.name                      depositprovince,
+               cust_account.city_         depositcityid,
+                td2.name         depositcity
+			  from cust_account
+			  left outer join cust_info
+		  	  on cust_info.id = cust_account.cust_id
+		  	   left join t_district td1 on td1.id=cust_account.province_ 
+            left join t_district td2 on td2.id=cust_account.city_ 
+             left join t_dicts_datas tdd on tdd.id_=cust_account.deposit_bank_type
+				 where 1 = 1
+               
+             
+               /~custid:and cust_account.cust_id='{custid}'~/
+               /~custname:and cust_info.cust_name='{custname}'~/
+			 ]]>
+
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

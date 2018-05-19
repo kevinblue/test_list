@@ -1,0 +1,266 @@
+package com.tenwa.leasing.entity.finacial;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.OrderBy;
+
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+
+@Entity
+@FieldName(name = "融资费信息")
+@Table(name = "LOAN_FEET_PLAN")
+public class LoanFeePlan {
+	@Id
+	@GeneratedValue(generator = "paymentableGenerator")
+	@GenericGenerator(name = "paymentableGenerator", strategy = "uuid")
+	@Column(length = 32)
+	@FieldName(name="标识符")
+	private String id;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@FieldName(name = "借款合同号")
+	@JoinColumn(name = "LOAN_ID")
+	private LoanAccount loanid;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@FieldName(name = "融资费类型")
+	@JoinColumn(name = "FEE_TYPE")
+	private DictionaryData feeType;
+	
+	@FieldName(name="费用项名称")
+	@Column(name="FEE_NAME",length=20)
+	private String feeName;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@FieldName(name = "币种")
+	@JoinColumn(name = "CURRENCY")
+	private DictionaryData currency;
+
+	@FieldName(name="应付金额")
+	@Column(name="PLAN_MONEY",precision=22,scale=2)
+	private BigDecimal planMoney;
+
+	@FieldName(name="应付日期")
+	@Column(name="PLAN_DATE",length=20)
+	private String planDate;
+
+	@FieldName(name="支付账号")
+	@Column(name="PAY_ACCOUNT",length=30)
+	private String payAccount;
+
+	@FieldName(name="备注")
+	@Column(name="MEMO",length=1000)
+	private String memo;
+	
+	@Transient
+	@FieldName(name="剩余金额")
+	private BigDecimal overageMoney;
+	
+	@ManyToOne
+	@FieldName(name = "创建人")
+	@JoinColumn(name = "CREATOR_")
+	private User creator;
+
+	@FieldName(name = "创建时间")
+	@Column(name = "CREATE_DATE", length = 20)
+	private String createDate;
+
+	@ManyToOne
+	@FieldName(name = "修改人")
+	@JoinColumn(name = "MODIFICATOR_")
+	private User modificator;
+
+	@FieldName(name = "修改时间")
+	@Column(name = "MODIFY_DATE", length = 20)
+	private String modifyDate;
+	
+	@FieldName(name = "融资费实收")
+	@OneToMany(mappedBy = "planId", fetch = FetchType.LAZY)
+	@OrderBy(clause = "FACT_DATE asc")
+	Set<LoanFeeIncome> loanFeeIncomes = new HashSet<LoanFeeIncome>();
+
+	@FieldName(name="提款银行")
+	@Column(name="ACC_BANK")
+	private String accBank;
+
+	@FieldName(name="提款账户")
+	@Column(name="ACC_NAME")
+	private String accName;
+	
+	@FieldName(name="提款帐号")
+	@Column(name="ACC_NUMBER")
+	private String accNumber;
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
+
+	public LoanAccount getLoanid() {
+		return loanid;
+	}
+
+	public void setLoanid(LoanAccount loanid) {
+		this.loanid = loanid;
+	}
+
+	public DictionaryData getFeeType() {
+		return feeType;
+	}
+
+	public void setFeeType(DictionaryData feeType) {
+		this.feeType = feeType;
+	}
+
+	public String getFeeName() {
+		return feeName;
+	}
+
+	public void setFeeName(String feeName) {
+		this.feeName = feeName;
+	}
+
+	public DictionaryData getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(DictionaryData currency) {
+		this.currency = currency;
+	}
+
+	public BigDecimal getPlanMoney() {
+		return planMoney;
+	}
+
+	public void setPlanMoney(BigDecimal planMoney) {
+		this.planMoney = planMoney;
+	}
+
+	public String getPlanDate() {
+		return planDate;
+	}
+
+	public void setPlanDate(String planDate) {
+		this.planDate = planDate;
+	}
+
+	public String getPayAccount() {
+		return payAccount;
+	}
+
+	public void setPayAccount(String payAccount) {
+		this.payAccount = payAccount;
+	}
+
+	public String getMemo() {
+		return memo;
+	}
+
+	public void setMemo(String memo) {
+		this.memo = memo;
+	}
+
+	public BigDecimal getOverageMoney() {
+		return overageMoney;
+	}
+
+	public void setOverageMoney(BigDecimal overageMoney) {
+		this.overageMoney = overageMoney;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public Set<LoanFeeIncome> getLoanFeeIncomes() {
+		return loanFeeIncomes;
+	}
+
+	public void setLoanFeeIncomes(Set<LoanFeeIncome> loanFeeIncomes) {
+		this.loanFeeIncomes = loanFeeIncomes;
+	}
+
+	public String getAccBank() {
+		return accBank;
+	}
+
+	public void setAccBank(String accBank) {
+		this.accBank = accBank;
+	}
+
+	public String getAccName() {
+		return accName;
+	}
+
+	public void setAccName(String accName) {
+		this.accName = accName;
+	}
+
+	public String getAccNumber() {
+		return accNumber;
+	}
+
+	public void setAccNumber(String accNumber) {
+		this.accNumber = accNumber;
+	}
+
+	//初始化剩余金额
+	public void initLoanFeePlan(){
+		BigDecimal factMoney=BigDecimal.ZERO;
+		if(this.getLoanFeeIncomes().size()>0){
+			for(LoanFeeIncome income : this.getLoanFeeIncomes()){
+				factMoney = factMoney.add(income.getFactMoney());
+			}
+		}
+		this.setOverageMoney(this.getPlanMoney().subtract(factMoney));
+	}
+}

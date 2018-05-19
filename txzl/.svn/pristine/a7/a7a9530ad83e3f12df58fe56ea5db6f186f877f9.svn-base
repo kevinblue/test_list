@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+	        	select 
+		        	contract.contract_id contractid,
+		        	contract.project_name  projname,
+		        	contract.id id,
+					contract.contract_number contractnumber,
+					contract.cust_name custname,
+					contract.department department,
+					contract.proj_manage projmanage,
+					contract.projmanagename projmanagename,
+					contract.contractstatus contractstatus,
+			        dunning.part_dept partdept,
+			        dunning.id dunningid,
+			        tusers.realname_ partdeptname
+		        	from Vi_contract_info  contract
+					left join OVERDUE_DUNNING_INFO dunning 
+					on contract.id = dunning.contract_id 
+			        left join T_USERS tusers
+			        on dunning.part_dept = tusers.id_
+				where contract_status >30 and contract_status <100
+				/~contractid: AND contract.contract_id like '%{contractid}%' ~/
+				/~contractnumber: AND contract.contract_number like '%{contractnumber}%' ~/
+				/~custname: AND contract.cust_name like '%{custname}%' ~/
+				/~department: AND contract.department like '%{department}%' ~/
+				/~projmanagename: AND contract.projmanagename like '%{projmanagename}%' ~/
+				ORDER BY NVL(dunning.modify_date,dunning.create_date) DESC
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        	select 
+		        	contract.contract_id contractid,
+		        	contract.id id,
+					contract.contract_number contractnumber,
+					contract.cust_name custname,
+					contract.department department,
+					contract.proj_manage projmanage,
+					contract.projmanagename projmanagename,
+					contract.contractstatus contractstatus,
+			        dunning.part_dept partdept,
+			        dunning.id dunningid,
+			        tusers.realname_ partdeptname
+		        	from Vi_contract_info  contract
+					left join OVERDUE_DUNNING_INFO dunning 
+					on contract.id = dunning.contract_id 
+			        left join T_USERS tusers
+			        on dunning.part_dept = tusers.id_
+				where contract_status >30 and contract_status <100
+				/~contractid: AND contract.contract_id like '%{contractid}%' ~/
+				/~contractnumber: AND contract.contract_number like '%{contractnumber}%' ~/
+				/~custname: AND contract.cust_name like '%{custname}%' ~/
+				/~department: AND contract.department like '%{department}%' ~/
+				/~projmanagename: AND contract.projmanagename like '%{projmanagename}%' ~/
+				ORDER BY ISNULL(dunning.modify_date,dunning.create_date) DESC
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

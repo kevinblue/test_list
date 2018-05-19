@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select rs.*
+				 from (
+				select 
+				ci.id,
+				ci.cust_name custinfoname,
+				cic.org_code code,
+				cic.creator_,
+				ci.id custinfo,
+				case 
+				when tp.cust_type ='cust_type.cust' then '承租人'
+				when tp.cust_type ='cust_type.assuror' then '担保人' else '' end custtype,
+				info.contract_status contractstatus
+				from cust_info_company cic
+				left join  cust_info ci  on cic.cust_id=ci.id 
+				LEFT JOIN contract_info info ON ci.ID = info.CUST_ID
+				LEFT JOIN cust_type_info tp ON ci.ID =tp.CUST_ID 
+				
+				union all
+				
+				select 
+				ci.id,
+				ci.cust_name custinfoname,
+				cip.id_card_no code,
+				cip.creator_,
+				ci.id  custinfo,
+				case 
+				when tp.cust_type ='cust_type.cust' then '承租人'
+				when tp.cust_type ='cust_type.assuror' then '担保人' else '' end custtype,
+				info.contract_status contractstatus
+				
+				from cust_info_person cip 
+				left join cust_info ci  on cip.cust_id =ci.id 
+				LEFT JOIN contract_info info ON ci.ID = info.CUST_ID
+				LEFT JOIN cust_type_info tp ON ci.ID =tp.CUST_ID 
+				)rs
+				where 1=1 and rs.contractstatus =31 and  custtype in ('承租人','担保人')
+				/~userid: and creator_='{userid}'~/
+				/~custinfoname: AND rs.custinfoname LIKE '%{custinfoname}%'~/
+				/~code: AND rs.code LIKE '%{code}%'~/
+				/~custtype: AND custtype LIKE '%{custtype}%'~/
+				/~applyid: AND applyid = '{applyid}'~/
+	  ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

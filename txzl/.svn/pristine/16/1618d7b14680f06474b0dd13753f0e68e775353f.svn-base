@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+			
+  select 
+        loan.id           id,
+        loan.loan_unit         loanunit,
+        loan.loan_type        loantype,
+        loan.now_rate        nowrate,    
+        loan.loan_contract_id    loancontractid,
+        loan.corpus         corpus,
+        nvl(bf.nums,0)  attachmentnum,
+        loan.loan_term        loanterm,
+        loan.year_rate        yearrate,
+        loan.caution_money       cautionmoney,
+        loan.loan_date        loandate,
+        loan.expire_date      expiredate,
+        loan.pay_date        paydate,
+        loan.mortgage_detail    mortgagedetail,
+        loan.contract_id    contractid,
+        ci.project_name      projectname,
+        dict.id_        paymenttype,
+        dict.name_        paymenttypename,
+        nvl(income.alreadycorpus,0) alreadycorpus,
+        nvl(income.alreadyinterest,0) alreadyinterest,
+        nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0) surpluscorpus,
+        nvl(rent.planinterest,0)-nvl(income.alreadyinterest,0) surplusinterest,
+        nvl(feeincome.alreadyhandling,0) alreadyhandling,
+        nvl(feeincome.alreadycaution,0) alreadycaution,
+        nvl(feeplan.planhandling,0)-nvl(feeincome.alreadyhandling,0) surplushandling,
+        nvl(feeplan.plancaution,0)-nvl(feeincome.alreadycaution,0) surpluscaution,
+        nvl(atmplan.planmoney,0) atmmoney,
+        nvl(loan.corpus,0)-nvl(atmplan.planmoney,0) surplusatmmoney
+        
+        from loan_account loan
+        left join contract_info ci on loan.contract_id=ci.id
+        left join t_dicts_datas dict on loan.payment_type=dict.id_
+        left join (select loan_id,sum(corpus) alreadycorpus,sum(interest) alreadyinterest  from LOAN_RENT_INCOME group by loan_id) income on loan.id=income.loan_id
+        left join (select loan_id,sum(corpus) plancorpus,sum(interest) planinterest from loan_rent_plan group by loan_id) rent on loan.id=rent.loan_id
+        left join (select loan_id,sum(decode(fee_type,'fee_type01',plan_money,0)) planhandling,sum(decode(fee_type,'fee_type02',plan_money,0)) plancaution  from loan_feet_plan group by loan_id) feeplan on loan.id=feeplan.loan_id
+        left join (select income.loan_id,sum(decode(fee.fee_type,'fee_type01',fact_money,0)) alreadyhandling,sum(decode(fee.fee_type,'fee_type02',fact_money,0)) alreadycaution  from loan_feet_income income left join loan_feet_plan fee on income.plan_id=fee.id group by income.loan_id) feeincome on loan.id=feeincome.loan_id
+    left join (select loan_id,sum(plan_money) planmoney from loan_atm_plan group by loan_id) atmplan on loan.id=atmplan.loan_id
+    left join (select file_key,count(file_key)nums from base_file group by file_key)bf on bf.file_key =loan.id
+   where 1=1
+				/~corpusMin: and loan.corpus>={corpusMin}~/
+				/~corpusMax: and loan.corpus<={corpusMax}~/
+				/~surpluscorpus: and nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0)={surpluscorpus}~/
+                /~loanunit: and loan.loan_unit like '%{loanunit}%'~/
+                /~projectname: and ci.project_name like '%{projectname}%'~/
+	       		/~expiredateStart: and loan.expire_date >= '{expiredateStart}'~/
+	       		/~expiredateEnd: and loan.expire_date <= '{expiredateEnd}'~/
+	       		order by loan.loan_date	
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--注意点模糊查询请用 like replace('%{ebdataid}%',' ') 可去掉前后空格 -->
+<!-- 复杂的列名取值说明：1. 【剩余金额=到账金额-流程中用掉的网银】 2. 查询所有网银信息考虑 是否作废为0 表示作废 -->
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql>   
+	        <![CDATA[
+           select 
+       fe.fact_money     factmoney,
+       fe.fact_date factdate,
+       fe.own_account ownaccount,
+       fe.own_bank ownbank,
+       fe.own_acc_number ownaccnumber,
+       fe.client_name clientname,
+       fe.upload_date uploaddate,
+       nvl(bf.nums,0)  attachmentnum,
+fe.id id,
+fe.TRANSACTION_DATE transactiondate,
+fe.PAYOUT_DATE payoutdate,
+fe.ACCOUNT_NAME accountname,
+fe.BANK_TYPE banktype,
+fe.ACCOUNT account,
+fe.BORROW borrow,
+fe.CREDIT credit,
+fe.ACCOUNT_BALANCE accountbalance,
+fe.DIGEST digest,
+fe.PURPOSE purpose,
+fe.OTHER_ACCOUNT otheraccount,
+fe.CLIENT_ACC_NUMBER clientaccnumber,
+fe.OTHER_BANK otherbank,
+fe.TRANSACTION_TYPE transactiontype,
+fe.SETTLEMENT_TYPE settlementType,
+fe.CURRENCY currency,
+fe.cust_id custid,
+cust.cust_name custidname,
+fe.SN sn,
+fe.DETAILED_SOURCE detailedSource,
+fe.MAINTENANCE_USER maintenanceUser,
+fe.AMOUNT amount,
+fe.NOTE note,
+fe.PAT_SUB_ACCOUNTS parSubAccname
+from FUND_EBANK_DATA fe
+left join cust_info cust on fe.cust_id=cust.id
+left join (select file_key,count(file_key)nums 
+from base_file group by file_key)bf 
+on bf.file_key =fe.id
+where 1=1
+         --配置参数查sql
+         /~ownaccount: and fe.own_account   like '%{ownaccount}%' ~/ 
+         /~ownbank: and fe.own_bank    like '%{ownbank}%' ~/ 
+         /~factmoney: and fe.fact_money   like '%{factmoney}%' ~/ 
+         /~ownaccnumber: and fe.own_acc_number    like '%{ownaccnumber}%' ~/ 
+         /~payoutdateStart: and fe.payout_date    >= '{payoutdateStart}' ~/ 
+         /~payoutdateEnd: and fe.payout_date    <= '{payoutdateEnd}' ~/ 
+         /~factdateStart: and fe.fact_date>= '{factdateStart}' ~/ 
+         /~factdateEnd: and fe.fact_date<= '{factdateEnd}' ~/ 
+         /~clientname: and fe.client_name   like '%{clientname}%' ~/ 
+       
+         ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

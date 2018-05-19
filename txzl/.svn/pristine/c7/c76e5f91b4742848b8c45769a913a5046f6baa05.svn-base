@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+	       select * from(
+	         select notice.id,
+	         cust.cust_name custname,
+	         to_char(sysdate,'yyyy"年"mm"月"dd"日"') systemdate,--当前日期
+	         ci.contract_id contract_id,--合同编号
+	         contractoutlist.inc_rent,--剩余租金
+	         (select  wmsys.wm_concat(ss.RENTLIST) from vi_contract_fund_rent_plan ss where to_date(contractoutlist.plan_date,'yyyy-mm-dd')<=to_date(to_char(sysdate,'yyyy-mm-dd'),'yyyy-mm-dd')
+	         and currentoverage>0 and ss.CONTRACTID=ci.ID) rentlist,--逾期租期
+	         contractoutlist.plan_date plandate,--计划日期
+	         contractoutlist.out_list outlist,--剩余租期
+	         plan_.overduerent,  --租金金额
+	         contract_penalty.penalty,--违约金
+	  		 contractcondition.start_date startdate--签约日期
+         
+            from contract_info ci 
+            left join cust_info cust 
+             on ci.cust_id=cust.id
+            left join OVERDUE_DUNNING_Notice notice 
+             on ci.id=notice.contract_id
+            left join vi_contract_out_list contractoutlist
+             on ci.id = contractoutlist.contract_id
+            left join (select sum(CURRENTOVERAGE) overduerent,currentoverage,contractid from vi_contract_fund_rent_plan vi where plandate <to_char(sysdate,'yyyy-mm-dd') group by contractid,currentoverage )plan_
+             on plan_.contractid = ci.id 
+            left join (select sum(penalty) penalty,contract_id from vi_contract_penalty contract_penalty group by contract_id ) contract_penalty
+             on contract_penalty.contract_id = ci.id 
+            left join CONTRACT_CONDITION contractcondition
+             on ci.id = contractcondition.contract_id
+        ) menutemp
+        where 1=1
+		     /~id: AND menutemp.id = '{id}' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        	select cust_name overdue_0,START_DATE overdue_1,CONTRACT_ID overdue_2,CONTRACT_ID overdue_3,plan_date overdue_4,
+				          left(overduelist,len(overduelist)-1) overdue_5,overage_rent overdue_6,overage_rent overdue_7,currdate overdue_8,isnull(penalty,0) overdue_9,
+				          leftlist overdue_10,left_rent overdue_11
+				           from (
+				         select ci.CONTRACT_ID,cust.CUST_NAME,cc.START_DATE,
+				         isnull(cfrp.overage_rent,0) overage_rent,cfrp.plan_date,
+				         dbo.FN_getPenalty_By_Contract(ci.id,CONVERT(varchar(10),getdate(),120)) penalty, 
+				         CONVERT(varchar(10),getdate(),120) currdate,
+				         (select cast(rentlist as varchar(10))+',' from VI_CONTRACT_FUND_RENT_PLAN 
+							where PLANDATE<=GETDATE() and CURRENTOVERAGE>0
+							and CONTRACTID=ci.id order by rentlist asc FOR XML PATH('')) overduelist,
+							cfrp2.left_rent,cfrp2.leftlist 
+				          from CONTRACT_INFO ci 
+				         left join CUST_INFO cust  on ci.CUST_ID=cust.id 
+				         left join CONTRACT_CONDITION cc on ci.id=cc.CONTRACT_ID 
+				         left join (
+							select contractid, SUM(vcfrp.CURRENTOVERAGE) overage_rent,MAX(PLANDATE) plan_date  from VI_CONTRACT_FUND_RENT_PLAN vcfrp where  PLANDATE<=GETDATE() group by contractid
+				         ) cfrp on ci.id=cfrp.CONTRACTID 
+				         left join (
+							select contractid, SUM(RENT) left_rent,COUNT(id) leftlist  from VI_CONTRACT_FUND_RENT_PLAN vcfrp where  PLANDATE>GETDATE() group by contractid
+				         ) cfrp2 on ci.id=cfrp2.CONTRACTID 
+				         left join OVERDUE_DUNNING_Notice odn on ci.id=odn.CONTRACT_ID 
+				         where 1=1 
+				         /~id: AND odn.id='{id}' ~/
+				         
+				         ) a
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

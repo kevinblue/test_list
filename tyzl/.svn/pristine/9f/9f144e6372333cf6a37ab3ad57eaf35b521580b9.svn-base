@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tw_ReportCenter" basedir=".">	
+	<property name="WASAPPDIR" location="./work" />
+	<property name="WEBCLASSES" location="${basedir}\\WebContent" />
+	<target name="DeployByCopy" >
+		<copy todir="${WASAPPDIR}" verbose="true">
+			<fileset dir="${WEBCLASSES}" >
+				<include name="*/**" />				
+				<exclude name="web.xml" />
+				<exclude name="*/**/xml/*.xml"/>
+				<exclude name="*/**/*.properties"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<target name="Deploy">
+		<copy todir="${WASAPPDIR}" verbose="true">
+			<fileset dir="${WEBCLASSES}" />
+		</copy>
+	</target>
+
+	<target name="CopyClasses">
+		<copy todir="${WASAPPDIR}\\WEB-INF\\classes" verbose="true">
+			<fileset dir="${WEBCLASSES}\\WEB-INF\\classes">
+				<include name="*/**" />				
+			</fileset>
+		</copy>
+	</target>
+	
+	<target name="CopyWeb">
+		<copy todir="${WASAPPDIR}" verbose="true">
+			<fileset dir="${WEBCLASSES}">
+				<exclude name="**/WEB-INF/" />
+			</fileset>
+		</copy>
+	</target>
+</project>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+部门选择数据用的xml
+
+如果是 属于经销商登陆 则选择部门时只能选择到 当前经销商的部门
+如果不是 经销商账户登陆则能选到整个组织架构
+
+传入参数
+
+dealer_id="${sessionScope['currentDealerCustInfoId']}" 传入该参数可以 过滤为 只有该经销部门 
+
+user_id="${sessionScope.loginUser.id}"  获取当前登陆人的id
+
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select * from (
+					SELECT 
+					DISTINCT
+					TD.ID_ ID,
+					TD.NAME_  NAME
+					FROM T_DEPTS TD
+					LEFT JOIN T_USERS_DEPTS TUD ON (TD.ID_=TUD.DEPT_ID_)
+					WHERE 1=1
+					 /~user_id:
+					 AND TUD.USER_ID_='{user_id}'
+					 ~/
+					 ) tdept
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

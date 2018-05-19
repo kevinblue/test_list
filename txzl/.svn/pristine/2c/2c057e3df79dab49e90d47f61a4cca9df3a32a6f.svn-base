@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	        
+			select *
+            from 
+            (
+                select rii.id as id,rd.out_no as outno,ci.contract_id as contractid,cinfo.cust_name as custname,cfrp.rent_list as rentlist,
+                rii.tax_type as taxtype,cfrp.plan_date as plandate,
+                rii.money as planmoney, 
+                tds1.name_   taxlevel,
+	            '' invoicenum,
+	            rd.invoice_money invoicemoney,
+	            '' invoicedate,
+	            rd.tax_bank taxbank,
+	            rd.tax_acc taxacc,
+	            rd.tax_tel taxphone,
+	            rd.TAX_REG_CODE taxregcode,
+	            rd.tax_addr taxregadd,
+	            sysdate,
+                '{login_username}' as exportperson  
+		           
+               From  rent_invoice_download_info rd
+               left join rent_invoice_info rii on rd.rent_invoice_id=rii.id
+               left join contract_fund_rent_plan cfrp on rii.cfrp_id=cfrp.id
+               left join contract_info ci on cfrp.contract_id=ci.id
+               left join contract_invoice_type cit on ci.id=cit.contract_id
+               left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+               left join cust_info cinfo on ci.cust_id=cinfo.id
+               where rd.rent_invoice_id is not null
+               and rii.bill_type='invoice'
+               and nvl(rd.is_export,0)=0
+               
+               union all    
+           
+               select rd.contract_id as id,rd.out_no as outno,ci.contract_id as contractid,cinfo.cust_name as custname,1 as rentlist,
+               'corpusone' as taxtype,cc.start_date as plandate,
+               cc.equip_amt planmoney,
+               tds1.name_   taxlevel,
+	           '' invoicenum,
+	           rd.invoice_money invoicemoney,
+	           '' invoicedate,
+	           rd.tax_bank taxbank,
+	           rd.tax_acc taxacc,
+	           rd.tax_tel taxphone,
+	           rd.TAX_REG_CODE taxregcode,
+	           rd.tax_addr taxregadd,
+	           sysdate,
+	           '' as exportperson  
+		           
+               From  rent_invoice_download_info rd
+               left join contract_condition cc on rd.contract_id=cc.contract_id
+               
+               left join contract_info ci on rd.contract_id=ci.id
+               left join contract_invoice_type cit on ci.id=cit.contract_id
+               left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+               left join cust_info cinfo on ci.cust_id=cinfo.id
+               where rd.rent_invoice_id is null
+               and nvl(rd.is_export,0)=0
+            
+           )list
+           where 1=1
+           and list.id in (<<ids>>)
+           
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	    <table_sql>
+	  	        <![CDATA[	        
+			select *
+            from 
+            (
+                select 
+                rii.id as id,
+              (case when tds1.id_='invoicetype1' then '增票' else '普票' end)   c1,--发票种类
+              rd.out_no as c2,--单据号
+              cfrp.PLAN_DATE as c3,--收款日期
+              ci.contract_id as c4,--客户编号 合同编号
+              cinfo.cust_name as c5,--客户名称
+              rd.TAX_REG_CODE c6,--客户税号
+              rd.tax_addr+' '+rd.tax_tel c7,--客户地址电话
+              rd.tax_bank+' '+ rd.tax_acc c8,--客户银行及帐号
+              '' c9,--备注
+              '' c10,--专用发票红票通知单号
+              '' c11,--普通发票红票对应正数发票代码
+              '' c12,--普通发票红票对应正数发票号码
+              '' c13,--开票人
+              '' c14,--复核人
+              '' c15,--收款人
+              '' c16,--销方银行及帐号
+              '' c17,--销方地址电话
+              '' c18,--商品编号
+              '租赁设备款' c19,--商品名称  
+              '' c20,--规格型号
+              '期' c21,--计量单位
+              '1' c22,--数量
+              rd.invoice_money c23,--金额
+              (case when tds1.id_='invoicetype1' then '0.17' else '0.17' end) c24,--税率
+              '' c25,--税额
+              '' c26,--折扣金额(含税)
+              '' c27,--折扣税额
+              '' c28--单价 
+		           
+               From  rent_invoice_download_info rd
+               left join rent_invoice_info rii on rd.rent_invoice_id=rii.id
+               left join contract_fund_rent_plan cfrp on rii.cfrp_id=cfrp.id
+               left join contract_info ci on cfrp.contract_id=ci.id
+               left join contract_invoice_type cit on ci.id=cit.contract_id
+               left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+               left join cust_info cinfo on ci.cust_id=cinfo.id
+               where rd.rent_invoice_id is not null
+               and rii.bill_type='invoice'
+               and ISNULL(rd.is_export,0)=0
+               
+               union all    
+           
+               select 
+               rd.contract_id as id,
+              (case when tds1.id_='invoicetype1' then '增票' else '普票' end)   c1,--发票种类
+              rd.out_no as c2,--单据号
+              '' as c3,--收款日期
+              ci.contract_id as c4,--客户编号 合同编号
+              cinfo.cust_name as c5,--客户名称
+              rd.TAX_REG_CODE c6,--客户税号
+              rd.tax_addr+' '+rd.tax_tel c7,--客户地址电话
+              rd.tax_bank+' '+ rd.tax_acc c8,--客户银行及帐号
+              '' c9,--备注
+              '' c10,--专用发票红票通知单号
+              '' c11,--普通发票红票对应正数发票代码
+              '' c12,--普通发票红票对应正数发票号码
+              '' c13,--开票人
+              '' c14,--复核人
+              '' c15,--收款人
+              '' c16,--销方银行及帐号
+              '' c17,--销方地址电话
+              '' c18,--商品编号
+              '租赁设备款' c19,--商品名称  
+              '' c20,--规格型号
+              '期' c21,--计量单位
+              '1' c22,--数量
+              rd.invoice_money c23,--金额
+              (case when tds1.id_='invoicetype1' then '0.17' else '0.17' end) c24,--税率
+              '' c25,--税额
+              '' c26,--折扣金额(含税)
+              '' c27,--折扣税额
+              '' c28--单价
+		           
+               From  rent_invoice_download_info rd
+               left join contract_condition cc on rd.contract_id=cc.contract_id
+               
+               left join contract_info ci on rd.contract_id=ci.id
+               left join contract_invoice_type cit on ci.id=cit.contract_id
+               left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+               left join cust_info cinfo on ci.cust_id=cinfo.id
+               where rd.rent_invoice_id is null
+               and ISNULL(rd.is_export,0)=0
+            
+           )list
+           where 1=1
+           and list.id in (<<ids>>)
+           
+			 ]]> 
+			   </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

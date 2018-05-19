@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select *from 
+	        (
+				select
+				ci.id as cid,
+				cffp.id           as id,
+				fii.id            as fundinvoiceid,
+				cffp.payment_id   as paymentid,
+				ci.contract_id    as contractid,
+				CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+				cinfo.cust_name   as custname,
+				cffp.plan_date    as plandate,
+				cffp.plan_money   as planmoney,
+				tds.name_         as feetype,
+				tds1.name_        as rentinvoicetype,
+				cit.tax_reg_code  as taxregcode,
+		        cit.tax_bank      as taxbank,
+		        cit.tax_acc       as taxacc,
+		        cit.invoice_phone as phone,
+		        cit.invoice_add   as regaddress,
+				case nvl(fii.invoice_status,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' end as status,
+				TDD2.NAME_        AS LEASEFORM
+				from contract_fund_fund_plan cffp
+				left join fund_invoice_info fii on cffp.id=fii.cffp_id and fii.bill_type='invoice'
+				left join t_dicts_datas tds on cffp.fee_type=tds.id_
+				left join contract_info ci on cffp.contract_id=ci.id
+				left join contract_invoice_type cit on ci.id=cit.contract_id
+				left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+				LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+				left join cust_info cinfo on ci.cust_id=cinfo.id
+				left join 
+				(
+				select cffc.payment_id,nvl(sum(cffc.fact_money),0) as factmoney,count(fii2.id) as invoicenun,nvl(sum(invoicelist.invoicemoney),0) as invoicemoney from contract_fund_fund_charge cffc 
+				left join fund_invoice_info fii2 on cffc.id=fii2.cffc_id and fii2.bill_type='invoice'
+				left join
+				(select fd.fund_invoice_id,nvl(sum(fd.invoice_money),0) as invoicemoney from  FUND_INVOICE_DOWNLOAD_INFO fd 
+				group by fd.fund_invoice_id 
+				) invoicelist on fii2.id=invoicelist.fund_invoice_id
+				group by cffc.payment_id
+				) chargelist on cffp.id=chargelist.payment_id
+				
+				where 1=1
+				and ci.contract_status>=20
+				and tds.prop_one_='invoice'
+				--实收金额为0 
+				--and nvl(chargelist.factmoney,0)=0
+				--实收开票记录为0
+                and nvl(chargelist.invoicenun,0)=0
+                --增加本金一次性开票是否包含首付款判断
+				and ((select td.description_ From t_dicts_datas td where td.id_='iscorpusone.01')='否' or (cffp.fee_type!='feetype5' or cit.rent_invoice_type not in('invoice_type01','invoice_type02')))
+				
+				/~contractid: and ci.contract_id like '%{contractid}%' ~/
+				/~contractnumber: AND CI.CONTRACT_NUMBER LIKE '%{contractnumber}%' ~/
+			    /~custname: and cinfo.cust_name like '%{custname}%' ~/
+			    /~plandateStart: and cffp.plan_date >='{plandateStart}' ~/
+                /~plandateEnd: and cffp.plan_date <='{plandateEnd}' ~/
+                /~feetype: and cffp.fee_type = '{feetype}' ~/
+                /~leaseform: AND CI.LEAS_FORM = '{leaseform}' ~/
+            ) list
+            where 1=1
+            --and list.status!='已申请'
+            /~status: and list.status in ('<<status>>') ~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,414 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>付款通知书</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript">
+function importMiniTableCallBack(message,tableid){
+	 var info=eval("("+message+")");
+	 alert(info.message);
+     mini.get("id_minitableimport").hide();
+     mini.get(tableid).reload();
+}
+function showcustinfo(custid){
+	var params = "id="+custid+"&isView=true";
+	var url = getRootPath()+"/leasing/cust_info/cust_company/cust_company_detail.bi?"+params;
+	var sheight = window.screen.availHeight - 30;
+	var swidth = window.screen.availWidth - 10;
+	var winoption = "left=0px,top=0px,height=" + sheight + "px,width=" + swidth + "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+	window.open(url, '_blank', winoption);
+}
+
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				addRemoteOperUrl:getRootPath()+"/acl/addTaxRentHcInfo.acl",
+				remoteOper:true,
+				id : 'table_id1',
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : '付款通知书',
+				iconCls : 'icon-node',
+				multiSelect : false,
+				queryButtonColSpan : 6,
+				queryButtonNewLine: false,
+				showPager:true,
+				isRemoteStatistic: true,
+				frozenStartColumn:0,
+				frozenEndColumn:5,
+				xmlFileName : '/eleasing/jsp/invoice_manage/rent_invoice/rent_payment_notice.xml',
+				tools : [{
+					html : '付款通知书',
+					plain : true,
+					iconCls : 'icon-addfolder',
+					handler : function(miniTable, buttonText) {
+						var row = miniTable.getSelected();
+						if(row){
+								mini.get("id_main_bank_account").show();
+						}else{
+								mini.alert('请先选择合同！！！');
+						}			
+				  	}  
+				}],
+				columns : [ 
+				    {
+				    	type : 'indexcolumn'
+				    },
+				   	{
+				    	type : 'checkcolumn'
+				    },  
+				   	{
+				    	field : 'id',
+				    	header : 'id',
+				    	visible : false
+				    },
+				    {
+				    	field : 'contract_id',
+				    	header : '合同ID',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'contract_number',
+				    	header : '业务合同编号',
+				    	queryConfig : {},
+				    	width: 120,
+				    	renderer:function(e){
+							return "<a href='javascript:void(0);' onclick='showContractDetail(\""+e.record.id+"\")'>" + e.record.contract_number + "</a>";
+						}
+				    },
+					{
+				    	field : 'custid',
+				    	header : '客户id',
+				    	visible : false
+				    },
+				    {
+				    	field : 'cfrp_id',
+				    	header : '租金计划id',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'cust_name',
+				    	header : '客户名称',
+				    	width: 130,
+				    	queryConfig : {},
+						renderer:function(e){
+					   	    var row=e.record;
+					   		return "<a href='javascript: showcustinfo(\""+row.custid+"\")'>"+row.cust_name+"</a>";
+					   	}
+				    },
+				    {
+				    	field : 'projectname',
+				    	header : '项目名称',
+				    	visible : true,
+				    	queryConfig : {},
+				    },
+				    
+				    {
+				    	field : 'moneytype',
+				    	header : '款项类别',
+				    	visible : true
+				    },
+				   	{
+				    	field : 'rent_list',
+				    	header : '期次',
+				    	width: 70,
+				    	align:'center'
+				    },
+				   	{
+				    	field : 'plandate',
+				    	header : '计划日期',
+				    	width: 80,
+				    	queryConfig:{
+				    		newLine:true,
+				    		type:'date',
+				    		range:true
+				    	}
+				    },
+				   	{
+				    	field : 'rent',
+				    	header : '计划金额',
+				    	width: 80,
+				    	dataType: 'currency',summary:true
+				    },
+				   	{
+				    	field : 'penalty',
+				    	header : '罚息金额',
+				    	width: 80,
+				    	dataType: 'currency',summary:true
+				    },
+				   	{
+				    	field : 'lessor',
+				    	header : '出租人',
+				    	align:'center',
+				    	visible : false
+				    },
+				   	{
+				    	field : 'leaseaccbank',
+				    	header : '租金回笼银行',
+				    	width: 100,
+				    	align:'center'
+				    },
+				   	{
+				    	field : 'leaseaccnumber',
+				    	header : '租金回笼账号',
+				    	width: 150
+				    },
+				   	{
+				    	field : 'export_state',
+				    	header : '导出状态',
+				    	width: 80,
+				    	align:'center',
+				    	queryConfig:{
+					   		type:'combobox',
+					   		showNullItem: true,
+					   		newLine: false,
+					   		data: [{name:"已导出",value:" record.ID IS NOT NULL"},{name:"未导出",value:" record.ID IS NULL"}],
+					   		textField:"name",
+					   		valueField:"value"
+				   		}
+				    },
+				   	{
+				    	field : 'export_times',
+				    	header : '导出次数',
+				    	width: 80,align:'center'
+				    },
+				   	{
+				    	field : 'proj_manage',
+				    	header : '项目经理',
+				    	width: 80,
+				    	align:'center',
+				    	queryConfig : {}
+				    },
+				   	{
+				    	field : 'proj_dept',
+				    	header : '业务部',
+				    	width: 100,
+				    	queryConfig:{newLine:true}
+				    },
+				   	{
+				    	field : 'offsetflag',
+				    	header : '是否抵扣',
+				    	visible:false
+				    }
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body>
+<div id="id_table_bank_account"></div>
+ <div id="id_main_bank_account" class="mini-window" title="选择银行账户" style="width:400px;height:100px;" showModal="true" allowResize="true" allowDrag="true">
+	<div id="id_bank_account">
+		<table>
+             	<tr>
+                    <td style="width:100px;">我司银行账户：</td>
+                    <td >
+                    <input style="width:200px;" id="id_account" name="id_account" class="mini-combobox" textField="text" 
+                    data="[{value:'工行基本户',text:'工行基本户'},{value:'保理账户',text:'保理账户'}]"/>
+                    </td>
+                    <td>
+                     <a class="mini-button" iconCls="icon-edit" onclick="addaccount">确定</a>
+                     </td>
+                </tr>
+          </table>
+	</div>
+	</div>
+</body>
+</html>
+<script>
+function showContractDetail(cid){
+	var url = getRootPath()+"/acl/queryContractInfoDetail.acl?contractid="+cid;
+	openFullScreenWindow(url);
+}
+
+function addaccount(){
+	var id_tasks_table1 = mini.get("table_id1");
+	var miniTable=mini.get("table_id1");
+	var row = id_tasks_table1.getSelected();
+	var value =mini.get("id_account").getText();
+		$.ajax({
+			url : '${pageContext.request.contextPath}/acl/saveaccbank.acl',
+			method : 'POST',
+			async : false,
+			data : {value:value},
+			success:function(res){
+				var values = res ; 
+				mini.get("id_main_bank_account").hide();
+				var checkedRowDatas = miniTable.getSelecteds();
+				if(0 == checkedRowDatas.length){
+					mini.alert("请选择要导出租金支付通知书的记录！！");
+					return;
+				}
+				
+				var row = checkedRowDatas[0];
+				var rent=row.rent;  //金额
+				var moneytype=row.moneytype;//款项名称
+				var rentlist=row.rent_list;//期次
+				
+				
+				if(rent==null){
+					mini.alert('计划金额不能为空');
+					return;
+				}
+				if(rent==''){
+					rent='0';
+				}
+				var params = {};
+				//label:承租人,业务合同编号,当期租金计划日期
+				params['values'] = value;
+				params['number.num'] = values;
+				params['label.cust_name'] = row.cust_name;
+				params['label.contract_number'] = row.contract_number;
+				var date=tenwa.toDate(row.plandate,'yyyy年MM月dd日');
+				var plandate=tenwa.toChar(date,'yyyy 年 MM 月 dd 日');
+				params['label.plandate']=plandate;
+				
+				//rent_list:项目,期次,金额,备注金额
+				var rentListArr=new Array();
+				var rentList={};
+				rentList["projectname"]=row.projectname;
+				
+				if(row.rent_list){
+					rentList["rent_list"]='第'+row.rent_list+'期';
+				}else{
+					mini.alert("期次不能为空");
+					return;
+				}
+				rentList["rent"]=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+				if(rent==0){
+					//alert("租金为0时");
+					rentList["comment_rent"]='0.00';
+				}else{
+					rentList["comment_rent"]=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+				}
+				rentListArr.push(rentList);
+				params['rent_list']=JsonUtil.encode(rentListArr);
+				//款项名称，内容，金额，备注
+				params['label.moneytype']=moneytype;
+				params['label.rentlist']='第'+rentlist+'期';
+				params['label.rent']=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+				//rent_list_total:总计,总计大写人民币
+				params['rent_list_total.total']=tenwa.money2Thousand(parseFloat(rent).toFixed(2));
+				if(rent==0){
+					params['rent_list_total.totalRMB']='零元零角零分';
+				}else{
+					params['rent_list_total.totalRMB']=convertCurrency(parseFloat(rent));
+				}
+				
+				//comment:户名,开户行,账号 这里用SQL写下
+				/* params['comment.lessor']=row.lessor;
+				params['comment.leaseaccbank']=row.leaseaccbank;
+				params['comment.leaseaccnumber']=row.leaseaccnumber;
+				*/
+				 
+				//date:当前时间
+				params['date.nowTime']= new Date().format("yyyy 年 MM 月 dd 日");
+				params["rent_list.contract_id"]=row.contract_id;//加的
+				params["rent_list.rent_list"]=row.rent_list;
+			  	var fileTeplate=new fileTemplateConfig({						
+					templateno : 'F-201612009',
+				 	tableid:'table_id1',
+					modelname:'租金催收通知函',
+					returntype:'file',
+					parames :params
+				});
+				fileTeplate.createFile();
+			},
+			failure : function(res) {
+				currentLoadMask.hide();
+			}
+			
+		});
+}
+function convertCurrency(money) {
+    //汉字的数字
+    var cnNums = new Array('零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖');
+    //基本单位
+    var cnIntRadice = new Array('', '拾', '佰', '仟');
+    //对应整数部分扩展单位
+    var cnIntUnits = new Array('', '万', '亿', '兆');
+    //对应小数部分单位
+    var cnDecUnits = new Array('角', '分', '毫', '厘');
+    //整数金额时后面跟的字符
+    var cnInteger = '整';
+    //整型完以后的单位
+    var cnIntLast = '元';
+    //最大处理的数字
+    var maxNum = 999999999999999.9999;
+    //金额整数部分
+    var integerNum;
+    //金额小数部分
+    var decimalNum;
+    //输出的中文金额字符串
+    var chineseStr = '';
+    //分离金额后用的数组，预定义
+    var parts;
+    if (money == '') { return ''; }
+    money = parseFloat(money);
+    if (money >= maxNum) {
+      //超出最大处理数字
+      return '';
+    }
+    if (money == 0) {
+      chineseStr = cnNums[0] + cnIntLast + cnInteger;
+      return chineseStr;
+    }
+    //转换为字符串
+    money = money.toString();
+    if (money.indexOf('.') == -1) {
+      integerNum = money;
+      decimalNum = '';
+    } else {
+      parts = money.split('.');
+      integerNum = parts[0];
+      decimalNum = parts[1].substr(0, 4);
+    }
+    //获取整型部分转换
+    if (parseInt(integerNum, 10) > 0) {
+      var zeroCount = 0;
+      var IntLen = integerNum.length;
+      for (var i = 0; i < IntLen; i++) {
+        var n = integerNum.substr(i, 1);
+        var p = IntLen - i - 1;
+        var q = p / 4;
+        var m = p % 4;
+        if (n == '0') {
+          zeroCount++;
+        } else {
+          if (zeroCount > 0) {
+            chineseStr += cnNums[0];
+          }
+          //归零
+          zeroCount = 0;
+          chineseStr += cnNums[parseInt(n)] + cnIntRadice[m];
+        }
+        if (m == 0 && zeroCount < 4) {
+          chineseStr += cnIntUnits[q];
+        }
+      }
+      chineseStr += cnIntLast;
+    }
+    //小数部分
+    if (decimalNum != '') {
+      var decLen = decimalNum.length;
+      for (var i = 0; i < decLen; i++) {
+        var n = decimalNum.substr(i, 1);
+        if (n != '0') {
+          chineseStr += cnNums[Number(n)] + cnDecUnits[i];
+        }
+      }
+    }
+    if (chineseStr == '') {
+      chineseStr += cnNums[0] + cnIntLast + cnInteger;
+    } else if (decimalNum == '') {
+      chineseStr += cnInteger;
+    }
+    return chineseStr;
+  }
+</script>

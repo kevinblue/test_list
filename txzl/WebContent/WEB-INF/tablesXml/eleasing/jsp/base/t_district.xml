@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				SELECT ID AS NAME,
+				NAME AS VALUE 
+				FROM T_DISTRICT 
+				WHERE 1=1
+				/~PID: AND PID = '{PID}' ~/
+				/~ID: AND ID = '{ID}' ~/
+				  /~currentRawValue: AND NAME like '%{currentRawValue}%' ~/
+				/~orderstr: ORDER BY {orderstr}~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	  	<table_sql>
+	  		<![CDATA[
+	  			SELECT ID AS NAME,
+				NAME AS VALUE 
+				FROM T_DISTRICT 
+				WHERE 1=1
+				/~PID: AND PID = '{PID}' ~/
+				/~ID: AND ID = '{ID}' ~/
+				  /~currentRawValue: AND NAME like '%{currentRawValue}%' ~/
+				
+	  		]]>
+	  	</table_sql>
+	  	<order_column>
+	  		<![CDATA[/~orderstr: ORDER BY {orderstr}~/]]>
+	  	</order_column>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

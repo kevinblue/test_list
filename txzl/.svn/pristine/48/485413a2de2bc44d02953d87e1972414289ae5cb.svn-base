@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		select 
+				pi.id id,
+		        pi.proj_id projid,
+		        tu1.realname_  projmanager,
+		        ci.cust_name,
+		        cic.province_||cip.province_ province,
+		        cic.city_||cip.city_ city,
+		        pi.proj_date projdate,
+		        pi.proj_status projstatus,
+		        bcs.status_name projstatusname,
+		        pi.expect_put_date expectputdate,
+		        pi.expect_approve_date expectapprovedate,
+		        pi.expect_sign_date expectsigndate,
+		        pi.competitors,
+		        pi.cust_income custincome,
+		        pi.cust_profit custprofit,
+		        pi.cust_debt custdebt,
+		        pi.debt_ratio debtratio,
+		        pi.cust_level custlevel,
+		        pi.cust_bed_num custbednum,
+				tdd.name_ agentsource,
+				tdd2.name_ leaseform,
+				pc.LEASE_TERM leaseterm,
+		        tdd3.name_ settlemethod,
+		        pc.clean_lease_money cleanleasemoney,
+		        pc.IRR irr,
+		        tdd4.NAME_ funduse,
+		        pi.agent_company agentcompany,
+		        pi.agent_name agentname,
+		        pi.agent_job agentjob,
+		        pi.agent_phone agentphone,
+		        pi.cust_memo custmemo 
+		       from proj_info pi
+		       left join base_contract_status bcs on bcs.status_code = pi.proj_status
+		      left join cust_info ci on ci.id = pi.cust_id
+		      left  join cust_info_company cic on cic.cust_id=ci.id
+		      left join cust_info_person cip  on cip.cust_id=ci.id
+		      left join t_users tu1 on tu1.id_ = pi.proj_manage
+		      left join proj_condition pc on pc.proj_id = pi.id
+		      left join t_dicts_datas tdd on tdd.id_ = pi.agent_source
+		     left join t_dicts_datas tdd2 on tdd2.id_ = pi.LEAS_FORM
+		     left join t_dicts_datas tdd3 on tdd3.id_ = pc.SETTLE_METHOD
+		     left join t_dicts_datas tdd4 on tdd4.id_ = pi.FUND_USE
+		     left join vi_user_leader leader on leader.id_ = pi.proj_manage
+			  where 1= 1 
+            /~projid: AND pi.proj_id like '%{projid}%' ~/
+          	/~cust_name: AND ci.CUST_NAME like '%{cust_name}%' ~/
+          	/~orgcodecardno: AND P.orgcodecardno like '%{orgcodecardno}%' ~/
+          	/~projmanager: AND tu1.realname_ like '%{projmanager}%' ~/
+          	/~projstatus: AND pi.proj_status = '{projstatus}' ~/
+          	/~extendsql: <<extendsql>>~/
+          	<EXTRACTEND>order by projdate desc<EXTRACTEND>          
+
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

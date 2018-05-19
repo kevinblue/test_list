@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		  
+SELECT 
+round(sum(aa.TempeRature),2) TempeRature,
+round(sum(aa.electricdate),2) electricdate,
+round(sum(aa.electric_money_real),2) electric_money_real,
+round(sum(aa.billreceivable),2) billreceivable
+
+FROM (
+
+SELECT a.*,a.yearpart reportdate,b.powerrationing powerrationing FROM (
+SELECT part.yearpart   yearpart,
+sum(part.TempeRature)/10000 TempeRature,
+sum(part.electricdate) electricdate,
+sum(part.electric_money_real)/10000 electric_money_real,
+sum(part.billreceivable)/10000 billreceivable
+ FROM (
+select 
+       substr(p.time, 0, 4)   yearpart,
+       p.time reportdate,
+       p.ongrid_energy TempeRature,
+       round((p.ongrid_energy / (pdi.PROJ_INSTALLED_CAPACITY * 10000)), 2) as electricdate, --标准发电小时数      
+       p.cash_received electric_money_real, --实收电费(元)
+       p.ongrid_energy * (p.settlement_price+p.after_benchmark_price) as billreceivable, --应收 
+       nvl(p.power_rationing, 0) powerrationing
+  from Proj_Electricity_Info p
+  left join PROJ_INFO pi
+    on p.proj_id = pi.id
+  LEFT JOIN proj_develope_info pdi
+    on pi.develop_id = pdi.id
+  left join contract_info ci
+    on ci.proj_id = p.proj_id
+ where ci.id = '{contractidselect}'
+  and p.time <= '{lesseefinancial.thisend}'
+ order by p.time）part GROUP BY part.yearpart
+) a
+LEFT JOIN (select 
+       tao.report_type,
+      ci.id,
+      tao.report_date reportdate,
+      tao.power TempeRature,
+      tao.Electric_Date electricdate,
+       round( pdi.Internet_Price * tao.power,2) billreceivable,
+      round(  tao.Limit_Loss/(tao.Limit_Loss+tao.power * 10000),2) powerrationing
+ from contract_info ci 
+   left join T_GLOBAL_CONTRACT_MESSAGE tgcm on tgcm.orapro_id = ci.wind_machine
+   left join  T_ANNUAL_OPERATION tao on tao.wf_id = tgcm.wf_id
+    left join proj_info pi on pi.id = ci.proj_id
+     left join proj_develope_info pdi on pi.develop_id = pdi.id
+where ci.id = '{contractidselect}'
+ and tao.report_type = '3'
+ order by tao.report_date) b on a.yearpart=b.reportdate 
+ ORDER BY a.yearpart desc) aa
+		    
+
+
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

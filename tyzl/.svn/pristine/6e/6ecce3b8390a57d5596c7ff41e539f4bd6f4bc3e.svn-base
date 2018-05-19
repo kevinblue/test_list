@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  获得乘租人相关信息；
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+                  SELECT 
+                  CI.ID AS VALUE,
+                  CI.CUST_NAME AS NAME , 
+                  CIR.post_Code AS POSTCODEVALUE ,
+                  CIR.MOBLIE AS  MOBILE_NUMBERVALUE,
+                  CIR.PERSON_REP as PERSON_REPVALUE,
+                  CIR.FAX AS CIR_FAX_VALUE ,
+                  CIR.contact AS contact_VALUE,
+                  CIR.COMPANY_ADDRESS AS COMPANY_ADDRESS_VALUE ,
+                  CIR.MOBLIE AS MOBLIE,
+                  CIR.MAILA_DDRESS AS MAILA_DDRESSVALUE,
+                  CA.ACC_NUMBER  AS ACC_NUMBER_VALUE,
+                  CA.BANK_NAME AS BANK_NAME_VALUE,
+                  CA.ACCOUNT AS ACCOUNT_VALUE
+                  FROM CUST_INFO CI
+                  LEFT JOIN(SELECT * FROM  CUST_INFO_COMPANY) CIR ON CIR.CUST_ID=CI.ID
+                  LEFT JOIN(SELECT * FROM CUST_ACCOUNT) CA ON CA.CUST_ID=CI.ID
+                  LEFT OUTER JOIN
+                 (SELECT to_char(wm_concat(cust_type)) custtype,cust_id from  CUST_TYPE_INFO 
+                  group by cust_id )CTI ON CI.ID = CTI.CUST_ID
+                 WHERE 1=1 and invalid_='否'
+               /~name:and CI.CUST_NAME like '%{name}%'~/
+               /~custtype:and CTI.CUSTTYPE like '%{custype}%'~/
+                   ]]> 
+         
+	  </table_sql> 
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

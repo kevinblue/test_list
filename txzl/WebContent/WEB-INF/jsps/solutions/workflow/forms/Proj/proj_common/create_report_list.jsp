@@ -1,0 +1,797 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyLoadMask.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/comm/miniui_ext.js"></script>
+<script type="text/javascript">
+var projectid = "${requestScope['proj_info.id']}";
+document.addEventListener('visibilitychange',function(){ //浏览器切换事件
+    if(document.visibilityState=='hidden') { //状态判断
+        return;
+    }else {
+    	mini.get("create_report_list").reload();
+    }
+});
+	var operationTools = true;
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true'||isViewHistoryTask==true){showTools = false;operationTools= false;}
+	//获取父页面中保存在hidden域的值
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "create_report_list",
+			renderTo: "id_table_create_report_list",
+			width: globalClientWidth - 20,
+			height: 350,
+			lazyLoad: false,
+			title: "生成经评模型",
+			isClickLoad:false,
+			remoteOper : false,
+			dataFormat:"yyyy-MM-dd",
+			showPager: false,
+			multiSelect: true,
+			showToolbar: showTools,
+			tools: ['remove','-',
+			        {
+						html : '生成经评模型',
+						plain : true,
+						iconCls : 'icon-save',
+						handler : function(miniTable, buttonText) {
+							    var cdates=miniTable.getData();
+							  for(var i=0;i<cdates.length;i++){
+						           if(!cdates[i].filename == null||!cdates[i].filename==undefined ||!cdates[i].filename==""){
+						          	 mini.alert("租赁系统-经评模型模板已生成,无需重复生成");
+						          	 return;
+						           }
+							    }	 
+							var multiform = new mini.Form("multiform");
+								var multieditWindow = mini.get("multieditWindow");
+								multiform.clear();
+								multieditWindow.show();  
+						}
+			        },'-',
+			        {
+						html : '统计数据',
+						plain : true,
+						iconCls : 'icon-save',
+						handler : function(miniTable, buttonText) {
+							mini.mask({el: document.body,cls: 'mini-mask-loading',html: '数据统计中 请稍等...'});
+							 var indexAndid = {};
+							    var cdates=miniTable.getData();
+								 var dontsave ="";
+							 for(var i=0;i<cdates.length;i++){
+								 if(cdates[i].savestate){
+								 indexAndid[cdates[i].filekey] = cdates[i].id
+								 }else{
+									 dontsave=dontsave+"["+(i+1)+"]"
+									
+								 }
+							    }
+							 if(dontsave!=""){
+								 mini.unmask(document.body);
+								 mini.alert("文件"+dontsave+"未编辑保存！");
+								 return;
+							 }
+							 $.ajax({
+							        url: getRootPath()+"/acl/getExcelValue.acl",
+							        type: "post",
+							        cache: false, 
+							        dataType : "json",
+							        data :{"indexAndid":JSON.stringify(indexAndid),"projectid":projectid,"flowUnid":flowUnid},
+							        async : false,
+							        success: function (text) {
+							        	mini.unmask(document.body);
+							        	if(text=="0"){
+							        		mini.alert("文件缺失，请重新生成！");
+							        	}else{
+							        		mini.get("evaluation_model_statistics1").reload();
+						        			mini.get("evaluation_model_statistics2").reload();
+						        			mini.alert("统计完成！");
+							        	}
+							        },
+							        error : function() {  
+							        	mini.unmask(document.body);
+							            mini.alert("有文件未编辑保存，请检查！");  
+							        }
+							    });
+						}
+			        }
+			        ],
+			          operValidate:function(miniTable, rowdata, operFlag){
+			        	  if(operFlag=="add"){
+			        		  return true;
+			        	  }
+			        	 if(rowdata.length==8){
+			        		 return true;
+			        	 }else if(rowdata.length==0){
+			        		 mini.alert("请选择文件！");
+					        	return false;
+			        	 }else{
+			        		 mini.alert("请全选删除！");
+					        	return false;
+			        	 }
+			        },
+			     removeOperCallBack: function(miniTable,rowDatas){
+				        	dropCreateFile3(rowDatas);
+					},  
+				/*  validateForm:function(miniTable, miniForm, editFormItemOperFlag, addIndex){
+					 $("#create_report_list_editFormPopupWindow").empty();;
+					 //mini.get("create_report_list_editFormPopupWindow_form");
+					 mini.get("create_report_list").reload();
+					 //mini.unmask(document.body);
+					 return false;
+				 }, */
+			xmlFileName : '/eleasing/workflow/proj/proj_credit/credit_report_list.xml',
+			params :{
+				    projId:projectid,
+					modelname:'租赁系统-经评模型模板'
+			},
+			columns: [
+				{type: 'indexcolumn'},
+				{type: 'checkcolumn'},
+				{field: 'id', header: 'id', visible: false},
+				{field: 'filename', header: '文件名称',formEditorConfig : {
+					fieldVisible : false
+				}},
+				{field: 'filekey', header: '文件序号', visible: false},
+				{field: 'savestate', header: '保存状态', visible: false},
+				{field: 'createdate', header: '文件生成时间',dateFormat : "yyyy-MM-dd HH:mm:ss",formEditorConfig : {
+					fieldVisible : false
+				}},
+				{field: 'operation', header: '操作',renderer:function(e){ var cfalg=showTools;
+				var temp=e;
+				return showOperator2(temp,cfalg);},formEditorConfig : {
+					fieldVisible : false
+				}
+				},
+				
+				
+				
+				{field: '11', header: '小时数选择', visible: false,
+					formEditorConfig : {
+						    fieldVisible : true,
+							type : 'combobox',//表单域类型
+							required : true,//是否必填
+							multiSelect : false,//combo是否可以多选
+							valueField : 'id',//table显示值
+							textField : 'text',//combox显示值
+							//labelWidth : 100,//该域标签宽度
+						    data:[{text:'年等效满负荷小时数',value:'1'},{text:'P90',value:'2'},{text:'P75',value:'3'},{text:'P50',value:'4'}]
+					}},
+				{field: '22', header: '风电场设备(含税)(万元)',visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}},
+				{field: '33', header: '建筑、安装工程(万元)', visible: false,formEditorConfig : {
+					required : true,
+					newLine : true,
+					fieldVisible : true
+				}},
+				{field: '44', header: '建设用地费(万元)', visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}},
+				{field: '55', header: '其他费用(万元)', visible: false,formEditorConfig : {
+					required : true,
+					newLine : true,
+					fieldVisible : true
+				}},
+				{field: '66', header: '预备费(万元)', visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}}
+			]	
+		});
+	});
+});
+function generativeEvaluationModel(){
+	
+}
+function getParamsEngraved(parameterSelection,windFarmEquipmentInput,engineeringInput,landInput,otherInput,preliminaryFeeInput,callist){
+	var params={};
+	params["parameter.parameterSelection"] = parameterSelection;
+	params["parameter.windFarmEquipmentInput"]=parseFloat(windFarmEquipmentInput);
+	params["parameter.engineeringInput"]=parseFloat(engineeringInput);
+	params["parameter.landInput"]=parseFloat(landInput);
+	params["parameter.otherInput"]=parseFloat(otherInput);
+	params["parameter.preliminaryFeeInput"]=parseFloat(preliminaryFeeInput);
+	params["projectid"]= projectid;
+	//测算参数
+	var equipamt1=mini.get("equipamt").getValue();
+	params["baseInformation.equipamt1"] = (parseFloat(equipamt1)/10000).toFixed(2);
+	var grace1=mini.get("grace").getValue(); //乘以付款频率incomenumberyear
+	var incomenumberyear=mini.get("incomenumberyear").getValue();
+	switch(incomenumberyear)
+	{
+		case "income_0":
+			grace1 = "";
+		    break;
+		case "income_1":
+		    break;
+		case "income_2":
+			grace1 = grace1*2;
+		    break;
+		case "income_3":
+			grace1 = grace1*3;
+		    break;
+		case "income_6":
+			grace1 = grace1*6;
+		    break;
+		case "income_12":
+			grace1 = grace1*12;
+		    break;
+	       
+	}
+	params["baseInformation.grace1"] = grace1;
+	var leaseYear1=parseInt(mini.get("leaseterm").getValue())+parseInt(grace1);//月除以12
+	params["baseInformation.leaseYear1"]  = (parseInt(leaseYear1)/12).toFixed(1);
+	var incomeNum1=mini.get("incomenumber").getValue();//除以年数
+	params["baseInformation.incomeNum1"]=(parseInt(incomeNum1)/(parseInt(mini.get("leaseterm").getValue())/12)).toFixed(1);
+	var startDate = mini.formatDate (mini.get("startdate").getValue(),"yyyy-MM-dd"); 
+	params["baseInformation.startdate"]=startDate;
+	params["baseInformation.equipamt2"] = (parseFloat(equipamt1)/10000).toFixed(2);
+	params["baseInformation.grace2"] = grace1;
+	var specialRegularTable = JSON.parse(mini.get("id_special_regular_leasing_value").getValue());//分段配置
+	var yRate1 ="";
+	var yRate2 ="";
+	for(var xi = 0;xi<2;xi++){
+		if(xi==0){
+			if(specialRegularTable[xi]){
+			  yRate1=(parseFloat(specialRegularTable[xi].yearrate)/100).toFixed(2);
+			}else{
+			 yRate1 = "";
+			}
+		}else{
+			if(specialRegularTable[xi]){
+				yRate2=(parseFloat(specialRegularTable[xi].yearrate)/100).toFixed(2);
+			}else{
+			 yRate2 = "";
+			}
+		}
+	};
+	params["baseInformation.yearRate1"] =yRate1;
+	params["baseInformation.yearRate2"] =yRate2;
+	params["baseInformation.leaseYear2"] =(parseInt(leaseYear1)/12).toFixed(1);
+	params["baseInformation.incomeNum2"]=params["baseInformation.incomeNum1"];
+	var handratio =parseFloat(mini.get("handratio").getValue());
+	params["baseInformation.handratio"] = (handratio/100).toFixed(4);
+	var basenumber =mini.get("handmoney").getValue();
+	switch(basenumber)
+	{
+		case "hand_ratio.01":
+			basenumber = "融资总额";
+		    break;
+		case "hand_ratio.02":
+			basenumber = "上期剩余本金";
+		    break;
+		case "hand_ratio.03":
+			basenumber = "当期剩余本金";
+		    break;
+	}
+	
+	params["baseInformation.basenumber"] = basenumber;
+	params["baseInformation.cautiondeductionratio"] =mini.get("cautiondeductionratio").getValue();
+    //经评模型页面取值格式化
+	var index = 0;
+	//投放计划
+	var paymentplanTable =mini.get('fund_put_config').getData();
+	var dateArray1 = [];
+	var moneyArray1 = [];
+	for(var i = 0;i< paymentplanTable.length;i++){
+		dateArray1[i] = paymentplanTable[i].plandate;
+		var money1 = parseFloat(paymentplanTable[i].planmoney);
+		moneyArray1[i] = (money1/10000).toFixed(2);
+	}
+	params["paymentplandate"]=dateArray1;
+	params["planmentplanmoney"]=moneyArray1;
+	
+	//资金收付计划表数据
+	var fundFundPlanTable =mini.get('fund_fund_plan').getData();
+	//手续费
+	var dateArray2 = [];
+	var moneyArray2 = [];
+	for(var i = 0;i< fundFundPlanTable.length;i++){
+		if(fundFundPlanTable[i].feetype == "feetype1"){
+		    dateArray2[index] = fundFundPlanTable[i].plandate;
+		    var money2 = parseFloat(fundFundPlanTable[i].planmoney);
+			moneyArray2[index] = (money2/10000).toFixed(2);
+			index+=1;
+		}
+	}
+	index = 0;
+	params["counterfeeplandete"]=dateArray2;
+	params["counterfeeplanmoney"]=moneyArray2;
+	//保证金
+	var dateArray3 = [];
+	var moneyArray3 = [];
+	for(var i = 0;i< fundFundPlanTable.length;i++){
+		if(fundFundPlanTable[i].feetype == "feetype2"){
+		    dateArray3[index] = fundFundPlanTable[i].plandate;
+		    var money3 = parseFloat(fundFundPlanTable[i].planmoney);
+			moneyArray3[index] = (money3/10000).toFixed(2);
+			index+=1;
+		}
+	}
+	index = 0;
+	params["bondplandate"]=dateArray3;
+	params["bondplanmoney"]=moneyArray3;
+	
+	
+	//银行模式，还本付息表数据
+	
+    var bankFundList = callist["fundlist"];//银行模式资金计划
+    var bankCashList = callist["cashlist"];//银行模式现金流
+    var bankGraceList = callist["graceplan"];//银行模式租前息
+	
+	//宽限期收款计划表数据
+	var gracePlanTable =mini.get('grace_plan').getData();
+	//租前息
+	var dateArray4 = [];
+	var moneyArray4 = [];
+	var bankDateArray4 = [];
+	var bankMoneyArray4 = [];
+	for(var i = 0;i< gracePlanTable.length;i++){
+		if(gracePlanTable[i].feetype == "feetype9"){
+		    dateArray4[index] = gracePlanTable[i].plandate;
+		    var money4 = parseFloat(gracePlanTable[i].planmoney);
+			moneyArray4[index] = (money4/10000).toFixed(2);
+			
+			bankDateArray4[index] = bankGraceList[i].plandate;
+			var bankMoney4 = parseFloat(bankGraceList[i].planmoney);
+			bankMoneyArray4[index] = (bankMoney4/10000).toFixed(2);
+			index+=1;
+		}
+	}
+	index = 0;
+	params["rentalinterestdate"]=dateArray4;
+	params["rentalinterestmoney"]=moneyArray4;
+	
+	params["bankrentalinterestdate"]=bankDateArray4;
+	params["bankrentalinterestmoney"]=bankMoneyArray4;
+	//租金计划表数据
+	var rentPlanTable =mini.get('fund_rent_plan_frame').getData();
+	var bankRentList = callist["rentlist"];//银行模式租金计划
+	//融资租赁模式，租金，本金，利息，期末融资余额
+	var dateArray5 = [];
+	var moneyArray5 = [];
+	var interestArr = [];
+	var principalArr = [];
+	var financingBalanceArr = [];
+	//银行模式，租金，本金，利息，期末融资余额
+	var bankDateArray5 = [];
+	var bankMoneyArray5 = [];
+	var bankInterestArr = [];
+	var bankPrincipalArr = [];
+	var bankfinancingBalanceArr = [];
+	for(var i = 0;i< rentPlanTable.length;i++){
+		    dateArray5[i] = rentPlanTable[i].plandate;
+		    var money5 = parseFloat(rentPlanTable[i].rent);
+			moneyArray5[i] = (money5/10000).toFixed(2);
+			var interest = parseFloat(rentPlanTable[i].interest);
+			interestArr[i] = (interest/10000).toFixed(2);
+		    var principal = parseFloat(rentPlanTable[i].corpus);
+		    principalArr[i] = (principal/10000).toFixed(2);
+		    var corpusoverage;
+		    if(i==(rentPlanTable.length-2)){
+		    	 corpusoverage = parseFloat(rentPlanTable[i].corpusoverage)+parseFloat(rentPlanTable[i+1].corpusoverage);
+			    financingBalanceArr[i] = (corpusoverage/10000).toFixed(2);
+		    }else if(i==(rentPlanTable.length-1)){
+			    financingBalanceArr[i] = 0;
+		    }else{
+		    	corpusoverage = parseFloat(rentPlanTable[i].corpusoverage);
+			    financingBalanceArr[i] = (corpusoverage/10000).toFixed(2);
+		    }
+		    bankDateArray5[i] = bankRentList[i].plandate;
+		    var bankmoney5 = parseFloat(bankRentList[i].rent);
+		    bankMoneyArray5[i] = (bankmoney5/10000).toFixed(2);
+			var bankinterest = parseFloat(bankRentList[i].interest);
+			bankInterestArr[i] = (bankinterest/10000).toFixed(2);
+		    var bankprincipal = parseFloat(bankRentList[i].corpus);
+		    bankPrincipalArr[i] = (bankprincipal/10000).toFixed(2);
+		    var bankcorpusoverage = parseFloat(bankRentList[i].corpusoverage);
+		    bankfinancingBalanceArr[i] = (bankcorpusoverage/10000).toFixed(2);
+	}
+	params["rentdate"]=dateArray5;
+	params["rentmoney"]=moneyArray5;
+	params["interest"]=interestArr;
+	params["principal"]=principalArr;
+	params["corpusoverage"]=financingBalanceArr;
+	
+	params["bankrentdate"]=bankDateArray5;
+	params["bankrentmoney"]=bankMoneyArray5;
+	params["bankinterest"]=bankInterestArr;
+	params["bankprincipal"]=bankPrincipalArr;
+	params["bankcorpusoverage"]=bankfinancingBalanceArr;
+	
+	
+	
+    return params;
+}
+function dateSformat(date){
+	return date.replace('-','年').replace('-','月')+'日';
+} 
+
+function getQuarter(time){
+	if(time!=null && time!=""){
+		time = mini.formatDate(time,"MM");
+		return Math.floor((time%3==0)?(time/3):(time/3+1));
+	}else{
+		return "";
+	}
+}
+
+function showOperator2(temp,cfalg){
+	var id = temp.record.id;
+	var savestate = temp.record.savestate;
+	if(operationTools){
+	var base = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>"+"&nbsp;&nbsp;"+
+	            "<a href='javascript:void(0);' onclick='editoverdue(\"" + id + "\")'>在线编辑</a>"+
+	            "&nbsp;&nbsp;"+'<span><font color="#708090">'+savestate+"<font></span>";
+	}else{
+		var base = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>"+"&nbsp;&nbsp;"+
+        "&nbsp;&nbsp;"+'<span><font color="#708090">'+savestate+"<font></span>";
+	}
+	return base;
+}
+
+
+
+
+function editoverdue(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+	var currentPageClientHeight =  document.documentElement.clientHeight;
+	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"2"});
+}
+function downloadFile(Id){
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+Id});
+} 
+function  readCreateWord(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+ 	var currentPageClientHeight =  document.documentElement.clientHeight;
+ 	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"1"});
+}
+
+//删除生成的文件。把文件注为无效
+function dropCreateFile3(rowDatas){
+	var plandata = rowDatas;
+	var ids=[];
+	for(var i=0;i<plandata.length;i++){
+		ids.push(plandata[i].id);
+	}
+    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除文件 请稍等...'});
+	var url="/leasing/template/dropCreateFileAndValue.action";
+	var param=[];
+	param["ids"]=ids+"";
+	ajaxRequest({
+		url:getRootPath()+url,
+		method:'POST',
+		success:function(rs){
+		var message= rs.responseText;
+			message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+			mini.unmask(document.body);
+			mini.alert(message);
+			mini.get("evaluation_model_statistics1").reload();
+			mini.get("evaluation_model_statistics2").reload();
+		},
+		async:false,
+		failure:function(res){
+			mini.unmask(document.body);
+		},
+		params:param
+	});
+}
+function calrentList(e){
+	mini.mask({
+		el: document.body,
+		cls: 'mini-mask-loading',
+		html: '正在测算中，请稍后...'
+	});
+	var o = businessForm.getData(true,true);
+	o.gracerate=mini.get("id_interest_rate_input").getValue();//替换宽限期利率
+	
+	var fields = businessForm.getFields();
+	var resultData = [];
+	$.extend(resultData,fields);
+	for(var index =0;index<fields.length;index++){
+		 //判断是否是下拉框控件，是则同时把text属性设置combobox
+		if(fields[index].uiCls == "mini-textbox"){
+			if(fields[index].getInputText().indexOf(',')!=-1){
+				//所有textbox去掉逗号,
+				resultData[index].setValue(fields[index].getInputText().replace(/,/g,""));
+			}else if(!fields[index].getInputText() && (fields[index].vtype == 'double' || fields[index].vtype == 'int')){
+				resultData[index].setValue('0');
+			}
+		}
+	}
+    o = businessForm.getData(true,true);//把textbox去掉,逗号之后，再次获取form
+    if(typeof(e) == 'string'){
+    	//说明是租金调整
+    	o.reckontype = e;
+    }
+    
+    o.json_knowing_corpus_plan_str = $('#id_json_knowing_corpus_plan_str').val();
+    var docid = mini.get('conditionDocId').getValue();
+    if(!docid){
+	    try{
+		    o.docid = mini.get('cust_doc_id').getValue();
+	    }catch(e){
+	    	
+	    }
+    }
+    var callist={};
+  //如果是是特殊规则
+	var special_regular="";
+	if(mini.get("settlemethod").getValue()=='special_regular'){
+		special_regular=mini.get("special_regular").getData();
+		mini.get("id_special_regular_leasing_value").setValue(JSON.stringify(special_regular));
+		for(var i=0;i<special_regular.length;i++){
+			special_regular[i].yearrate=mini.get("id_interest_rate_input").getValue();
+		}
+		if(special_regular.length==0){
+			mini.alert('请先填写特殊规则！');
+			return null;
+		}else{
+			//给还租次数 租赁期限赋值
+			var month=0;
+			var count=0;
+			for(var i=0;i<special_regular.length;i++){
+				month=parseInt(month)+(parseInt(special_regular[i].endlist)-parseInt(special_regular[i].startlist)+1)*parseInt(special_regular[i].regularmonths);
+				count=(parseInt(count)<parseInt(special_regular[i].endlist))?parseInt(special_regular[i].endlist):parseInt(count);
+			}
+			mini.get("leaseterm").setValue(month);
+			mini.get("incomenumber").setValue(count);
+		}
+		//设备款和投放计划校验
+		if(!fund_put_config){
+			mini.alert('请先填写投放计划！');
+			return null;
+		}else{
+			var equipMoney=mini.get("equipamt").getValue().replace(/,/g,'');
+			var fundputmoney=mini.get("fund_put_config").getSummaryCellEl("planmoney").innerHTML.replace(/,/g,'');
+			if(parseFloat(equipMoney)!=parseFloat(fundputmoney)){
+				mini.alert("投放计划的投放总金额和设备款不一致！");
+				return null;
+			}
+		}
+	}
+    o.json_fund_rent_plan_str  = $('#id_json_fund_rent_plan_str').val();
+    o.json_fund_cash_flow_str  = $('#id_json_fund_cash_flow_str').val();
+    o.json_fund_fund_charge_str  = $('#id_json_fund_fund_charge_str').val();
+    o.json_knowing_rent_plan_str  = $('#id_json_knowing_rent_plan_str').val();
+    o.json_knowing_corpus_plan_st  = $('#id_json_knowing_corpus_plan_str').val();
+    o.json_fund_put_config_str=$('#id_json_fund_put_config_str').val();
+    o.json_special_regular_str=mini.encode(special_regular);
+    var url="<%=request.getContextPath() %>/leasing/rentCalculate.action";
+   
+    $.ajax({
+        url: url,
+        type: "post",
+        async:false,
+        data:  o ,
+        success: function (text) {
+        	var result = mini.decode(text);
+        	callist.rentlist =result.rentplanlist ;
+        	callist.fundlist =result.fundchargeplan ;
+        	callist.cashlist =result.cashdetaillist ;
+        	callist.graceplan =result.graceplan ;
+        	mini.unmask(document.body);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+        	mini.unmask(document.body);
+            alert(jqXHR.responseText);
+        }
+    });
+    return callist;
+}
+function requreTureField(){
+	var fund_put_config=mini.get("fund_put_config").getData();
+	var id_interest_rate_input=mini.get("id_interest_rate_input").getValue();
+	if(!id_interest_rate_input){
+		mini.alert("请填写银行贷款模式利率！");
+		return false;
+	}
+	formatSpecialConfig();
+	var fund_put_config=mini.get("fund_put_config").getData();
+	
+	//判断设备款是否大于0
+	var equipamt =  $minigetvalue("equipamt");
+	if(equipamt){
+		if(Number(equipamt) <= 0 ){
+			mini.alert('设备款需大于0！！！');
+			return false;
+		}
+	}else{
+		mini.alert('设备款不能为空！！！');
+		return false;
+	}
+	var leaseterm=mini.get("leaseterm").getValue();
+	if(!leaseterm||Number(leaseterm)<=0){
+		mini.alert("租赁期限(月)必须大于0！");
+		return false;
+	}
+	//判断租金支付类型，规则测算不能为不等期
+	var incomenumber = $minigetvalue("incomenumber");
+	
+	//判断还租次数,年租息率 ，起租日是否为空，以及还租次数、年租息率格式是否正确
+	var incomenumberyear = $minigetvalue("incomenumberyear");
+	if(incomenumberyear == 'income_0' && '${param.process}' != 'onhire'){
+		mini.alert('请选择规则的租金支付类型！！！！')
+		return false;
+	}
+	var numRegex  = /^[-\+]?\d+$/;
+	if(!numRegex.test(incomenumber)){
+		mini.alert('请你输入正确格式的还租次数！')
+		return false;
+	}else{
+		if(Number(incomenumber) <= 0 ){
+			mini.alert('还租次数需大于0！');
+			return false;
+		}
+	}
+	var rateRegex = /^[-\+]?\d+(\.[0-9]{1,6})?$/;
+	var yearrate = $minigetvalue("yearrate");
+	
+	var leaseamtdate = $minigetvalue("leaseamtdate");
+	if(!leaseamtdate){
+		mini.alert('请先输入付款日！！！');
+		return false;
+	}
+	
+	var startdate = $minigetvalue("startdate");
+	if(!startdate){
+		mini.alert('请先输入起租日！！！');
+		return false;
+	}
+	var firstplandate = $minigetvalue("firstplandate");
+	if(!firstplandate){
+		mini.alert('请先输入第一期租金支付日！！！');
+		return false; 
+	}
+	//如果手续费收取间隔是随还租频率收取，并且手续费计算基数是剩余本金，则起租日和第一期租金支付日的日期保持一致
+	var handhz=$minigetvalue("handhz");//手续费收取间隔
+	var handmoney=$minigetvalue("handmoney");//手续费计算基数
+	var leaseamtday=leaseamtdate.getDate();//付款日
+	var firstplanday = firstplandate.getDate();//第一期租金支付日
+	if(handhz=="hand_hz.01"&&(handmoney=="hand_ratio.02"||handmoney=="hand_ratio.03")){
+		if(leaseamtday!=firstplanday){
+			mini.alert('手续费收取间隔为规则收取时，第一期租金支付日期【'+firstplanday+'】要和付款日期【'+leaseamtday+'】保持一致');
+			return false;
+		}
+	}
+	return true;
+}
+function submitMultiDataWindReport(e){
+	var parameterSelection = mini.get("id_parameterSelection_list").getValue();//小时数
+    mini.get(multieditWindow).hide();
+	if(!requreTureField()){
+	   return;
+	}
+	
+	var callist=calrentList();
+	if(!callist){
+	   return;
+	}
+	//console.info(callist);//租金计划、现金流、资金计划
+     mini.mask({el: document.body,cls: 'mini-mask-loading',html: '测算完成，正在生成文件 请稍等...'});
+	 $.ajax({
+         type: "post",
+         url:'${pageContext.request.contextPath}/acl/lvaluationModel.acl',
+         data: {projid:projectid,parameterSelection:parameterSelection},
+         dataType: "json",
+         success: function(data){
+        	 //hideLoadMask();
+        	 if(data=="0"){
+        	     mini.unmask(document.body);
+        		 mini.alert("该项目概率小时数缺失，请到项目一览中补充！");
+                 return;
+        	 }else{
+        		    //var parameterSelection = mini.get("id_parameterSelection_list").getValue();//小时数
+        		    var windFarmEquipmentInput = mini.get("id_WindFarmEquipment_input").getValue();//风电场设备（含税）
+        		    var engineeringInput = mini.get("id_engineering_input").getValue();//建筑、安装工程
+        		    var landInput = mini.get("id_land_input").getValue();//建设用地费
+        		    var otherInput = mini.get("id_other_input").getValue();//其他费用
+        		    var preliminaryFeeInput = mini.get("id_PreliminaryFee_input").getValue();//预备费
+        		    if(parameterSelection==""||windFarmEquipmentInput==""||engineeringInput==""||landInput==""||otherInput==""||preliminaryFeeInput==""){
+        		    	mini.alert("有必填项未填！");
+        		    	return;
+        		    }    
+        		    mini.get("id_total_investment_str").setValue("");
+        			mini.get("id_total_investment_str").setValue(parseFloat(windFarmEquipmentInput)+parseFloat(engineeringInput));
+        			///miniui_ext.saveData("model_parameter_form");  此处需要保存，银行利率，和项目总投资
+        			var params=getParamsEngraved(parameterSelection,windFarmEquipmentInput,engineeringInput,landInput,otherInput,preliminaryFeeInput,callist);
+        			var fileTeplate=new fileTemplateConfig({
+        				isAttachment : false,
+        				attachmentParams: {
+        					module:'WorkflowAttchmentFiles',
+        					jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+        					attachmentFileDictId : 'root.FileType.Type3.TEST01',
+        					identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+        					identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+        					identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+        					identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+        					identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+        					identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+        					identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+        					identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+        					identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+        					identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val(),
+        					//此处开始自定义参数
+        					evaluationModel:true,//判断是否生成多个,有此参数就生成多个
+        					parameterSelection:parameterSelection,//小时数,参数变量
+        					windFarmEquipmentInput:windFarmEquipmentInput, //风电场设备（含税）
+        					engineeringInput :engineeringInput,//建筑、安装工程
+        					projectid:projectid,//项目id
+        					flowunid:flowUnid
+        				},
+        				templateno : 'F-201706007',
+        				tableid : 'create_report_list',
+        				modelname : '租赁系统-经评模型模板',
+        				returntype : 'listtocurpage',
+        				parames : params
+        			});
+        			fileTeplate.createFile();
+        			__userOperationClose(); 
+        			mini.unmask(document.body);
+        			mini.get("create_report_list").reload();
+        			mini.get("evaluation_model_statistics1").reload();
+        			mini.get("evaluation_model_statistics2").reload();
+        			
+        	 }
+                    
+                  }
+     });
+};
+function __userOperationClose(){
+	mini.get(multieditWindow).hide();
+}
+</script>
+
+
+<div id="id_table_create_report_list">
+</div>
+<div id="multieditWindow" class="mini-window" title="经评模型" style="width:47%;height:40%;" showModal="true" allowResize="true" allowDrag="true">
+        <div id="multiform">
+            <table>
+                <tr>
+                    <td style="width:10%">小时数选择：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" id= "id_parameterSelection_list" name="windfarmreportMonth" required="true" class="mini-combobox miniext-form-fit" textField="text"   valueField="value"    data="[{text:'年等效满负荷小时数',value:'1'},{text:'P90',value:'2'},{text:'P75',value:'3'},{text:'P50',value:'4'}]"   allowInput="false"    value="第一季度"	  text="1"/>
+                    </td>
+                    <td style="width:10%">风电场设备(含税)(万元)：</td>
+                    <td  style="width:30%;" >
+                      <input style="width:90%" name="WindFarmEquipment_input" id="id_WindFarmEquipment_input"  required="true" label="风电场设备（含税）" class="mini-textbox"  type="text" >
+                    </td>
+                </tr>  
+                
+                <tr>
+                    <td style="width:10%">建筑、安装工程(万元)：</td>
+                    <td style="width:30%;" >
+                       <input style="width:90%" name="engineering_input" id="id_engineering_input"  required="true" label="建筑、安装工程" class="mini-textbox"  type="text" >
+                    </td>
+                    <td style="width:10%">建设用地费(万元)：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" name="land_input" id="id_land_input"  required="true" label="建设用地费" class="mini-textbox"  type="text" >
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%">其他费用(万元)：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" name="other_input" id="id_other_input"  required="true" label="其他费用" class="mini-textbox"  type="text" >
+                    </td>
+                     <td style="width:10%">预备费(万元)</td>
+                    <td style="width:30%;" >
+                       <input style="width:90%" name="PreliminaryFee_input" id="id_PreliminaryFee_input"   required="true" label="预备费" class="mini-textbox"  type="text" >
+                    </td>
+                </tr>  
+                <tr>
+                    
+                    <td align="right" colspan="2" style="width:10%">
+                        <a class="mini-button" onclick="submitMultiDataWindReport">&nbsp;&nbsp;确定&nbsp;&nbsp;</a>
+                    </td>
+                    <td align="left" colspan="2" style="width:10%">
+                        <a class="mini-button" onclick='__userOperationClose'>&nbsp;&nbsp;取消&nbsp;&nbsp;</a>
+                    </td>
+                </tr>   
+            </table>
+        </div>
+	</div>

@@ -1,0 +1,1097 @@
+package com.tenwa.leasing.serviceImpl.Finance;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.jasper.tagplugins.jstl.core.ForEach;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.drools.process.instance.impl.demo.SystemOutWorkItemHandler;
+import org.hibernate.hql.ast.tree.BooleanLiteralNode;
+import org.json.JSONArray;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import com.tenwa.business.dao.BaseDao;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.entity.base.BaseRoleBlock;
+import com.tenwa.business.entity.notice.SmsNotice;
+import com.tenwa.business.model.ExcelVersionEnum;
+import com.tenwa.business.service.TableService;
+import com.tenwa.exception.BusinessException;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.PoiExcelUtil;
+import com.tenwa.kernal.utils.SecurityUtil;
+import com.tenwa.kernal.utils.UUIDUtil;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.file.BaseFile;
+import com.tenwa.leasing.entity.finacial.CashDeposit;
+import com.tenwa.leasing.entity.finacial.CashDepositBase;
+import com.tenwa.leasing.entity.finacial.DepositInterest;
+import com.tenwa.leasing.entity.finacial.DepositInterestDetail;
+import com.tenwa.leasing.entity.finacial.InterestProvision;
+import com.tenwa.leasing.entity.finacial.PaymentCountDetail;
+import com.tenwa.leasing.entity.finacial.ReceiptCountDetail;
+import com.tenwa.leasing.entity.finance.FinancialData;
+import com.tenwa.leasing.entity.finance.FinancialSubjects;
+import com.tenwa.leasing.entity.finance.FinancialTable;
+import com.tenwa.leasing.entity.fund.ContractFundFundCharge;
+import com.tenwa.leasing.service.finance.FinanceService;
+import com.tenwa.message.SendMessageUtil;
+import com.tenwa.report.dao.ReportDao;
+@Service(value = "financeServiceImpl")
+public class FinanceServiceImpl implements FinanceService {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	@Resource
+	private BaseDao baseDao;
+	@Resource(name = "reportDao")
+	private ReportDao reportDao;
+	
+	@Override
+	public String importFinance(HttpServletRequest request,Map<String, String> model) throws Exception {
+		MultipartFile multipartFile = null;
+		InputStream is = null;
+		String custid="";
+		CustInfo custInfo=null;
+		try {
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+			//加载附件
+			multipartFile = multipartRequest.getFile("tableImportExcel");
+			if (null == multipartFile) {
+				throw new BusinessException("没有上传财务报表的EXCEL");
+			}
+			//根据前台传过来的客户ID获得客户
+			if(model.containsKey("custid")){
+				custid=model.get("custid");
+				if(custid==null||"".equals(custid)){
+					
+				}else{
+				   custInfo=this.tableService.findEntityByID(CustInfo.class, custid);
+				}
+			}
+			if(null==custInfo){
+				throw new BusinessException("导入财务报表时没有提供客户ID");
+			}
+			//获得当前登陆的用户
+			User user = null;
+			boolean isWithUser = true;
+			try {
+				user = (User) SecurityUtil.getPrincipal();
+			} catch (Exception e) {
+				isWithUser = false;
+			}
+			is = multipartFile.getInputStream();
+			Workbook wb = null;
+			//获得上传文件的名称
+			String importFileName = multipartFile.getOriginalFilename().toLowerCase();
+			//登记上传的附件
+			BaseFile bf=this.tableService.saveUpFiletoService(multipartFile, model);
+			this.tableService.addlogFileOper(bf, "上传");
+			//判断文件类型创建wb
+			try {
+				if (importFileName.endsWith("xlsx")) {
+					wb = PoiExcelUtil.readWorkbook(is,ExcelVersionEnum.VERSION2007);
+				} else {
+					wb = PoiExcelUtil.readWorkbook(is,ExcelVersionEnum.VERSION2003);
+				}
+			} catch (Exception e1) {
+				throw new BusinessException("财务报表解析excel现错" + e1.getMessage());
+			}
+		    Map<String,List>financeTableConfig=new  HashMap<String,List>();
+		    //根据上传的文件的sheet名获得上传的配置
+		    financeTableConfig=this.getSheetRowConfig(wb);
+		    if(financeTableConfig.keySet().size()==0){
+		    	throw new BusinessException("财务报表出错没有配置科目表");
+		    }
+		    //根据文件和配置导入财务报表
+		    this.importFinanceDateByConfig(wb, financeTableConfig,custInfo,user);
+		} catch (Exception e) {
+			e.printStackTrace();
+			is.close();
+			throw new BusinessException(e.getMessage());
+		}
+		return null;
+		
+	}
+
+	@Override
+	public Map<String, List> getSheetRowConfig(Workbook wb )throws Exception {
+		//根据Sheet名称获得配置放到MAP中
+		int sheetCount = wb.getNumberOfSheets();
+		List<String> sheetNames = new ArrayList<String>();
+		for(int i=0;i<sheetCount;i++){
+			sheetNames.add(wb.getSheetName(i));
+		}
+		String hsql = "from FinancialTable where sheetname=?";
+		Map<String, List> maptable = new HashMap<String, List>();
+		List<FinancialTable> tables = null;
+		for (String sheetName : sheetNames) {
+			tables = null;
+			tables = this.tableService.findResultsByHSQL(hsql, sheetName);
+			if (tables.size() > 0) {
+				maptable.put(sheetName, tables);
+			}
+		}
+		return maptable;
+	}
+
+	@Override
+	public String importFinanceDateByConfig(Workbook wb,Map<String, List> tableconfig,CustInfo cust,User user) throws Exception {
+		List<FinancialTable> ftables=null;
+		Sheet sheet=null;
+		int startrowindex=0;
+		int startcellindex=0;
+		int keyRowIndex=0;
+		int keyCellIndex=0;
+
+		int skipcell=0;
+		String id="";
+		String otherData="";
+		//获取当前时间
+		String systemDate = DateUtil.getSystemDateTime();
+		Row DataRow=null;
+		String keyDate="";
+	    Set<FinancialSubjects> finSubjects=new HashSet<FinancialSubjects>();
+		Cell cell=null;
+		String value = "";
+		String yearvalue="";//excle年初的值
+		String yearend="";//数据库中年末的值
+		List<FinancialData> datas=new ArrayList<FinancialData>();
+		//根据每个shett配置遍历配置列
+		for(String sheetname:tableconfig.keySet()){
+			ftables=tableconfig.get(sheetname);
+			sheet=wb.getSheet(sheetname);
+		    for(FinancialTable ft:ftables){
+		        //if(ft.getDataType().getCode().equals("reportdatatype.01")){//数据字典
+		    	  	keyRowIndex=ft.getKeyRowIndex()-1;//年份所在行  2-1
+			    	keyCellIndex=ft.getKeyCellIndex()-1;//年份开如列 1-0
+			    	skipcell=ft.getSkipcell();//调过列数   0
+			    	finSubjects=ft.getFinancialSubjects();
+			    	if(finSubjects.size()<=0){
+			    		throw new BusinessException("财务报表中"+sheetname+"导入"+ft.getTitlename()+"没有配置科目");
+			    	}  
+			    	Row keyrow = (Row)sheet.getRow(keyRowIndex);//获得年所在行
+			    	cell = PoiExcelUtil.getCell(keyrow,keyCellIndex);
+		    		keyDate = "";
+		    		keyDate = PoiExcelUtil.getCellValue(cell);
+		    		if(null!=keyDate&&(!"".equals(keyDate))){
+		    			keyDate=keyDate.replace("年","-") ;
+			    		keyDate=keyDate.replace("月","-") ;
+			    		keyDate=keyDate.replace("日","") ;
+			    		keyDate=keyDate.replaceAll(" ", "");
+			    		for(FinancialSubjects fs:finSubjects){
+			    			 int rowIndex=Integer.valueOf(fs.getSubjectIndex())-1; //对应EXCEL位置行
+			    			 int cellIndex=Integer.valueOf(fs.getSubjectCell())-1;//对应EXCEL列
+					    	 DataRow=(Row)sheet.getRow(rowIndex);
+					    	 cell = PoiExcelUtil.getCell(DataRow,cellIndex);
+					    	 value=PoiExcelUtil.getCellValue(cell).replace(",", "");
+						    	   if("资负表".equals(sheetname)){
+						    		     String Contrast=fs.getContrast();
+						    		     if(Contrast!=""&&Contrast!=null){
+						    		    	 int contrastIndex=Integer.valueOf(fs.getContrast())-1;//年初所在的列
+							    			 cell = PoiExcelUtil.getCell(DataRow,contrastIndex);
+									    	 yearvalue=PoiExcelUtil.getCellValue(cell).replace(",", ""); 
+									    	     if(null!=yearvalue&&!"".equals(yearvalue)){
+									    	    	 yearend=getFinancefieldValue(cust,fs,yearvalue);
+									    	    	  if(null!=yearend&&!"".equals(yearend)){
+									    	    		    if(!yearvalue.equals(yearend)){
+									    	    		    	 String checkDate = DateUtil.getSystemDateTime();
+									    	    		    	 if (!compareTimeToSystem("2017-12-31")){
+											    	    	   	 throw new BusinessException("资负表第"+fs.getSubjectIndex()+"行,第"+fs.getContrast()+"列的"+fs.getSubjectName()+"年初值不等于年末值");	
+											    	    	   	 }	  	
+											    	    }  
+									    	    	  }
+									    	     }	 
+						    		     }
+						    	     }
+					        	 String formula= fs.getFormula();//用來校驗科目表格字段
+						    	 if(formula!=""&&formula!=null){
+						    		   
+						    		    if(value==""){
+						    		    	 throw new BusinessException("财务报表中第"+fs.getSubjectIndex()+"行,第"+fs.getSubjectCell()+"列的"+fs.getSubjectName()+"不能为空");		
+						    		    	
+						    		    }else{
+						    		    	if(Integer.parseInt(value)<=Integer.parseInt(formula)){
+						    		    	throw new BusinessException("财务报表中第"+fs.getSubjectIndex()+"行,第"+fs.getSubjectCell()+"列的"+fs.getSubjectName()+"必须大于"+Integer.parseInt(formula));	
+						    		    	}  	
+						    		    }
+						    	 }
+						    	 FinancialData fd=new FinancialData();
+						    	 fd=this.getFinanceData(cust,fs,keyDate);//根据客户，科日和时间到数据库中查是否导过
+						    	 if(null==fd){
+						    	 fd=new FinancialData();
+						    	 }
+						 		 fd.setSubjectData(value);
+						 		 fd.setFinancialSubjectsid(fs);
+						 		 fd.setCreateDate(systemDate);
+						 		 fd.setCustInfo(cust);
+						 		 fd.setCreator(user);
+						 		 fd.setFinancialDate(keyDate);
+						 		 otherData="";
+						 		 //如果保存跳过的列，则调过的列，的值以豆号分隔
+						 		 if("是".equals(ft.getIsSaveSkipData())){
+							    	for(int j=1;j<=skipcell;j++){
+							    		cell = PoiExcelUtil.getCell(DataRow,cellIndex+j);
+								    	value=PoiExcelUtil.getCellValue(cell).replace(",", "");
+								    	if(!"".equals(otherData)){otherData+=",";}
+								    	otherData+=value;
+							    	} 
+							     }
+						 		 fd.setSubjectOtherData(otherData);
+						 		 datas.add(fd); 
+					
+					     }
+		    		}
+		    		  
+/*		    	  }else{
+		    	    	//读入评分数据
+				    	finSubjects=ft.getFinancialSubjects();
+				    	if(finSubjects.size()<=0){
+				    		throw new BusinessException("财务报表中"+sheetname+"导入"+ft.getTitlename()+"没有配置科目");
+				    	}else{
+				    		value="";
+				    		for(FinancialSubjects fs:finSubjects){
+				    			keyRowIndex=Integer.valueOf(fs.getSubjectIndex());
+				    			keyCellIndex=Integer.valueOf(fs.getSubjectCell());
+				    			 DataRow=(Row)sheet.getRow(keyRowIndex-1);
+						    	 cell = PoiExcelUtil.getCell(DataRow,keyCellIndex-1);
+						    	 FinancialData fd=null;
+						    	 value=PoiExcelUtil.getCellValue(cell);
+						    	 fd=this.getFinanceCriedtData(cust,fs);//根据客户，科日到数据库中查是否导过
+						    	 if(null==fd){fd=new FinancialData();}
+						 		 fd.setSubjectData(value);
+						 		 fd.setFinancialSubjectsid(fs);
+						 		 fd.setCreateDate(systemDate);
+						 		 fd.setCustInfo(cust);
+						 		 fd.setCreator(user);
+						 		 datas.add(fd);
+				    		}
+				    	}
+		    		  
+		    		  
+		    	  }*/
+	    		
+		    }
+		}
+		if (!compareTimeToSystem("2017-10-01")){
+		FinancialImportCheck(datas);
+		}
+		this.tableService.saveOrUpdateAllEntities(datas);
+		return "";
+	}
+	//财务报表导入校验
+	//导入校验1.资产负债表：B41=E46  C41=F46
+	//导入校验2.现金流量表：B40=资产负债表（B5-C5）  B14=B66   B62=资负表(C13-B13)     B29=资负表(E32-F32) 
+	public void FinancialImportCheck(List<FinancialData> datas) throws Exception {
+				String zB41="";String zE46="";String zC41="";String zF46="";String xB40="";String zB5="";
+				String zC5="";String xB14="";String xB66="";String xB62="";String zC13="";String zB13="";
+				String xB29="";String zE32="";String zF32="";
+				boolean flag=false;
+				for (FinancialData fdjy: datas) {
+					String temp=fdjy.getFinancialSubjectsid().getId();
+					if(temp.equals("394A87E735CE40D5A1D4C01D95CF494C")){
+						zB41=fdjy.getSubjectData()==null?"0":fdjy.getSubjectData();
+						if(fdjy.getSubjectOtherData().indexOf(",")!=-1){
+						zC41=fdjy.getSubjectOtherData()==null?"0":fdjy.getSubjectOtherData().substring(0,fdjy.getSubjectOtherData().indexOf(","));
+						}else{
+							flag=true;
+						}
+					}
+					if(temp.equals("E547729264604F258B0BD3673863A530")){
+						zE46=fdjy.getSubjectData()==null?"0":fdjy.getSubjectData();;
+						if(fdjy.getSubjectOtherData().indexOf(",")!=-1){
+						zF46=fdjy.getSubjectOtherData()==null?"0":fdjy.getSubjectOtherData().substring(0,fdjy.getSubjectOtherData().indexOf(","));
+						}else{
+							flag=true;
+						}
+						}
+					if(temp.equals("6A1824D721E248C1AC0C867A836DE380")){
+						zB5=fdjy.getSubjectData()==null?"0":fdjy.getSubjectData();;
+						if(fdjy.getSubjectOtherData().indexOf(",")!=-1){
+						zC5=fdjy.getSubjectOtherData()==null?"0":fdjy.getSubjectOtherData().substring(0,fdjy.getSubjectOtherData().indexOf(","));
+						}else{
+							flag=true;
+						}
+						}
+					if(temp.equals("95D18A97C8BF4CCD9EDC3E293F598B59")){
+						zB13=fdjy.getSubjectData()==null?"0":fdjy.getSubjectData();;
+						if(fdjy.getSubjectOtherData().indexOf(",")!=-1){
+						zC13=fdjy.getSubjectOtherData()==null?"0":fdjy.getSubjectOtherData().substring(0,fdjy.getSubjectOtherData().indexOf(","));
+						}else{
+							flag=true;
+						}
+						}
+					if(temp.equals("B86E41F47306421F8A27E47778E8E201")){
+						zE32=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+						if(fdjy.getSubjectOtherData().indexOf(",")!=-1){
+						zF32=fdjy.getSubjectOtherData()==""?"0":fdjy.getSubjectOtherData().substring(0,fdjy.getSubjectOtherData().indexOf(","));
+						}else{
+							flag=true;
+						}
+						}
+					if(temp.equals("AF7BF3298F2E4048A54764B424097342")){
+						xB40=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+					}
+					if(temp.equals("5E701447E1B3406AB09689DFD9F3E1DC")){
+						xB14=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+					}
+					if(temp.equals("B526E5328797466BAB088FFD4541A647")){
+						xB66=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+					}if(temp.equals("F99F7F7CF6AE4A02ABFD57E39D126E15")){
+						xB62=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+					}if(temp.equals("EAC3CFFAB7F54C8D916E8E4AB963BD80")){
+						xB29=fdjy.getSubjectData()==""?"0":fdjy.getSubjectData();;
+					}
+				}
+				if(!flag){
+				if(!(getTwo(zB41)).toString().equals((getTwo(zE46).toString()))){
+					throw new BusinessException("资产负债表中年末余额的资产总计与负债和所有者权益合计年末余额不相等！");
+				}
+				if(!(getTwo(zC41)).toString().equals((getTwo(zF46).toString()))){
+					throw new BusinessException("资产负债表中年初余额的资产总计与负债和所有者权益合计不相等！");
+				}
+				/*if(!(getTwo(xB40)).toString().equals(((getMore(zB5)).subtract(getMore(zC5))).setScale(2, BigDecimal.ROUND_HALF_UP).toString())){
+					throw new BusinessException("现金及现金等价物净增加额不等于货币资金年末余额与年初余额的差！");
+				}*/
+				if(!(getTwo(xB14)).toString().equals((getTwo(xB66)).toString())){
+					throw new BusinessException("经营活动产生的现金流量净额不等于经营活动产生的现金流量净颤！");
+				}
+				if(!(getTwo(xB62)).toString().equals(((getMore(zC13)).subtract(getMore(zB13))).setScale(2, BigDecimal.ROUND_HALF_UP).toString())){
+					throw new BusinessException("存货的减少（增加以“-”号填列）不等于年初余额存货与年末余额存货之差！");
+				}
+				if(!(getTwo(xB29)).toString().equals(((getTwo(zE32)).subtract(getTwo(zF32))).setScale(2, BigDecimal.ROUND_HALF_UP).toString())){
+					throw new BusinessException("吸收投资收到的现金不等于实收资本（或股本）的年末余额与年初余额之差！");
+				}}
+	}
+	//比较输入的"yyyy-mm-dd"字符串时间是否大于系统当前时间，如果大就返回true
+	public boolean compareTimeToSystem(String a){
+	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+	String checkDate = DateUtil.getSystemDateTime();
+	Date date1=null;
+	Date date2=null;
+	try {
+		date1 = format.parse(a);
+		date2 = format.parse(checkDate);
+	} catch (ParseException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	if (date1.getTime()>date2.getTime()){
+		return true;
+	}else{
+		return false;
+	}
+	}
+	
+	//返回四舍五入的2位小数
+	public BigDecimal getTwo(String a){
+		if(a.equals("")||a==null){
+			return new BigDecimal(0).setScale(2, BigDecimal.ROUND_HALF_UP);
+		}
+		return new BigDecimal(a).setScale(2, BigDecimal.ROUND_HALF_UP);
+	}
+	public BigDecimal getMore(String a){
+		if(a.equals("")||a==null){
+			return new BigDecimal(0).setScale(6, BigDecimal.ROUND_HALF_UP);
+		}
+		return new BigDecimal(a).setScale(6, BigDecimal.ROUND_HALF_UP);
+	}
+	@Override
+	public String getKeyDate(String key) throws Exception {
+	   String strData="";
+	   if(key.indexOf("年")>0){
+		   strData=key.substring(0, 4)+"-12-31"; 
+	   }else{
+		   strData=key.replaceAll("//", "-");
+	   }
+	   return strData;
+	}
+	public FinancialData getFinanceCriedtData(CustInfo custinfo,FinancialSubjects fs) throws Exception {
+		String HSQL="From FinancialData FD where FD.custInfo=? and FD.FinancialSubjectsid=? ";
+		List<FinancialData> fds=new ArrayList<FinancialData>();
+		fds=this.tableService.findResultsByHSQL(HSQL, custinfo,fs);
+	    if(fds.size()>0){
+	    	return fds.get(0);
+	    }else{
+	       return null;	
+	    }
+	}
+	
+	@Override
+	public FinancialData getFinanceData(CustInfo custinfo,FinancialSubjects fs,String financialDate ) throws Exception {
+		
+		
+		String HSQL="From FinancialData FD where FD.custInfo=? and FD.FinancialSubjectsid=? and FD.FinancialDate=?";
+		List<FinancialData> fds=new ArrayList<FinancialData>();
+		fds=this.tableService.findResultsByHSQL(HSQL, custinfo,fs,financialDate);
+	    if(fds.size()>0){
+	    	return fds.get(0);
+	    }else{
+	       return null;	
+	    }
+	}
+	@Override
+	public String getFinancefieldValue(CustInfo custinfo,FinancialSubjects fs,String yearvalue ) throws Exception {
+		String subject_data="";
+			  String sql="select *"
+					  +"from financial_data t"
+					 +" where t.financial_date ="
+					 +"(select MAX(t1.financial_date)"
+					 +"from financial_data t1"
+					        + " where t1.cust_id = '"+custinfo.getId()+"' and t1.fina_sub_id = '"+fs.getId()+"')"
+					   +"and t.cust_id = '"+custinfo.getId()
+					   +"'and t.fina_sub_id = '"+fs.getId()+"'";
+			    List<Map<String, Object>>  list=this.baseDao.queryListBySql(sql,null);
+				 if(null!=list&&list.size()>0){
+					 Object value= list.get(0).get("subject_data");
+						if (value == null) {
+							value = "";
+						}
+						 subject_data= value.toString();
+					
+					
+					 }
+				 
+				 System.out.println("年末的值"+subject_data);
+				 System.out.println("年初的值"+yearvalue);
+				return subject_data; 
+				 
+	}
+	@Override
+	public List<Map<String, Object>> getProjectYear(Map<String, String> model) throws Exception {
+		String custid = model.get("custid");
+		String sql="select fd.subject_data,fd.financial_date from financial_data fd left join financial_subjects fs on fs.id=fd.fina_sub_id where fs.subject_code='item1'and fd.cust_id='"+custid+"'";
+		List<Map<String, Object>> results = null;
+		results = this.tableService.queryListBySql(sql);
+		return results;
+	}
+
+	@Override
+	public void modifyFinanceData(Map<String, String> model) throws Exception {
+		List<FinancialData> dataList = new ArrayList<FinancialData>();
+		String ids = model.get("data");
+		System.out.println(ids);
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> list = objectMapper.readValue(ids, List.class);
+		for(Map<String,String> map : list){
+			String id = map.get("id");
+			FinancialData data = new FinancialData();
+			data = this.tableService.findEntityByID(FinancialData.class, id);
+			data.setSubjectData(map.get("subjectdata"));
+			dataList.add(data);
+		}
+	}
+	@Override
+	public void removeFinanceData(Map<String, String> model) throws Exception {
+		String custid = model.get("custid");
+		String financialdate=model.get("financialdate");
+		if(null==custid || custid.length()<0){
+			return;
+		}
+		CustInfo custInfo = this.tableService.findEntityByID(CustInfo.class, custid);
+		Map<String,Object> propertiesMap = new HashMap<String, Object>();
+		propertiesMap.put("custInfo",custInfo);
+		propertiesMap.put("FinancialDate",financialdate);
+		List<FinancialData> list = this.tableService.findEntityByProperties(FinancialData.class, propertiesMap);
+		this.tableService.removeAllEntites(list);
+	}
+
+	@Override
+	public List<Map<String, Object>> getProjectYearNew(Map<String, String> model)
+			throws Exception {
+		String custid = model.get("custid");
+		String sql="select fd.subject_data,fd.financial_date from financial_data fd left join financial_subjects fs on fs.id=fd.fina_sub_id where fs.subject_code='item0'and fd.cust_id='"+custid+"'";
+		List<Map<String, Object>> results = null;
+		results = this.tableService.queryListBySql(sql);
+		return results;
+	}
+
+	public synchronized String createCalNum() throws Exception {
+		try{
+			
+			String year=DateUtil.getSystemDate().substring(0, 4);
+			String month=DateUtil.getSystemDate().substring(5, 7);
+			String day=DateUtil.getSystemDate().substring(8, 10);
+			return "TXZL"+year+month+day+"000001";
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	@Override
+	public void addFundPlanReportApplication(Map<String, String> variablesMap) throws Exception {
+		DepositInterest work=new DepositInterest();
+		User user = SecurityUtil.getPrincipal();
+		String creat_date=DateUtil.getSystemDateTime();
+		work.setCreator(user);
+		work.setReportStyle("草稿");
+		work.setsN(createCalNum());
+		work.setDidate(variablesMap.get("didate"));
+		work.setNote(variablesMap.get("note"));
+		work.setAccountBalance(variablesMap.get("accountbalance"));
+		work.setBalanceDeposit(variablesMap.get("balancedeposit"));
+		work.setCreateDate(DateUtil.getSystemDateTime());
+		this.tableService.saveEntity(work);
+		String time=variablesMap.get("didate");
+		int year=Integer.parseInt(time.substring(0, 4));
+		int month=Integer.parseInt(time.substring(5, 7))-1;
+		//获取月第一天 
+		 Calendar startTime = Calendar.getInstance();
+		 startTime.set(Calendar.YEAR, year);     
+		 startTime.set(Calendar.MONTH, month);  
+		 startTime.set(Calendar.DAY_OF_MONTH,startTime.getMinimum(Calendar.DATE));  
+	     String startDate= new   SimpleDateFormat( "yyyy-MM-dd ").format(startTime.getTime());   
+	    //获取当月最后一天
+		Calendar endTime = Calendar.getInstance();     
+		endTime.set(Calendar.YEAR, year);     
+		endTime.set(Calendar.MONTH, month);     
+		endTime.set(Calendar.DAY_OF_MONTH,endTime.getActualMaximum(Calendar.DATE));  
+        String endDate=new  SimpleDateFormat( "yyyy-MM-dd ").format(endTime.getTime());
+        //保存DepositInterest后，在查找该表主键id
+        Map<String,Object> queryMap = new HashMap<String,Object>();
+		queryMap.put("didate", time);
+        List<DepositInterest> resultDI= this.tableService.findEntityByProperties(DepositInterest.class, queryMap);
+        String diid=resultDI.get(0).getId();
+       //保存收款数据
+        String rcdsql="insert into DEPOSIT_INTEREST_DETAIL "+
+"  (id,  "+
+"   return_amount_name, "+
+"   return_amount, "+
+"   plan_time, "+
+"   return_amount_unit, "+
+"   return_amount_note, "+
+"  di_id, "+
+"   creator_, "+
+"   create_date) "+
+"  ((select sys_guid() id, "+
+"           ci.project_name || '第' || c.payment_id || '期' || t.name_ receiptcount, "+
+"           c.plan_money amount, "+
+"           c.plan_date receipttime, "+
+"           c.pay_obj paymentunit, "+
+"           c.fpnote note, '"+
+diid+  "'           diid, '"+
+user.getId()+
+"',           '"+creat_date+
+"'      from contract_fund_fund_plan c "+
+"      left join contract_info ci "+
+"        on ci.id = c.contract_id "+
+"      left join t_dicts_datas t "+
+"        on c.fee_type = t.id_ "+
+"     where c.plan_date>='"+startDate+"' and c.plan_date<='"+endDate+
+"'       and c.pay_type = 'pay_type_in') union "+
+"   (select sys_guid() id, "+
+"           ci.project_name || '第' || cf.rent_list || '期租金' receiptcount, "+
+"           cf.rent amount, "+
+"           cf.plan_date receipttime, "+
+"           vci.custname paymentunit, "+
+"           '' note, '"+
+diid+"'          diid, "+
+"           '"+user.getId()+
+"',   '"+creat_date+
+"'      from contract_fund_rent_plan cf "+
+"      left join contract_info ci "+
+"        on ci.id = cf.contract_id "+
+"      left join vi_cust_info_all vci "+
+"        on ci.cust_id = vci.custid "+
+"     where cf.plan_date >=  '"+startDate+
+"'       and cf.plan_date <='"+endDate+"')) ";
+      //保存付款数据
+        String pcdsql="insert into DEPOSIT_INTEREST_DETAIL "+
+        		"  (id, "+
+        		"   PAYMENT_name, "+
+        		"   PAYMENT, "+
+        		"   plan_TIME, "+
+        		"   PAYMENT_UNIT, "+
+        		"   PAYMENT_note, "+
+        		"   di_id, "+
+        		"   creator_, "+
+        		"   create_date) "+
+        		"  (select sys_guid() id, "+
+        		"          ci.project_name || '第' || c.payment_id || '期' || t.name_, "+
+        		"          c.plan_money, "+
+        		"          c.plan_date, "+
+        		"          c.pay_obj, "+
+        		"          c.fpnote note, '"+
+        		diid+"'        diid, "+
+        		"           '"+user.getId()+
+        		"',   '"+creat_date+
+        		"'     from contract_fund_fund_plan c "+
+        		"     left join contract_info ci "+
+        		"       on ci.id = c.contract_id "+
+        		"     left join t_dicts_datas t "+
+        		"       on c.fee_type = t.id_ "+
+        		" where c.plan_date>='"+startDate+"' and c.plan_date<='"+endDate+
+        		"'       and c.pay_type = 'pay_type_out')";
+        System.out.println(rcdsql);
+        System.out.println(pcdsql);
+		reportDao.getJdbcTemplate().execute(rcdsql);
+		reportDao.getJdbcTemplate().execute(pcdsql);
+	}
+
+	@Override
+	public void deleteFundPlanReportApplication(Map<String, String> variablesMap) throws Exception {
+			String id=variablesMap.get("id");
+			DepositInterest di=this.tableService.findEntityByID(DepositInterest.class, id);
+			List<DepositInterestDetail>  didlist=new ArrayList<DepositInterestDetail>();
+			didlist=this.tableService.findResultsByHSQL("From DepositInterestDetail d where d.planTime<=? and d.planTime>= ? ",di.getDidate()+"-31", di.getDidate()+"-1");
+			Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();
+		    queryMainObjectMap.put("diid", di);
+		    List<DepositInterestDetail>  didlistManual=new ArrayList<DepositInterestDetail>();
+		    didlistManual=this.tableService.findEntityByProperties(DepositInterestDetail.class, queryMainObjectMap);
+			this.tableService.removeAllEntites(didlist);
+			this.tableService.removeAllEntites(didlistManual);
+			this.tableService.removeEntity(di);
+	}
+
+	@Override
+	public void updateFundPlanReport(Map<String, String> variablesMap) throws Exception {
+		String id=variablesMap.get("id");
+		DepositInterest work=this.tableService.findEntityByID(DepositInterest.class, id);
+		work.setReportStyle("已完成");
+		this.tableService.updateEntity(work);
+	}
+
+		
+	
+//修改付款统计表数据
+	@Override
+	public void updatePaymentCountData(Map<String, String> variablesMap) throws Exception {
+		//获取资金安排类别，该类别不允许该操作修改
+				String fundtype=variablesMap.get("fundtype");
+				//通过序列号找到DepositInterestDetail中对应的数据
+				String fundplanno=variablesMap.get("fundplanno");
+				String didSql="From DepositInterestDetail d where d.fundPlanNo=?";
+				List<DepositInterestDetail> dilist=this.tableService.findResultsByHSQL(didSql, fundplanno);
+				DepositInterestDetail did=dilist.get(0);
+				System.out.println(did.getId()+"===id");
+				//获取款项名称
+				String paymentcount=variablesMap.get("paymentcount")==null?"":variablesMap.get("paymentcount");
+				//获取金额
+				String amount=variablesMap.get("amount")==null?"":variablesMap.get("amount");
+				//获取款项时间,时间不允许修改
+				String paymenttime=variablesMap.get("paymenttime");
+				//获取款项单位
+				String supportunit=variablesMap.get("supportunit")==null?"":variablesMap.get("supportunit");
+				//获取银承
+				String silver=variablesMap.get("silver")==null?"":variablesMap.get("silver");
+				//获取款项备注
+				String note=variablesMap.get("note")==null?"":variablesMap.get("note");
+				//获取收款类型
+				String plannameid=variablesMap.get("plannameid");
+				DictionaryData dd=new DictionaryData();
+				String ddid="";
+				String sql="";
+				if(plannameid!=""&&plannameid!=null){
+					dd=this.tableService.findEntityByID(DictionaryData.class, plannameid);
+					ddid=dd.getId();
+				}
+				if(fundtype.equals("付款")){
+					sql="update DEPOSIT_INTEREST_DETAIL set "+
+						 "   PAYMENT     ='"+amount+"', "+
+					"   PAYMENT_NAME      ='"+paymentcount+"', "+
+					"   PAYMENT_UNIT      ='"+supportunit+"', "+
+					"   PAYMENT_NOTE      ='"+note+"', "+
+					"   PAYMENT_SILVER    ='"+silver+"', "+
+					"   PAYMENT_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				}
+				if(fundtype.equals("资金上存")){
+					sql="update DEPOSIT_INTEREST_DETAIL set "+
+						 "   FUND_DEPOSIT     ='"+amount+"', "+
+						"   FUND_DEPOSIT_NAME      ='"+paymentcount+"', "+
+						"   FUND_DEPOSIT_UNIT      ='"+supportunit+"', "+
+						"   FUND_DEPOSIT_NOTE      ='"+note+"', "+
+						"   FUND_DEPOSIT_SILVER    ='"+silver+"', "+
+						"   FUND_DEPOSIT_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				}if(fundtype.equals("内部账户转款(转出)")){
+					sql="update DEPOSIT_INTEREST_DETAIL set "+
+							 "   INNER_TRAN     ='"+amount+"', "+
+							"   INNER_TRAN_NAME      ='"+paymentcount+"', "+
+							"   INNER_TRAN_UNIT      ='"+supportunit+"', "+
+							"   INNER_TRAN_NOTE      ='"+note+"', "+
+							"   INNER_TRAN_SILVER    ='"+silver+"', "+
+							"   INNER_TRAN_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				}if(fundtype.equals("外部还款")){
+					sql="update DEPOSIT_INTEREST_DETAIL set "+
+							 "   OUTTER_RETURN     ='"+amount+"', "+
+							"   OUTTER_RETURN_NAME      ='"+paymentcount+"', "+
+							"   OUTTER_RETURN_UNIT      ='"+supportunit+"', "+
+							"   OUTTER_RETURN_NOTE      ='"+note+"', "+
+							"   OUTTER_RETURN_SILVER    ='"+silver+"', "+
+							"   OUTTER_RETURN_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				}if(fundtype.equals("还集团借款")){
+					sql="update DEPOSIT_INTEREST_DETAIL set "+
+							 "   GROUP_RETURN     ='"+amount+"', "+
+							"   GROUP_RETURN_NAME      ='"+paymentcount+"', "+
+							"   GROUP_RETURN_UNIT      ='"+supportunit+"', "+
+							"   GROUP_RETURN_NOTE      ='"+note+"', "+
+							"   GROUP_RETURN_SILVER    ='"+silver+"', "+
+							"   GROUP_RETURN_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				}
+			    System.out.println(sql);
+				reportDao.getJdbcTemplate().execute(sql);
+				User user = SecurityUtil.getPrincipal();
+				String modisql="update DEPOSIT_INTEREST_DETAIL set MODIFICATOR_='"+user.getId()+"' ,MODIFY_DATE='"+DateUtil.getSystemDateTime()+"' where FUND_PLAN_NO='"+fundplanno+"'";
+				reportDao.getJdbcTemplate().execute(modisql);
+
+	}
+//修改收款统计表数据
+	@Override
+	public void editReceiptCountData(Map<String, String> variablesMap) throws Exception {
+		//获取资金安排类别，该类别不允许该操作修改
+		String fundtype=variablesMap.get("fundtype");
+		//通过序列号找到DepositInterestDetail中对应的数据
+		String fundplanno=variablesMap.get("fundplanno");
+		String didSql="From DepositInterestDetail d where d.fundPlanNo=?";
+		List<DepositInterestDetail> dilist=this.tableService.findResultsByHSQL(didSql, fundplanno);
+		DepositInterestDetail did=dilist.get(0);
+		//获取款项名称
+		String receiptcount=variablesMap.get("receiptcount")==null?"":variablesMap.get("receiptcount");
+		//获取金额
+		String amount=variablesMap.get("amount")==null?"":variablesMap.get("amount");
+		//获取款项时间,时间不允许修改
+		String receipttime=variablesMap.get("receipttime");
+		//获取款项单位
+		String paymentunit=variablesMap.get("paymentunit")==null?"":variablesMap.get("paymentunit");
+		//获取款项备注
+		String note=variablesMap.get("note")==null?"":variablesMap.get("note");
+		//获取收款类型
+		String plannameid=variablesMap.get("plannameid");
+		DictionaryData dd=new DictionaryData();
+		String ddid="";
+		String sql="";
+		if(plannameid!=""&&plannameid!=null){
+			dd=this.tableService.findEntityByID(DictionaryData.class, plannameid);
+			ddid=dd.getId();
+		}
+		if(fundtype.equals("内部账户转款(转入)")){
+			sql="update DEPOSIT_INTEREST_DETAIL set "+
+					 "   INNER_ACCOUNT     ='"+amount+"', "+
+					"   INNER_ACCOUNT_NAME      ='"+receiptcount+"', "+
+					"   INNER_ACCOUNT_UNIT      ='"+paymentunit+"', "+
+					"   INNER_ACCOUNT_NOTE      ='"+note+"', "+
+					"   INNER_ACCOUNT_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+		}
+		if(fundtype.equals("回款")){
+			sql="update DEPOSIT_INTEREST_DETAIL set "+
+					 "   RETURN_AMOUNT     ='"+amount+"', "+
+					"   RETURN_AMOUNT_NAME      ='"+receiptcount+"', "+
+					"   RETURN_AMOUNT_UNIT      ='"+paymentunit+"', "+
+					"   RETURN_AMOUNT_NOTE      ='"+note+"', "+
+					"   RETURN_AMOUNT_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+		}
+		if(fundtype.equals("资金下拨")){
+			sql="update DEPOSIT_INTEREST_DETAIL set "+
+					 "   FUND_ALLOCATED     ='"+amount+"', "+
+					"   FUND_ALLOCATED_NAME      ='"+receiptcount+"', "+
+					"   FUND_ALLOCATED_UNIT      ='"+paymentunit+"', "+
+					"   FUND_ALLOCATED_NOTE      ='"+note+"', "+
+					"   FUND_ALLOCATED_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+		}
+		if(fundtype.equals("内部借款")){
+			sql="update DEPOSIT_INTEREST_DETAIL set "+
+					 "   INNER_BORROW     ='"+amount+"', "+
+					"   INNER_BORROW_NAME      ='"+receiptcount+"', "+
+					"   INNER_BORROW_UNIT      ='"+paymentunit+"', "+
+					"   INNER_BORROW_NOTE      ='"+note+"', "+
+					"   INNER_BORROW_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+		}
+		if(fundtype.equals("外部借款")){
+			sql="update DEPOSIT_INTEREST_DETAIL set "+
+					 "   OUTTER_BORROW     ='"+amount+"', "+
+					"   OUTTER_BORROW_NAME      ='"+receiptcount+"', "+
+					"   OUTTER_BORROW_UNIT      ='"+paymentunit+"', "+
+					"   OUTTER_BORROW_NOTE      ='"+note+"', "+
+					"   OUTTER_BORROW_TYPE      ='"+ddid+"' where FUND_PLAN_NO='"+fundplanno+"'";
+		}
+		this.tableService.updateEntity(did);  
+	        System.out.println(sql);
+			reportDao.getJdbcTemplate().execute(sql);
+			User user = SecurityUtil.getPrincipal();
+			String modisql="update DEPOSIT_INTEREST_DETAIL set MODIFICATOR_='"+user.getId()+"' ,MODIFY_DATE='"+DateUtil.getSystemDateTime()+"' where FUND_PLAN_NO='"+fundplanno+"'";
+			reportDao.getJdbcTemplate().execute(modisql);
+	}
+	@Override
+	public void updateInterest(Map<String, String> variablesMap) throws Exception {
+			String dateid=variablesMap.get("dateid");
+			String didSql="From InterestProvision d where d.id=?";
+		    List<InterestProvision> interestProvision=	this.tableService.findResultsByHSQL(didSql, dateid);
+		    String date=interestProvision.get(0).getDidate();
+			String deleteInterestSql="DELETE FROM   LOAN_RENT_PLAN_TO_INTEREST WHERE  to_char(to_date(ypay_date,'yyyy-mm-dd'),'mm')="+date.substring(5, 7);
+			String insertInterestSql=
+					"insert into LOAN_RENT_PLAN_TO_INTEREST\n" +
+							"  (id,\n" + 
+							"   plan_list,\n" + 
+							"   plan_date,\n" + 
+							"   interest,\n" + 
+							"   create_date,\n" + 
+							"   modify_date,\n" + 
+							"   meno,\n" + 
+							"   loan_id,\n" + 
+							"   currency,\n" + 
+							"   pay_interest,\n" + 
+							"   open_invoice,\n" + 
+							"   up_id,\n" + 
+							"   creator_,\n" + 
+							"   modificator_,\n" + 
+							"   ypay_date,\n" + 
+							"   balance,\n" + 
+							"   interest_rate)\n" + 
+							"  SELECT sys_guid(),\n" + 
+							"         i.service_number,\n" + 
+							"         i.date_of_interest,\n" + 
+							"         round(i.interest, 2),\n" + 
+							"         to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss'),\n" + 
+							"         '',\n" + 
+							"         '',\n" + 
+							"         l.id,\n" + 
+							"         'currency_type1',\n" + 
+							"         '',\n" + 
+							"         'notary_flag.02',\n" + 
+							"         '',\n" + 
+							"         'Administrator',\n" + 
+							"         '',\n" + 
+							"         i.cease_date,\n" + 
+							"         i.balance,\n" + 
+							"         i.interest_rate\n" + 
+							"    FROM INTEREST_PROVISION_INFO i\n" + 
+							"    LEFT JOIN LOAN_ACCOUNT l\n" + 
+							"      on l.loan_contract_id = i.contract_no\n" + 
+							"   WHERE to_char(to_date(cease_date, 'yyyy-mm-dd'), 'mm') = "+date.substring(5, 7);
+			//this.tableService.getTableXMLJsonData("tablesXml\eleasing\jsp\finacial\loan_account\insert_interest.xml", dateid.substring(5, 6));
+			reportDao.getJdbcTemplate().execute(deleteInterestSql);
+			reportDao.getJdbcTemplate().execute(insertInterestSql);
+	}
+
+	@Override
+	public void addCashDepositData(Map<String, String> model) throws Exception {
+		String systemDate = DateUtil.getSystemDateTime();
+		User user = SecurityUtil.getPrincipal();
+		String cashdepositdate = model.get("cashdepositdate");
+		String [] chargeIds = model.get("ids").split(",");
+		String [] factmoneys = model.get("factmoneys").split(",");
+		String [] maxdates = model.get("maxdates").split(",");
+		String [] baserateones = model.get("baserateones").split(",");
+		String [] baseratedepositones = model.get("baseratedepositones").split(",");
+		List<CashDeposit> listsave= new ArrayList<CashDeposit>();
+		List<CashDeposit> listupdate= new ArrayList<CashDeposit>();
+		String cashDepositAmount="";
+		String cashDepositInterest="";
+		//计算时间年份折现中间量
+		BigDecimal temp1;
+		//计算年底时间差
+		BigDecimal temp11;
+		//利率加1转换为整数的分子值
+		BigDecimal temp2;
+		//利率加1转换为整数的分子值的年份幂运算后的12次方
+		BigDecimal temp3;
+		//利率加1转换为整数的分母值的年份幂运算后的12次方
+		BigDecimal temp4;
+		//利息折算中间值
+		BigDecimal temp5;
+		for (int i = 0; i < chargeIds.length; i++) {
+			CashDeposit cashDeposit=new CashDeposit();
+			temp1=(((new BigDecimal(maxdates[i].substring(0, 4))).subtract(new BigDecimal(cashdepositdate.substring(0, 4))))
+					.multiply(new BigDecimal("12")))
+					.add((new BigDecimal(maxdates[i].substring(5, 7))).subtract(new BigDecimal(cashdepositdate.substring(5, 7))));
+			temp11=(((new BigDecimal(maxdates[i].substring(0, 4))).subtract(new BigDecimal(cashdepositdate.substring(0, 4))))
+					.multiply(new BigDecimal("12")))
+					.add((new BigDecimal(maxdates[i].substring(5, 7))).subtract(new BigDecimal(12)));
+			//如利率为4.35，转换为整数为4.36乘10的6次方，除10的8次方
+			temp2=((new BigDecimal(baserateones[i])).multiply(new BigDecimal("100"))).add(new BigDecimal("10000"));
+			//利率加1转换为整数的分子值的年份幂运算后的12次方
+			temp3=bigRoot(temp2.pow(temp1.intValue()),12,20,BigDecimal.ROUND_HALF_UP);
+			//利率加1转换为整数的分母值的年份幂运算后的12次方
+			temp4=bigRoot((new BigDecimal("10000")).pow(temp1.intValue()),12,20,BigDecimal.ROUND_HALF_UP);
+			//折现值cashDepositAmount
+			cashDepositAmount=((new BigDecimal(factmoneys[i])).multiply(temp4)).divide(
+					temp3, 6, BigDecimal.ROUND_HALF_UP).toString();
+			//保证金利息
+			temp5=bigRoot(((new BigDecimal(1)).add((new BigDecimal(baserateones[i])).divide(new BigDecimal(100),20, BigDecimal.ROUND_HALF_UP)).pow(temp11.intValue())),12,20,BigDecimal.ROUND_HALF_UP);
+			cashDepositInterest=(((temp5.subtract(new BigDecimal(1))).divide(new BigDecimal(baserateones[i]),20, BigDecimal.ROUND_HALF_UP)).multiply(new BigDecimal(factmoneys[i]))).multiply(new BigDecimal(baseratedepositones[i])).setScale(6, BigDecimal.ROUND_HALF_UP).toString();
+			//一个保证金每月只存入一条数据，判断折现保证金是否存在
+			String hql = "from CashDeposit  where chargeId.id = ? and cashDepositInterestDate=?";
+			List<CashDeposit> query = this.tableService.findResultsByHSQL(hql,chargeIds[i] ,cashdepositdate.substring(0, 7));
+			//如果query大于0表中已经存在数据就修改原数据，否则新增数据
+			if(query.size()!=0){
+				cashDeposit=query.get(0);
+				cashDeposit.setCashDepositAmount(cashDepositAmount);
+				cashDeposit.setCashDepositDate(cashdepositdate);
+				cashDeposit.setCashDepositInterest(cashDepositInterest);
+				cashDeposit.setModificator(user);
+				cashDeposit.setModifyDate(systemDate);
+				cashDeposit.setCashDepositInterestDate(cashdepositdate.substring(0,7));
+				listupdate.add(cashDeposit);
+			}else{
+				cashDeposit.setId(UUIDUtil.getUUID());
+				cashDeposit.setCashDepositAmount(cashDepositAmount);
+				cashDeposit.setCashDepositInterest(cashDepositInterest);
+				cashDeposit.setCashDepositDate(cashdepositdate);
+				cashDeposit.setContractId(this.tableService.findEntityByID(CashDepositBase.class, chargeIds[i]).getContractId());
+				cashDeposit.setChargeId(this.tableService.findEntityByID(CashDepositBase.class, chargeIds[i]));
+				cashDeposit.setCreator(user);
+				cashDeposit.setCreateDate(systemDate);
+				cashDeposit.setCashDepositInterestDate(cashdepositdate.substring(0,7));
+				listsave.add(cashDeposit);
+			}
+		}
+		try {
+			
+			this.tableService.updateAllEntities(listupdate);
+			this.tableService.saveAllEntities(listsave);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	 //计算一个数的number的n次方根，精确scale位，四舍五入方法roundingMode
+	 public static BigDecimal bigRoot(BigDecimal number, int n, int scale, int roundingMode) {
+			boolean negate = false;
+			if (n < 0)
+				throw new ArithmeticException();
+			if (number.compareTo(BigDecimal.ZERO) < 0) {
+				if (n % 2 == 0)
+					throw new ArithmeticException();
+				else {
+					number = number.negate();
+					negate = true;
+				}
+			}
+
+			BigDecimal root;
+
+			if (n == 0)
+				root = BigDecimal.ONE;
+			else if (n == 1)
+				root = number;
+			else {
+				final BigInteger N = BigInteger.valueOf(n);
+				final BigInteger N2 = BigInteger.TEN.pow(n);
+				final BigInteger N3 = BigInteger.TEN.pow(n - 1);
+				final BigInteger NINE = BigInteger.valueOf(9);
+
+				BigInteger[] C = new BigInteger[n + 1];
+				for (int i = 0; i <= n; i++) {
+					C[i] = combination(n, i);
+				}
+
+				BigInteger integer = number.toBigInteger();
+				String strInt = integer.toString();
+				int lenInt = strInt.length();
+				for (int i = lenInt % n; i < n && i > 0; i++)
+					strInt = "0" + strInt;
+				lenInt = (lenInt + n - 1) / n * n;
+				BigDecimal fraction = number.subtract(number.setScale(0, BigDecimal.ROUND_DOWN));
+				int lenFrac = (fraction.scale() + n - 1) / n * n;
+				fraction = fraction.movePointRight(lenFrac);
+				String strFrac = fraction.toPlainString();
+				for (int i = strFrac.length(); i < lenFrac; i++)
+					strFrac = "0" + strFrac;
+
+				BigInteger res = BigInteger.ZERO;
+				BigInteger rem = BigInteger.ZERO;
+				for (int i = 0; i < lenInt / n; i++) {
+					rem = rem.multiply(N2);
+
+					BigInteger temp = new BigInteger(strInt.substring(i * n, i * n + n));
+					rem = rem.add(temp);
+
+					BigInteger j;
+					if (res.compareTo(BigInteger.ZERO) != 0)
+						j = rem.divide(res.pow(n - 1).multiply(N).multiply(N3));
+					else
+						j = NINE;
+					BigInteger test = BigInteger.ZERO;
+					temp = res.multiply(BigInteger.TEN);
+					while (j.compareTo(BigInteger.ZERO) >= 0) {
+						// test = res.multiply(BigInteger.TEN);
+						// test = ((test.add(j)).pow(n)).subtract(test.pow(n));
+						test = BigInteger.ZERO;
+						if (j.compareTo(BigInteger.ZERO) > 0)
+							for (int k = 1; k <= n; k++)
+								test = test.add(j.pow(k).multiply(C[k]).multiply(temp.pow(n - k)));
+						if (test.compareTo(rem) <= 0)
+							break;
+						j = j.subtract(BigInteger.ONE);
+					}
+
+					rem = rem.subtract(test);
+					res = res.multiply(BigInteger.TEN);
+					res = res.add(j);
+				}
+				for (int i = 0; i <= scale; i++) {
+					rem = rem.multiply(N2);
+
+					if (i < lenFrac / n) {
+						BigInteger temp = new BigInteger(strFrac.substring(i * n, i * n + n));
+						rem = rem.add(temp);
+					}
+
+					BigInteger j;
+					if (res.compareTo(BigInteger.ZERO) != 0) {
+						j = rem.divide(res.pow(n - 1).multiply(N).multiply(N3));
+					} else
+						j = NINE;
+					BigInteger test = BigInteger.ZERO;
+					BigInteger temp = res.multiply(BigInteger.TEN);
+					while (j.compareTo(BigInteger.ZERO) >= 0) {
+						// test = res.multiply(BigInteger.TEN);
+						// test = ((test.add(j)).pow(n)).subtract(test.pow(n));
+						test = BigInteger.ZERO;
+						if (j.compareTo(BigInteger.ZERO) > 0)
+							for (int k = 1; k <= n; k++)
+								test = test.add(j.pow(k).multiply(C[k]).multiply(temp.pow(n - k)));
+						if (test.compareTo(rem) <= 0)
+							break;
+						j = j.subtract(BigInteger.ONE);
+					}
+
+					rem = rem.subtract(test);
+					res = res.multiply(BigInteger.TEN);
+					res = res.add(j);
+				}
+				root = new BigDecimal(res).movePointLeft(scale + 1);
+				if (negate)
+					root = root.negate();
+			}
+			return root.setScale(scale, roundingMode);
+		}
+
+		public static BigInteger combination(int n, int k) {
+			if (k > n || n < 0 || k < 0)
+				return BigInteger.ZERO;
+			if (k > n / 2)
+				return combination(n, n - k);
+			BigInteger N1 = BigInteger.ONE;
+			BigInteger N2 = BigInteger.ONE;
+			BigInteger N = BigInteger.valueOf(n);
+			BigInteger K = BigInteger.valueOf(k);
+			for (int i = 0; i < k; i++) {
+				N1 = N1.multiply(N);
+				N2 = N2.multiply(K);
+				N = N.subtract(BigInteger.ONE);
+				K = K.subtract(BigInteger.ONE);
+			}
+			return N1.divide(N2);
+		}
+}

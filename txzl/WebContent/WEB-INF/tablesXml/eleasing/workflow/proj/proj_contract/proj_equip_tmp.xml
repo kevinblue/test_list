@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+		SELECT * FROM (SELECT P.ID,
+		p.DOC_ID as docid,
+       P.PROJ_ID    AS projinfo,
+       p.CONTRACTID as contractid,
+       P.EQUIP_NAME AS equipname,
+       P.MODEL_ AS model,
+       P.EQUIP_NUM AS equipnum,
+       P.PRICE AS price,
+       P.UNIT,
+       P.EQUIP_PRICE AS equipprice,
+       P.TOTAL AS TOTAL,
+       P.NOWTOTAL AS NOWTOTAL,
+       P.BRAND_ AS brand,
+       P.VNDR AS vndr,
+       CI2.CUST_NAME AS vndrname,
+       P.MANUFACTURER AS manufacturer,
+       CI3.CUST_NAME AS manufacturername,
+       P.DEVICE_TYPE AS DEVICETYPE,
+       DICT.NAME_ AS DEVICETYPENAME,
+       P.EQUIP_ID AS EQUIPID,
+       P.ORIGINALTOTAL AS ORIGINALTOTAL,
+       P.EQUIP_DELIVERY_PLACE AS equipdeliveryplace,
+       P.EQUIP_DELIVERY_DATE AS equipdeliverydate,
+       P.EQUIP_PLACE AS equipplace,
+       p.equip_period AS equipperiod,
+       P.CENOTE AS cenote,
+       P.VNDR_TYPE AS vndrtype,
+       DICT1.NAME_ AS vndrtypename
+       FROM PROJ_EQUIP_TMP P
+       LEFT JOIN CUST_INFO CI2 ON P.VNDR = CI2.ID
+       LEFT JOIN CUST_INFO CI3 ON P.MANUFACTURER = CI3.ID
+       LEFT JOIN T_DICTS_DATAS DICT ON P.DEVICE_TYPE = DICT.ID_
+       LEFT JOIN T_DICTS_DATAS DICT1 ON P.VNDR_TYPE = DICT1.ID_
+       ) P
+       where 1=1 
+      /~projid: AND projinfo ='{projid}' ~/
+       /~docid: AND docid ='{docid}' ~/ 
+     
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

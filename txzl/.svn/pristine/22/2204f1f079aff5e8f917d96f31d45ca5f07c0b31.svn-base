@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+			<![CDATA[
+				select 
+        to_char(aa.custtypename )  as  custcategory  
+        ,aa.* ,case aa.custscale when 'cust_scale.supplier' then '供应商' 
+                      when 'cust_scale.big' then '大中型企业' 
+                     when 'cust_scale.centre' then '小型企业' 
+                  end custscalename,
+                  cc.grade_result 
+                  from VI_CUST_INFO_ALL aa
+                  left join cust_info_company cic on cic.cust_id = aa.custid
+                  left join
+                   (
+                   select * from 
+                   (select cg1.*,gradedate.key from cust_grade cg1  left join
+                   (select '1' as key, cust_id,   max(GRADE_DATE) gradedate from cust_grade  group by cust_id ) gradedate
+                   on cg1.cust_id = gradedate.cust_id and cg1.grade_date = gradedate.gradedate) gradedate2
+                   where gradedate2.key is not null
+                   )cc on cc.cust_id=aa.custid 
+                   
+                    where 1=1  and aa.custclass='法人'  
+                    --and (to_char(aa.custtypename) like'%承租人%' or to_char(aa.custtypename) like'%供应商%')
+                  --  and cic.CUST_SCALE is not null
+            		
+            		--AND NVL(DRAFT_,'否')='否' 
+          			/~custname: AND aa.custname like '%{custname}%' ~/
+          			/~custscalename: AND custscalename like '%{custscalename}%' ~/
+          			/~grade_result: AND grade_result like '%{grade_result}%' ~/
+          			/~custnumber: AND aa.custnumber like '%{custnumber}%' ~/
+          			/~extendsql: <<extendsql>>~/
+          			<EXTRACTEND>order by createdate desc<EXTRACTEND>      
+				]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

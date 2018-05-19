@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+                SELECT 
+                   MAX(CHILDREN_COUNT_) AS  MAX_ITEM_COUNT_ 
+                FROM(  
+			         SELECT   
+			            ITEM_PID_,  
+			            COUNT(ITEM_ID_) AS CHILDREN_COUNT_  
+			          FROM(  
+			             SELECT   
+			              PID_               AS ITEM_PID_,   
+			              ID_                AS ITEM_ID_,   
+			              FLAG_              AS ITEM_FLAG_       
+			             FROM(  
+			                SELECT  PID_,ID_,'DIR'  AS FLAG_ FROM {dictTableName} 
+			                 WHERE TO_CHAR(ENABLED_) = '1'   
+			                UNION ALL  
+			                SELECT  PID_,ID_,'DATA' AS FLAG_ FROM {dictDataTableName} 
+			                 WHERE TO_CHAR(ENABLED_) = '1'  
+			             )  
+			             START WITH  PID_='{rootDictId}'  
+			             CONNECT BY PRIOR ID_ = PID_  
+			         )  
+			         WHERE ITEM_FLAG_ ='DATA'   
+			         GROUP BY ITEM_PID_   
+			     )			  
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	   <predefined_sql>
+	    <![CDATA[
+	   with tree as (   
+       SELECT  PID_ AS ITEM_PID_,ID_ AS ITEM_ID_,POSITION_ AS ITEM_POSITION_                        
+                FROM {dictTableName} WHERE ENABLED_ = 1 and PID_ = '{rootDictId}'  
+           UNION ALL
+            SELECT  PID_ AS ITEM_PID_,ID_ AS ITEM_ID_,POSITION_ AS ITEM_POSITION_
+               FROM {dictTableName} INNER JOIN Tree T ON {dictTableName}.PID_ = t.ITEM_ID_ 
+               where  {dictTableName}.ENABLED_ = 1                  
+)      ]]> 
+	   </predefined_sql>
+	   <table_sql>
+	    <![CDATA[
+	      select max(CHILDREN_COUNT_) MAX_ITEM_COUNT_ from (  
+		  select PID_,COUNT(*) CHILDREN_COUNT_ from {dictDataTableName}  
+	      where PID_ in(select ITEM_ID_ from tree )
+	     and ENABLED_ = 1    
+	     group by PID_) t]]> 
+	   </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

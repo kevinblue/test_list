@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      		<!-- 
+      			注：由于打印催款函比较特殊，后人如果需修改这段SQL，注意千万不要从vi_cust_info_all视力中取数据
+      			因为为报无法从套接字读取更多的数据
+      		 -->
+	        <![CDATA[
+	        	select * from(
+					select 
+					notice.id,
+						vi.cust_name custname,
+						vi.project_name projname,
+						vi.custid custid,
+						vi.id contractid,
+						vi.contract_id contract_id,
+						vi.contract_number contractnumber,
+						vi.proj_manage,
+						vi.projmanagename,
+						vi.proj_dept,
+						tusers.realname_ rawValue_partdept,
+						dd.dunning dunningid,
+						outlist.out_list overduenum,
+						outlist.out_date outdate,
+						cc.start_date as startdate,
+            			outlist.plan_date as plandate,
+						(outlist.rent-outlist.inc_rent) overduerent,
+						penaltytemp.penalty,
+						next_commitment_date,
+						vi.contract_status,
+						commitment_date,
+						vi.business_type,
+						notice.sent_date senddate,
+						notice.status 
+					from vi_contract_info vi
+					left join CONTRACT_CONDITION cc on vi.ID=cc.contract_id
+					left join vi_contract_out_list outlist on outlist.contract_id = vi.id
+					left join (select contract_id, sum(penalty) penalty from vi_contract_penalty group by contract_id )  penaltytemp on penaltytemp.contract_id = vi.id
+					left join(
+						select cf.id, nvl(cip.province_,ccp.province_) province
+						FROM CUST_INFO CF
+						LEFT OUTER JOIN CUST_INFO_COMPANY CIP ON CIP.CUST_ID=CF.ID
+						LEFT OUTER JOIN CUST_INFO_PERSON CCP  ON CCP.CUST_ID=CF.ID
+					)cinfo on vi.custid=cinfo.id
+					left join DUNNING_DISTRICT dd on dd.district = cinfo.province and vi.proj_dept=dd.business_dept
+					left join t_users tusers on tusers.id_ = dd.dunning
+					left join (select max(commitment_date) commitment_date,max(next_commitment_date) next_commitment_date, contract_id from OVERDUE_DUNNING_RECORD group by contract_id )
+						dunningrecord on dunningrecord.contract_id = vi.id 
+					left join   (
+						select * from (
+							select notice.*, row_number() over (partition by contract_id order by create_date desc ) rowno from OVERDUE_DUNNING_Notice notice
+						) where rowno=1-- and status = '1'
+					) notice on vi.id = notice.contract_id
+		        ) menutemp
+		        where 1=1 
+		        and menutemp.business_type='business_type.lease'
+		        --and outdate > 0 
+		       -- and status='1'
+		        --and overduerent > 0
+		        /~status: AND status = '{status}' ~/
+		        /~custname: AND menutemp.custname like '%{custname}%' ~/
+		        /~projname: AND menutemp.projname like '%{projname}%' ~/
+		        /~contract_id: AND menutemp.contract_id like '%{contract_id}%' ~/
+		        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+		        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+		        /~guaranteecustname: AND menutemp.guaranteecustname like '%{guaranteecustname}%' ~/
+		        /~selectStr: <<selectStr>> ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        select * from(
+			        	select 
+							vi1.cust_name custname,
+							vi1.id contractid,
+							vi1.contract_id contract_id,
+							vi1.contract_number contractnumber,
+				          dunning.id dunningid,
+				          tusers.realname_ rawValue_partdept,
+				          contractoutlist.out_list overduenum,
+				          --nvl(contractoutlist.inc_rent,0) overduerent,
+				          plan_.overduerent,
+				          contract_penalty.penalty,
+				          --custall.phone,
+				          --custall.address,
+				          CCP.PHONE_
+		                  +CIP.PHONE AS phone,
+		                  CCP.mail_add
+		                  +CIP.MAILA_DDRESS AS address,
+				          contractcondition.start_date startdate,
+				          guaranteecustinfo.cust_name guaranteecustname,
+                  		  notice1.id,
+                  		  notice1.status				  
+								from 
+                (select notice.id,notice.contract_id,status from overdue_dunning_notice notice where 
+exists 
+(select contract_id,max(sent_date) sendate from OVERDUE_DUNNING_Notice group by contract_id
+having notice.contract_id=contract_id and notice.sent_date = max(sent_date)
+)) notice1
+                  left join 
+                (
+				        select * from (select vi2.contractid contractid from vi_contract_fund_rent_plan vi2 group by vi2.contractid
+								having sum(vi2.CURRENTINCOME)<sum(vi2.rent))   fundrentplan) fundrentplan1
+				        on fundrentplan1.contractid= notice1.contract_id
+				        left join 
+				        vi_contract_info vi1 on fundrentplan1.contractid =vi1.id
+				        left join OVERDUE_DUNNING_INFO dunning 
+				        on vi1.id = dunning.contract_id 
+				            left join T_USERS tusers
+				            on dunning.part_dept = tusers.id_
+								left join 
+								base_contract_status status
+								on vi1.contract_status = status.status_code
+				        left join
+				        vi_contract_out_list contractoutlist
+				        on vi1.id = contractoutlist.contract_id
+				        --left join
+				        --vi_cust_info_all custall
+				        --on vi1.custid = custall.custid
+				        LEFT OUTER JOIN CUST_INFO_COMPANY CIP
+		                ON CIP.CUST_ID=vi1.custid
+		                LEFT OUTER JOIN CUST_INFO_PERSON CCP
+		                ON CCP.CUST_ID=vi1.custid
+				        left join
+				        CONTRACT_CONDITION contractcondition
+				        on vi1.id = contractcondition.contract_id
+				        left join(select contract_id,
+                            [cust_name]=stuff((select ','+cust_name from cust_info t where t.id=guaranteemethod.assuror for xml path('')), 1, 1, '')
+		                  FROM contract_guarantee_method guaranteemethod
+		                  group by contract_id,assuror) guaranteecustinfo
+		                on  guaranteecustinfo.contract_id = vi1.id
+				        left join (select sum(CURRENTOVERAGE) overduerent,contractid from vi_contract_fund_rent_plan where plandate <convert(varchar(100),getdate(),23) group by contractid )plan_
+                on plan_.contractid = vi1.id 
+                left join (select sum(penalty) penalty,contract_id from vi_contract_penalty contract_penalty group by contract_id ) contract_penalty
+				         on contract_penalty.contract_id = vi1.id 
+		        ) menutemp
+		        where 1=1
+		        and overduerent > 0
+		        /~status: AND status = '{status}' ~/
+		        /~custname: AND menutemp.custname like '%{custname}%' ~/
+		        /~contract_id: AND menutemp.contract_id like '%{contract_id}%' ~/
+		        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+		        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+		        /~guaranteecustname: AND menutemp.guaranteecustname like '%{guaranteecustname}%' ~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

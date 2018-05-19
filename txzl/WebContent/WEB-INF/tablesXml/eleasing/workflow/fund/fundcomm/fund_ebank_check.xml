@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+实际投放资金计划
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	            select 
+                e.id id,
+                e.ebdata_id  ebdataid,
+                e.fact_money-e.no_with_money-nvl(cf.fundmoney,0)- nvl(cr.rent,0) mayopemoney
+                from fund_ebank_data e
+		        left outer join cust_info cust on e.cust_id =cust.id
+		        left outer join 
+		        (
+		           select sum(process_amount) process_amount ,ebdata_id from fund_ebank_process 
+		            where 1=1
+		            /~flowunid:and flow_unid<>'{flowunid}'~/
+		            group by  ebdata_id
+		        )pro on pro.ebdata_id=e.id
+		        left outer join 
+		        ( select sum(fact_money) fundmoney,ebank_number from contract_fund_fund_charge group by ebank_number
+		        )cf on cf.ebank_number=e.id
+		          left outer join 
+		        ( select sum(rent) rent,ebank_number from contract_fund_rent_income group by ebank_number
+		        )cr on cr.ebank_number=e.id
+		         where 1=1
+		         /~ebankid: and e.id='{ebankid}'~/		
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

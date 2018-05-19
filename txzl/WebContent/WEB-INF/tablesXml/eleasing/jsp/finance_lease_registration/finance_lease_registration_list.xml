@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+	        select
+            flr.id id,          
+            ci.contract_id contractname,
+            ci.id contractid,
+            ci.cust_id lesseeid,
+            cust.cust_name lesseename,           
+            ci.project_name projectname,          
+            flr.preparer preparer,
+            flr.serial_number serialnumber,
+            flr.record_date recorddate,
+            flr.dead_line deadline,
+            flr.date_of_registration dateofregistration,
+            flr.archive_number archivenumber,
+            flr.rent_amount rentamount,
+            flr.property_description propertydescription,
+             v.fileaddress,
+         v.FILENAME,
+          v.REALNAME,
+           v.CREATEDATE,
+           v.fileid
+                       
+          from Finance_Lease_Registration flr
+          left join contract_info ci on flr.contract_id=ci.id
+          left join cust_info cust on ci.cust_id=cust.id
+          left join  (select
+            A.file_key as flrid,
+            wm_concat( A.file_address) as fileaddress,
+            wm_concat( A.FILE_NAME )   AS FILENAME,
+            wm_concat( A.CREATE_DATE)  AS CREATEDATE,
+            wm_concat(A.id)            as fileid,
+            wm_concat(U.REALNAME_  )   AS REALNAME
+         from base_file A
+         LEFT JOIN T_USERS U ON A.CREATOR_ = U.ID_
+         where A.file_key is not null
+         and A.invalid_ ='是'
+         group by A.file_key
+          ) v on  v.flrid = flr.id
+          where 1=1
+                /~contractname: and ci.contract_id like '%{contractname}%' ~/     	
+				/~lesseename: and cust.cust_name like '%{lesseename}%'~/
+				/~projectname: and ci.project_name like '%{projectname}%'~/ 
+  			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

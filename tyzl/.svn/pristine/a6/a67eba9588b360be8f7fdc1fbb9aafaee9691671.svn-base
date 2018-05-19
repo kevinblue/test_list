@@ -1,0 +1,165 @@
+.icon-add{background:url('../../menuIcons/plus.png') no-repeat;}
+.icon-copy{background:url('../../menuIcons/clipboard.png') no-repeat;}
+.icon-update{background:url('../../menuIcons/cogs.png') no-repeat;}
+.icon-remove{background:url('../../menuIcons/minus.png') no-repeat;}
+.icon-export{background:url('../../menuIcons/layers.png') no-repeat;}
+.icon-import{background:url('../../menuIcons/inbox.png') no-repeat;}
+.icon-reckon{background:url('../../menuIcons/wrench.png') no-repeat;}
+.icon-adjust{background:url('../../menuIcons/wrench.png') no-repeat;}
+.icon-add-disable{background:url('../../menuIcons_w/plus.png') no-repeat;}
+.icon-plus-disable{background:url('../../menuIcons_w/plus.png') no-repeat;}
+.icon-update-disable{background:url('../../menuIcons_w/cogs.png') no-repeat;}
+.icon-remove-disable{background:url('../../menuIcons_w/minus.png') no-repeat;}
+.icon-reckon-disable{background:url('../../menuIcons_w/wrench.png') no-repeat;}
+.icon-adjust-disable{background:url('../../menuIcons_w/wrench.png') no-repeat;}
+
+.icon-attention {background:url('../../menuIcons/attention.png') no-repeat;}
+.icon-attention-w {background:url('../../menuIcons_w/attention.png') no-repeat;}
+.icon-back {background:url('../../menuIcons/back.png') no-repeat;}
+.icon-back-w {background:url('../../menuIcons_w/back.png') no-repeat;}
+.icon-balance {background:url('../../menuIcons/balance.png') no-repeat;}
+.icon-balance-w {background:url('../../menuIcons_w/balance.png') no-repeat;}
+.icon-blank {background:url('../../menuIcons/blank.gif') no-repeat;}
+.icon-blank-w {background:url('../../menuIcons_w/blank.gif') no-repeat;}
+.icon-base {background:url('../../menuIcons/base.gif') no-repeat;}
+.icon-base-w {background:url('../../menuIcons_w/base.gif') no-repeat;}
+.icon-box {background:url('../../menuIcons/box.png') no-repeat;}
+.icon-box-w {background:url('../../menuIcons_w/box.png') no-repeat;}
+.icon-bubble {background:url('../../menuIcons/bubble.png') no-repeat;}
+.icon-bubble-w {background:url('../../menuIcons_w/bubble.png') no-repeat;}
+.icon-calc {background:url('../../menuIcons/calc.png') no-repeat;}
+.icon-calc-w {background:url('../../menuIcons_w/calc.png') no-repeat;}
+.icon-calendar {background:url('../../menuIcons/calendar.png') no-repeat;}
+.icon-calendar-w {background:url('../../menuIcons_w/calendar.png') no-repeat;}
+.icon-cancel {background:url('../../menuIcons/cancel.png') no-repeat;}
+.icon-cancel-w {background:url('../../menuIcons_w/cancel.png') no-repeat;}
+.icon-case {background:url('../../menuIcons/case.png') no-repeat;}
+.icon-case-w {background:url('../../menuIcons_w/case.png') no-repeat;}
+.icon-chart_bar {background:url('../../menuIcons/chart_bar.png') no-repeat;}
+.icon-chart_bar-w {background:url('../../menuIcons_w/chart_bar.png') no-repeat;}
+.icon-chart_line {background:url('../../menuIcons/chart_line.png') no-repeat;}
+.icon-chart_line-w {background:url('../../menuIcons_w/chart_line.png') no-repeat;}
+.icon-chart_pie {background:url('../../menuIcons/chart_pie.png') no-repeat;}
+.icon-chart_pie-w {background:url('../../menuIcons_w/chart_pie.png') no-repeat;}
+.icon-check {background:url('../../menuIcons/check.png') no-repeat;}
+.icon-check-w {background:url('../../menuIcons_w/check.png') no-repeat;}
+.icon-clip {background:url('../../menuIcons/clip.png') no-repeat;}
+.icon-clip-w {background:url('../../menuIcons_w/clip.png') no-repeat;}
+.icon-clipboard {background:url('../../menuIcons/clipboard.png') no-repeat;}
+.icon-clipboard-w {background:url('../../menuIcons_w/clipboard.png') no-repeat;}
+.icon-clock {background:url('../../menuIcons/clock.png') no-repeat;}
+.icon-clock-w {background:url('../../menuIcons_w/clock.png') no-repeat;}
+.icon-cogs-disable {background:url('../../menuIcons/cogs-disable.png') no-repeat;}
+.icon-cogs-disable-w {background:url('../../menuIcons_w/cogs-disable.png') no-repeat;}
+.icon-cogs {background:url('../../menuIcons/cogs.png') no-repeat;}
+.icon-cogs-w {background:url('../../menuIcons_w/cogs.png') no-repeat;}
+.icon-compass {background:url('../../menuIcons/compass.png') no-repeat;}
+.icon-compass-w {background:url('../../menuIcons_w/compass.png') no-repeat;}
+.icon-connect {background:url('../../menuIcons/connect.png') no-repeat;}
+.icon-connect-w {background:url('../../menuIcons_w/connect.png') no-repeat;}
+.icon-contact {background:url('../../menuIcons/contact.png') no-repeat;}
+.icon-contact-w {background:url('../../menuIcons_w/contact.png') no-repeat;}
+.icon-cut {background:url('../../menuIcons/cut.png') no-repeat;}
+.icon-cut-w {background:url('../../menuIcons_w/cut.png') no-repeat;}
+.icon-dashboard {background:url('../../menuIcons/dashboard.png') no-repeat;}
+.icon-dashboard-w {background:url('../../menuIcons_w/dashboard.png') no-repeat;}
+.icon-db {background:url('../../menuIcons/db.png') no-repeat;}
+.icon-db-w {background:url('../../menuIcons_w/db.png') no-repeat;}
+.icon-delete {background:url('../../menuIcons/delete.png') no-repeat;}
+.icon-delete-w {background:url('../../menuIcons_w/delete.png') no-repeat;}
+.icon-department {background:url('../../menuIcons/department.png') no-repeat;}
+.icon-department-w {background:url('../../menuIcons_w/department.png') no-repeat;}
+.icon-diagram {background:url('../../menuIcons/diagram.png') no-repeat;}
+.icon-diagram-w {background:url('../../menuIcons_w/diagram.png') no-repeat;}
+.icon-doc {background:url('../../menuIcons/doc.png') no-repeat;}
+.icon-doc-w {background:url('../../menuIcons_w/doc.png') no-repeat;}
+.icon-edit_add {background:url('../../menuIcons/edit_add.png') no-repeat;}
+.icon-edit_add-w {background:url('../../menuIcons_w/edit_add.png') no-repeat;}
+.icon-edit_remove {background:url('../../menuIcons/edit_remove.png') no-repeat;}
+.icon-edit_remove-w {background:url('../../menuIcons_w/edit_remove.png') no-repeat;}
+.icon-filesave {background:url('../../menuIcons/filesave.png') no-repeat;}
+.icon-filesave-w {background:url('../../menuIcons_w/filesave.png') no-repeat;}
+.icon-filter {background:url('../../menuIcons/filter.png') no-repeat;}
+.icon-filter-w {background:url('../../menuIcons_w/filter.png') no-repeat;}
+.icon-flag {background:url('../../menuIcons/flag.png') no-repeat;}
+.icon-flag-w {background:url('../../menuIcons_w/flag.png') no-repeat;}
+.icon-globe {background:url('../../menuIcons/globe.png') no-repeat;}
+.icon-globe-w {background:url('../../menuIcons_w/globe.png') no-repeat;}
+.icon-help {background:url('../../menuIcons/help.png') no-repeat;}
+.icon-help-w {background:url('../../menuIcons_w/help.png') no-repeat;}
+.icon-home {background:url('../../menuIcons/home.png') no-repeat;}
+.icon-home-w {background:url('../../menuIcons_w/home.png') no-repeat;}
+.icon-inbox {background:url('../../menuIcons/inbox.png') no-repeat;}
+.icon-inbox-w {background:url('../../menuIcons_w/inbox.png') no-repeat;}
+.icon-key {background:url('../../menuIcons/key.png') no-repeat;}
+.icon-key-w {background:url('../../menuIcons_w/key.png') no-repeat;}
+.icon-layers {background:url('../../menuIcons/layers.png') no-repeat;}
+.icon-layers-w {background:url('../../menuIcons_w/layers.png') no-repeat;}
+.icon-link {background:url('../../menuIcons/link.png') no-repeat;}
+.icon-link-w {background:url('../../menuIcons_w/link.png') no-repeat;}
+.icon-mail {background:url('../../menuIcons/mail.png') no-repeat;}
+.icon-mail-w {background:url('../../menuIcons_w/mail.png') no-repeat;}
+.icon-mini_add {background:url('../../menuIcons/mini_add.png') no-repeat;}
+.icon-mini_add-w {background:url('../../menuIcons_w/mini_add.png') no-repeat;}
+.icon-mini_edit {background:url('../../menuIcons/mini_edit.png') no-repeat;}
+.icon-mini_edit-w {background:url('../../menuIcons_w/mini_edit.png') no-repeat;}
+.icon-mini_refresh {background:url('../../menuIcons/mini_refresh.png') no-repeat;}
+.icon-mini_refresh-w {background:url('../../menuIcons_w/mini_refresh.png') no-repeat;}
+.icon-minus-disable {background:url('../../menuIcons/minus-disable.png') no-repeat;}
+.icon-minus-disable-w {background:url('../../menuIcons_w/minus-disable.png') no-repeat;}
+.icon-minus {background:url('../../menuIcons/minus.png') no-repeat;}
+.icon-minus-w {background:url('../../menuIcons_w/minus.png') no-repeat;}
+.icon-money {background:url('../../menuIcons/money.png') no-repeat;}
+.icon-money-w {background:url('../../menuIcons_w/money.png') no-repeat;}
+.icon-monitor {background:url('../../menuIcons/monitor.png') no-repeat;}
+.icon-monitor-w {background:url('../../menuIcons_w/monitor.png') no-repeat;}
+.icon-net {background:url('../../menuIcons/net.png') no-repeat;}
+.icon-net-w {background:url('../../menuIcons_w/net.png') no-repeat;}
+.icon-no {background:url('../../menuIcons/no.png') no-repeat;}
+.icon-no-w {background:url('../../menuIcons_w/no.png') no-repeat;}
+.icon-notepad {background:url('../../menuIcons/notepad.png') no-repeat;}
+.icon-notepad-w {background:url('../../menuIcons_w/notepad.png') no-repeat;}
+.icon-ok {background:url('../../menuIcons/ok.png') no-repeat;}
+.icon-ok-w {background:url('../../menuIcons_w/ok.png') no-repeat;}
+.icon-on-off {background:url('../../menuIcons/on-off.png') no-repeat;}
+.icon-on-off-w {background:url('../../menuIcons_w/on-off.png') no-repeat;}
+.icon-pencil {background:url('../../menuIcons/pencil.png') no-repeat;}
+.icon-pencil-w {background:url('../../menuIcons_w/pencil.png') no-repeat;}
+.icon-phone {background:url('../../menuIcons/phone.png') no-repeat;}
+.icon-phone-w {background:url('../../menuIcons_w/phone.png') no-repeat;}
+.icon-pin {background:url('../../menuIcons/pin.png') no-repeat;}
+.icon-pin-w {background:url('../../menuIcons_w/pin.png') no-repeat;}
+.icon-plus-disable {background:url('../../menuIcons/plus-disable.png') no-repeat;}
+.icon-plus-disable-w {background:url('../../menuIcons_w/plus-disable.png') no-repeat;}
+.icon-plus {background:url('../../menuIcons/plus.png') no-repeat;}
+.icon-plus-w {background:url('../../menuIcons_w/plus.png') no-repeat;}
+.icon-print {background:url('../../menuIcons/print.png') no-repeat;}
+.icon-print-w {background:url('../../menuIcons_w/print.png') no-repeat;}
+.icon-redo {background:url('../../menuIcons/redo.png') no-repeat;}
+.icon-redo-w {background:url('../../menuIcons_w/redo.png') no-repeat;}
+.icon-reload {background:url('../../menuIcons/reload.png') no-repeat;}
+.icon-reload-w {background:url('../../menuIcons_w/reload.png') no-repeat;}
+.icon-save {background:url('../../menuIcons/save.png') no-repeat;}
+.icon-save-w {background:url('../../menuIcons_w/save.png') no-repeat;}
+.icon-search {background:url('../../menuIcons/search.png') no-repeat;}
+.icon-search-w {background:url('../../menuIcons_w/search.png') no-repeat;}
+.icon-shield {background:url('../../menuIcons/shield.png') no-repeat;}
+.icon-shield-w {background:url('../../menuIcons_w/shield.png') no-repeat;}
+.icon-star {background:url('../../menuIcons/star.png') no-repeat;}
+.icon-star-w {background:url('../../menuIcons_w/star.png') no-repeat;}
+.icon-sum {background:url('../../menuIcons/sum.png') no-repeat;}
+.icon-sum-w {background:url('../../menuIcons_w/sum.png') no-repeat;}
+.icon-tip {background:url('../../menuIcons/tip.png') no-repeat;}
+.icon-tip-w {background:url('../../menuIcons_w/tip.png') no-repeat;}
+.icon-track {background:url('../../menuIcons/track.png') no-repeat;}
+.icon-track-w {background:url('../../menuIcons_w/track.png') no-repeat;}
+.icon-undo {background:url('../../menuIcons/undo.png') no-repeat;}
+.icon-undo-w {background:url('../../menuIcons_w/undo.png') no-repeat;}
+.icon-up {background:url('../../menuIcons/up.png') no-repeat;}
+.icon-up-w {background:url('../../menuIcons_w/up.png') no-repeat;}
+.icon-users {background:url('../../menuIcons/users.png') no-repeat;}
+.icon-users-w {background:url('../../menuIcons_w/users.png') no-repeat;}
+.icon-wrench {background:url('../../menuIcons/wrench.png') no-repeat;}
+.icon-wrench-w {background:url('../../menuIcons_w/wrench.png') no-repeat;}
+.icon-zoom {background:url('../../menuIcons/zoom.png') no-repeat;}
+.icon-zoom-w {background:url('../../menuIcons_w/zoom.png') no-repeat;}

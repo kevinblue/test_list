@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        	select 
+					custcontact.id, 
+					custcontact.contact_date contactdate, 
+					custcontact.contact_person contactperson, 
+					custcontact.contact_phone contactphone, 
+					custcontact.contact_add contactadd, 
+					custcontact.ccmemo, 
+					custcontact.create_date createdate, 
+					custcontact.modify_date modifydate, 
+					custcontact.cust_id custid, 
+					custcontact.contact_type contacttype, 
+					D1.name_ rawValue_contacttype,
+					custcontact.creator_ creator, 
+					custcontact.modificator_ modificator,
+					custinfo.cust_name custname
+					,users1.realname_ creatorname
+            		,users2.realname_ modificatorname
+				from 
+					cust_contact custcontact
+				left join cust_info custinfo
+				on custcontact.cust_id = custinfo.id
+				LEFT JOIN 
+					T_DICTS_DATAS D1 ON custcontact.contact_type=D1.ID_
+				left join
+	            	t_users users1
+	            on 
+	            	custcontact.creator_ = users1.id_ 
+	            left join
+	            	t_users users2
+	            on custcontact.modificator_ = users2.id_
+				where 1=1
+				 /~id: and custcontact.ID = '{id}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

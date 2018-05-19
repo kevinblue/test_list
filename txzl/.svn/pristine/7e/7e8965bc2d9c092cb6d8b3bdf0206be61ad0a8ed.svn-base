@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		       SELECT U.ID_ AS NAME, U.REALNAME_ AS VALUE
+					  FROM T_USERS U
+					  LEFT JOIN T_USERS_DEPTS UD
+					    ON UD.USER_ID_ = U.ID_
+					  LEFT JOIN T_DEPTS D
+					    ON D.ID_ = UD.DEPT_ID_
+					
+					 WHERE D.ID_ NOT IN 
+					 (SELECT D.ID_
+                       FROM T_DEPTS D
+                      START WITH D.PID_ = '402881ef409b4bfa01409b9ce7fb01e6'
+                     CONNECT BY PRIOR D.ID_ = D.PID_)
+                     /~currentRawValue: and U.REALNAME_ like '%{currentRawValue}%' ~/
+		       
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	      <predefined_sql>
+	       <![CDATA[
+			   with tree as (
+			      select pid_,id_ FROM T_DEPTS 
+			      where PID_ = '402881ef409b4bfa01409b9ce7fb01e6'
+			      UNION ALL
+			      select d.pid_,d.id_ FROM T_DEPTS d
+			      INNER JOIN Tree T ON d.PID_=t.id_  
+			  )    
+	       ]]>
+	      </predefined_sql>
+	      <table_sql>
+	            <![CDATA[
+		       SELECT U.ID_ AS NAME, U.REALNAME_ AS VALUE
+					  FROM T_USERS U
+					  LEFT JOIN T_USERS_DEPTS UD
+					    ON UD.USER_ID_ = U.ID_
+					  LEFT JOIN T_DEPTS D
+					    ON D.ID_ = UD.DEPT_ID_
+					
+					 WHERE D.ID_ NOT IN 
+					 ( select id_ from tree)
+                     /~currentRawValue: and U.REALNAME_ like '%{currentRawValue}%' ~/
+		       
+			 ]]> 
+	      </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

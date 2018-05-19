@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审风控经办
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	  select to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.1', aa.amount)),0)) in0,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.2', aa.amount)),0)) in1,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.3', aa.amount)),0)) in2,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.4', aa.amount)),0)) in3,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.5', aa.amount)),0)) in4,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.6', aa.amount)),0)) in5,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.7', aa.amount)),0)) in6,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.8', aa.amount)),0)) in7,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.9', aa.amount)),0)) in8,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.10', aa.amount)),0)) in9,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.11', aa.amount)),0)) in10,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.12', aa.amount)),0)) in11,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.13', aa.amount)),0)) in12,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.14', aa.amount)),0)) in13,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.15', aa.amount)),0)) in14,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.16', aa.amount)),0)) in15,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.17', aa.amount)),0)) in16,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.18', aa.amount)),0)) in17,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.19', aa.amount)),0)) in18,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.20', aa.amount)),0)) in19,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.21', aa.amount)),0)) in20,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.22', aa.amount)),0)) in21,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.23', aa.amount)),0)) in22,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.24', aa.amount)),0)) in23,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.25', aa.amount)),0)) in24,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.26', aa.amount)),0)) in25,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.27', aa.amount)),0)) in26,
+             to_number(nvl(sum(decode(aa.plan_name, 'fund_plan_in.28', aa.amount)),0)) in27
+        from (select rcd.report_id reportid, rcd.plan_name, sum(rcd.amount) amount
+                from RECEIPT_COUNT_DETAIL_AP rcd
+                group by rcd.plan_name,rcd.report_id) aa
+                where aa.reportid='{reportid}'
+       group by aa.reportid
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      <!-- -->
+	        <![CDATA[
+	        
+	       select tt.*, tdd.name_ currencyname, loan.loan_contract_id loancontractid
+  from (select lri.sjinterest      sjinterest,
+      lri.sjdate_of_interest sjdateofinterest,
+      lri.sjcease_date sjceasedate,
+       lri.sjbalance sjbalance,
+       lri.sjinterest_rate*100||'%' sjinterestrate,
+       lri.id,
+       lri.HIRE_DATE     hiredate,
+       lri.SUM_PLAN_LIST planlist,
+       lri.currency      currency,
+       lri.meno,
+       lri.loan_id loanid
+  from loan_rent_income_to_interest lri
+  LEFT JOIN loan_rent_plan_to_interest lrp
+    on lri.plan_id = lrp.id
+       
+         ) tt
+  left join t_dicts_datas tdd
+    on tdd.id_ = tt.currency
+  left join loan_account loan
+    on tt.loanid = loan.id
+ where 1 = 1
+   and tt.loanid = '{loanid}'
+ order by tt.sjceasedate desc
+              
+	        ]]> 
+    </table_sql>
+    </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

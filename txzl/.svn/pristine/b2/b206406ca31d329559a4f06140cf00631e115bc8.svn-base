@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 筛选： 1 设备款未投放完毕       2 合同审批通过 状态 >=21  <31
+ 字段说明：
+ 未收资金合计 = 应收资金合计 - 已收资金合计 - 调整资金合计
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 				SELECT A.ID,
+			       A.FLOW_UNID,
+			       A.MODEL_NAME,
+			       A.FILE_KEY    AS FILEKEY,
+			       A.FILE_NAME   AS FILENAME,
+			       U.REALNAME_   AS REALNAME,
+			       A.CREATE_DATE AS CREATEDATE
+			  FROM BASE_FILE A
+			  LEFT JOIN BASE_FILE_TEMPLATE B
+			    ON A.FILE_TEMPLATE = B.ID
+			  LEFT JOIN T_USERS U
+			    ON A.CREATOR_ = U.ID_
+			 WHERE (A.INVALID_ = '是' OR A.INVALID_ = '0')
+			          /~modelname: AND model_name = '{modelname}' ~/
+			         /~flowUnid: AND A.FLOW_UNID = '{flowUnid}' ~/ 
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

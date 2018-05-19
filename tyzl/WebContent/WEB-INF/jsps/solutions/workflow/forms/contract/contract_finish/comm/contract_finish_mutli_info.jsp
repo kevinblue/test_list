@@ -1,0 +1,7 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<input  style="display:none;"	class="mini-textarea" id="id_json_fund_payment_plan_info_str" name="json_fund_payment_plan_info_str" value='<mini:param  name="json_fund_payment_plan_info_str" defaultValue="[]"/>' ></input>
+<input  style="display:none;"	class="mini-textarea" id="id_json_fund_charge_his_info_str" name="json_fund_charge_his_info_str" value='<mini:param  name="json_fund_charge_his_info_str" defaultValue="[]"/>' ></input>
+<input  style="display:none;"	class="mini-textarea" id="id_json_rent_income_plan_str" name="json_rent_income_plan_str" value='<mini:param  name="json_rent_income_plan_str" defaultValue="[]"/>' ></input>
+<input  style="display:none;"	class="mini-textarea" id="id_json_rent_income_his_str" name="json_rent_income_his_str" value='<mini:param  name="json_rent_income_his_str" defaultValue="[]"/>' ></input>
+<input  style="display:none;"	class="mini-textarea" id="id_json_contract_property_rights_transfer_str" name="json_contract_property_rights_transfer_str" value='<mini:param  name="json_contract_property_rights_transfer_str" defaultValue="[]"/>' ></input>

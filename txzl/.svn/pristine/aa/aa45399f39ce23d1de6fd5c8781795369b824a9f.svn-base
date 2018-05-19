@@ -1,0 +1,57 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<div id="contract_patrol_plan_form" title="巡视基本信息">
+	<fieldset class="fieldset-title">
+		<table cellspacing="0" cellpadding="0" style="width: 100%"
+			class="fillTable">
+			<tr class="tr-odd">
+				<td class="td-content-title" width="12%">检查时间：</td>
+				<td class="td-content" width="100px"><input
+					id="contract_patrol_info.checkTime"
+					name="contract_patrol_info.checkTime" class="mini-datepicker"
+					allowInput="false"
+					value="${requestScope['contract_patrol_info.checkTime'] }"
+					required="false" label="检查时间" /></td>
+			</tr>
+			
+			<tr class="tr-even">
+				<td class="td-content-title" width="11%">检查方式：</td>
+				<td width="100px">
+				<!-- <input name="contract_patrol_info.patrolpoint" class="mini-combobox miniext-form-fit" textField="text" valueField="value"   data="[{text:'现场',value:'现场'},{text:'非现场',value:'非现场'}]" allowInput="false" /> -->
+				<input id="contract_patrol_info.checkMode" name="contract_patrol_info.checkMode" class="mini-combobox miniext-form-fit" textField="text" valueField="value"   data="[{text:'现场',value:'现场'},{text:'非现场',value:'非现场'}]" allowInput="false" />
+			</tr>
+
+			<tr class="tr-odd">
+				<td class="td-content-title" width="11%">参访人员：</td>
+				<td style="padding-top: 4px; padding-bottom: 4px;" colspan="3">
+					<input style="width: 75%; height: 100px"
+					id="contract_patrol_info.visitPensonnel"
+					name="contract_patrol_info.visitPensonnel" class="mini-textarea"
+					value="${requestScope['contract_patrol_info.visitPensonnel'] }"
+					required="false" label="参访人员" />
+				</td>
+			</tr>
+
+			<tr class="tr-even">
+				<td class="td-content-title" width="12%">客户接待人员：</td>
+				<td style="padding-top: 4px; padding-bottom: 4px;" colspan="3">
+					<input style="width: 75%; height: 100px"
+					id="contract_patrol_info.custPersonnel"
+					name="contract_patrol_info.custPersonnel" class="mini-textarea"
+					allowInput="true" label="客户接待人员"
+					value="${requestScope['contract_patrol_info.custPersonnel']}" />
+				</td>
+			</tr>
+
+		</table>
+		<br />
+	</fieldset>
+</div>
+<script type="text/javascript">
+	jQuery(function() {
+		if ('${param.isView}' == 'true' || isViewHistoryTask == true) {
+			miniui_ext.disableFormFields("contract_patrol_plan_form");
+		}
+		;
+	});
+</script>

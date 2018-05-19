@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+					 select 
+						   ci.id,
+                           ci.contract_id contractid,
+                           ci.project_name projectname,
+                           cust.cust_name custname,
+                           nvl(cc.equip_amt,0) equipamt,                 											--设备款
+                           nvl(tax.grant_money,0) grantmoney,													--已发放金额
+                           nvl(vii.invoice_money,0) invoicemoney,    										--已登记金额
+                           nvl(cc.equip_amt,0) - nvl(vii.invoice_money,0) unrecordmoney,  	--未登记金额
+                           
+                           case																										--登记状态
+                             when nvl(vii.invoice_money, 0) = 0 then '未登记'
+                             when cc.equip_amt = vii.invoice_money then '已登记'
+                             else '部分登记'
+                           end statusname,
+                           
+                           case																										--登记状态排序
+                             when nvl(vii.invoice_money, 0) = 0 then 0
+                             when cc.equip_amt = vii.invoice_money then 2
+                             else 1
+                           end statusorder
+                           
+                      from contract_info ci
+                        left join contract_condition cc on ci.id = cc.contract_id
+                      	left join cust_info cust on ci.cust_id = cust.id
+                        left join (select contract_number,sum(invoice_money) invoice_money from vat_invoice_info group by contract_number) vii on vii.contract_number=ci.contract_id
+                      	left join (select contract_id,sum(fact_money) grant_money from contract_fund_fund_charge cffc where cffc.fee_type='feetype10' group by contract_id) tax 
+                             on ci.id = tax.contract_id
+                      where 1=1 
+                      
+	       			/~id: and vii.id = '{id}'~/
+	       			/~contractid: and ci.contract_id like '%{contractid}%'~/
+	       			/~projectname: and ci.project_name like '%{projectname}%'~/
+	       			/~custname: and cust.cust_name like '%{custname}%'~/
+	       			
+	       			/~equipamtMin: and cc.equip_amt>={equipamtMin}~/
+					/~equipamtMax: and cc.equip_amt<={equipamtMax}~/
+	       			
+	       			/~grantmoneyMin: and tax.grant_money>={grantmoneyMin}~/
+					/~grantmoneyMax: and tax.grant_money<={grantmoneyMax}~/
+					
+	       			/~invoicemoneyMin: and nvl(vii.invoice_money,0)>={invoicemoneyMin}~/
+					/~invoicemoneyMax: and nvl(vii.invoice_money,0)<={invoicemoneyMax}~/
+					
+	       			/~unrecordmoneyMin: and nvl(cc.equip_amt,0) - nvl(vii.invoice_money,0) >={unrecordmoneyMin}~/
+					/~unrecordmoneyMax: and nvl(cc.equip_amt,0) - nvl(vii.invoice_money,0) <={unrecordmoneyMax}~/
+
+                    order by statusorder,contractid desc
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+		  <table_sql> 
+		        <![CDATA[
+		        	select
+	                vii.id             as id,
+	                vii.invoice_no     as invoiceno,
+	                vii.invoice_money  as invoicemoney,
+	                isnull(tt.sumamt,0)   as sumamt,
+	                temptable3.contractinfo as contractinfo,
+	                vii.record_date    as recorddate,
+	                vii.purchase_units as purchasenits,
+	                vii.goods_name     as goodsname,
+	                vii.memo           as memo,
+	                cust2.cust_name    as suppliername,
+	                vii.supplier       as supplier,
+	                vii.create_date    as createdate,
+	                vii.modify_date    as modifydate,
+	                u1.realname_       as creatorname,
+	                vii.creator_       as creator,
+	              	u2.realname_       as modificator,
+	                case when isnull(vii.invoice_status,0)=0 then '未提交' 
+	                when vii.invoice_status=1 then '已提交' 
+	                when vii.invoice_status=2 then '已确认'
+	                when vii.invoice_status=3 then '已退回'
+	                when vii.invoice_status=4 then '已认证'
+	              else '未认证' end invoicestatusname,
+	               	vii.invoice_status invoicestatus,
+	                isnull(tt.contractnum,0)     as contractnum
+	              from vat_invoice_info vii
+	              left join cust_info cust2 on vii.supplier = cust2.id
+	              left join t_users u1 on u1.id_ = vii.creator_
+	              left join t_users u2 on u2.id_ = vii.modificator_
+	              left join(
+	              	select count(vic.id) contractnum,vic.invoice_id,sum(vic.registered_amt)sumamt from  vat_invoice_contract vic 
+	              	group by vic.invoice_id) tt on tt.invoice_id = vii.id
+	              left join(
+	              select vic.invoice_id invoiceid,contractinfo=stuff((select ','+[c_info] 
+	                     from (select  vci.id,  vci.contract_number+':'+convert(varchar, cc.equip_amt) c_info
+	from vi_contract_info vci 
+	left join contract_condition cc on cc.contract_id = vci.id) t where 
+	                     id in(select CONTRACT_ID from vat_invoice_contract  where invoice_id=  vic.invoice_id) for xml path('')), 1, 1, '')
+	from vat_invoice_contract vic
+	group by vic.invoice_id
+	              ) temptable3 on temptable3.invoiceid = vii.id
+	          		where 1=1 
+		       			/~id: and vii.id = '{id}'~/
+		       			/~invoiceno: and vii.invoice_no like '%{invoiceno}%'~/
+		       			/~invoicemoney: and vii.invoice_money >={invoicemoney}~/
+		       			/~purchasenits: and vii.purchase_units like '%{purchasenits}%'~/
+		       			/~supplier: and vii.supplier like '%{supplier}%'~/
+		       			/~suppliername: and cust2.cust_name like '%{suppliername}%'~/
+		       			/~goodsname: and vii.goods_name like '%{goodsname}%'~/
+		       			/~recorddateStart: and vii.record_date >= '{recorddateStart}'~/
+		       			/~recorddateEnd: and vii.record_date <= '{recorddateEnd}'~/
+		       			/~invoicestatusname: and nvl(vii.invoice_status,0) in ('{invoicestatusname}') ~/
+		       			/~contractno: and temptable3.contractinfo like '%{contractno}%' ~/
+				 ]]> 
+		  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

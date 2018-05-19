@@ -1,0 +1,410 @@
+package com.tenwa.leasing.serviceImpl.invoice;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.apache.log4j.Logger;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
+
+import sajt.webservice.ws.service.SajtIssueInvoiceServicePortTypeProxy;
+import sajt.webservice.ws.service.SajtIssueInvoiceServiceSoap11BindingStub;
+import sajt.webservice.ws.service.xsd.SajtIssueInvoiceResponse;
+
+import com.tenwa.business.dao.BaseDao;
+import com.tenwa.business.service.TableService;
+import com.tenwa.business.serviceImpl.AbstractBaseServiceImpl;
+import com.tenwa.exception.BusinessException;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.FileUtil;
+import com.tenwa.kernal.utils.ResourceUtil;
+import com.tenwa.leasing.entity.invoice.FundInvoiceDownloadInfo;
+import com.tenwa.leasing.entity.invoice.RentInvoiceDownloadInfo;
+import com.tenwa.leasing.service.invoice.InvoiceToSajtService;
+
+@Service(value = "invoiceToSajtService")
+public class InvoiceToSajtServiceImpl extends AbstractBaseServiceImpl implements InvoiceToSajtService {
+
+	@Resource(name = "tableService")
+	private TableService tableService;
+
+	private Logger log = Logger.getLogger(InvoiceToSajtServiceImpl.class);
+	/*
+	 * 生成发票
+	 */
+	@Override
+	public void generateInoviceToSajt(Map<String, String> variablesMap) throws Exception {
+		String [] ids=variablesMap.get("ids").split(",");
+		for(String id:ids){
+			String generateCommand = getGenerateXMlStr(id);
+			log.info("generateCommand:生成报文=========="+generateCommand);
+			sendInvoiceToSajt(generateCommand, "generate");
+		}
+	}
+
+	/*
+	 * 打印发票
+	 */
+	@Override
+	public void printInvoiceToSajt(Map<String, String> variablesMap) throws Exception {
+		String printCommand = getPrintXMlStr(variablesMap);
+		sendInvoiceToSajt(printCommand, "print");
+	}
+	/*
+	 * 作废发票
+	 */
+	@Override
+	public void voidedInvoiceToSajt(Map<String, String> variablesMap) throws Exception {
+		String voidedCommand = getVoidedXMlStr(variablesMap);
+		sendInvoiceToSajt(voidedCommand, "voided");
+	}
+
+	@Override
+	public void sendInvoiceToSajt(String command, String xmlType) throws Exception {
+		try {
+			String url="http://10.51.1.16:8080/axis2/services/SajtIssueInvoiceService?wsdl";
+			SajtIssueInvoiceServicePortTypeProxy stub = new SajtIssueInvoiceServicePortTypeProxy();
+			command="<?xml version=\"1.0\" ?><siiscmd xmlns=\"http://www.aisino.sh.cn\"><issueinv><invrecord><invrecordhead><machinetaxnr>310101000000023</machinetaxnr><machinenr>0</machinenr><invkind><value>0</value></invkind><doctype><value>1</value></doctype><docnr>600000378</docnr><docdate>2015-07-03 15:05:12</docdate><custnr>ZHXG</custnr><custname>中海集装箱运输（香港）有限公司</custname><custtaxnr>310022131312221</custtaxnr><custaddrtel>上海青州北路112号 32717322</custaddrtel><custbankacct>icbc 312031030131221</custbankacct><memo>清单编号:700171284|结算方式:ZD|</memo><memo2>CHB_BILLID:2108767|CHB_HANDLE_ADDRESS:GSFS</memo2><refinvcode></refinvcode><refinvnr></refinvnr><rednoticenr></rednoticenr><issuer>0284</issuer><checker>0284</checker><payee>0284</payee><sellerbankacct>招商银行上海分行江湾支行 214881399710001</sellerbankacct><selleraddresstel>上海分行路97号 33121001</selleraddresstel></invrecordhead><invrecorditem><prodnr>10021</prodnr><prodname>堆存费1</prodname><spec></spec><unit>/箱天</unit><quantity>1</quantity><price>1632.22</price><amount>1632.22</amount><taxrate>.17</taxrate><tax>277.48</tax><includetax>0</includetax><discountvalue>45.23</discountvalue><discounttax>7.69</discounttax></invrecorditem></invrecord></issueinv></siiscmd>";
+			SajtIssueInvoiceResponse response = stub.saveDocument(command);
+			if ("S".equals(response.getStatus())) {
+				// 生成xml文件
+				String responseXmlStr = response.getCmdMessage();
+				createSajtXmlFile(responseXmlStr);
+				if ("print".equals(xmlType)) {
+					parsePrintResponseXmlStr(responseXmlStr);
+				} else if ("generate".equals(responseXmlStr)) {
+					parseGenerateResponseXmlStr(responseXmlStr);
+				} else if ("voided".equals(responseXmlStr)) {
+					parseGenerateResponseXmlStr(responseXmlStr);
+				}
+			} else {
+				throw new BusinessException("与税控机接口通讯失败, 请联系系统管理员!");
+			}
+			// 保存xml文件
+			log.info(response);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+	}
+	@Override
+	public BaseDao getBussinessDao() throws Exception {
+		return null;
+	}
+
+	/**
+	 * @Title: getPrintXMlStr
+	 * @Description: 打印发票 invkind 0-专用发票，2 –普通发票 Invcode 发票代码 Invnr 发票号码
+	 * @param @return 设定文件
+	 * @return String 返回类型
+	 * @throws
+	 */
+	private String getPrintXMlStr(Map<String, String> variablesMap) {
+		// 打印命令
+		String invkind = "";
+		String Invcode = "";
+		String Invnr = "";
+		StringBuilder printXml = new StringBuilder();
+		printXml.append("<?xml version=\"1.0\" ?><siiscmd xmlns=\"http://www.aisino.sh.cn\"><printinv><key><invkind><value>");
+		printXml.append(invkind);
+		printXml.append("</value></invkind><invcode>");
+		printXml.append(Invcode);
+		printXml.append("</invcode><invnr>");
+		printXml.append(Invnr);
+		printXml.append("</invnr></key></printinv></siiscmd>");
+		return printXml.toString();
+
+	}
+	/**
+	 * @Title: getVoidedXMlStr invkind 0-专用发票，2 –普通发票 Invcode 发票代码 Invnr 发票号码
+	 * @Description: 作废发票
+	 * @param @return 设定文件
+	 * @return String 返回类型
+	 * @throws
+	 */
+	private String getVoidedXMlStr(Map<String, String> variablesMap) {
+		// 作废命令
+		String invkind = "2";
+		String Invcode = "3100124130";
+		String Invnr = "00162955";
+		StringBuilder voidedStr = new StringBuilder();
+		voidedStr.append("<?xml version=\"1.0\" ?><siiscmd xmlns=\"http://www.aisino.sh.cn\"><cancelinv><key><invkind><value>");
+		voidedStr.append(invkind);
+		voidedStr.append("</value></invkind><invcode>");
+		voidedStr.append(Invcode);
+		voidedStr.append("</invcode><invnr>");
+		voidedStr.append(Invnr);
+		voidedStr.append("</invnr></key></cancelinv></siiscmd>");
+		return voidedStr.toString();
+
+	}
+	private  String getGenerateXMlStr(String invoice_down_info) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String, String>();
+		queryMainObjectMap.put("ids", invoice_down_info);
+		JSONArray exportdata=tableService.getJsonArrayData("eleasing/jsp/invoice_manage/invoice_interface/invoice_interface_export.xml", queryMainObjectMap);
+		JSONObject obj=exportdata.getJSONObject(0);
+		// 生成发票命令
+		String machinetaxnr = "310101000000023";//开票机税号 待提供
+		String machinenr = "0";//开票机号  待提供
+		String invkind = "2";//0-专用发票，2 –普通发票
+		String doctype = obj.optString("hcstatus").equals("0")?"1":"2"; // 1-正常单据，2-红冲单据
+		String docnr = obj.optString("outno");//业务系统发票号  单据号
+		String docdate = DateUtil.getSystemDateTime();
+		String custnr = obj.optString("custnumber");//客户编号
+		String custname = obj.optString("custname");
+		String custtaxnr = obj.optString("taxregcode");//客户税号
+		String custaddrtel = obj.optString("regaddress");
+		String custbankacct = obj.optString("taxacc");
+		String memo = "";
+		String memo2 = "";
+		String issuer = "0284";
+		String checker = "0284";
+		String payee = "0284";
+		String sellerbankacct = "";
+		String selleraddresstel = "";
+		String prodnr = "";
+		String prodname = "第"+obj.optString("rentlist")+"期"+obj.optString("feetype");
+		String unit = "";//计量单位数量 单价 可以为空 同事有或无
+		String quantity = "";
+		String price = "";
+		String amount = obj.optString("invoicemoney");
+		String taxrate = obj.optString("taxrate");
+		String includetax = "1";// 0-不含税，1–含税
+		StringBuilder generateStr = new StringBuilder();
+		generateStr.append("<?xml version=\"1.0\" encoding=\"utf-8\"?><siiscmd xmlns=\"http://www.aisino.sh.cn\"><issueinv>");
+		generateStr.append("<invrecord><invrecordhead><machinetaxnr>");
+		generateStr.append(machinetaxnr);
+		generateStr.append("</machinetaxnr><machinenr>");
+		generateStr.append(machinenr);
+		generateStr.append("</machinenr><invkind><value>");
+		generateStr.append(invkind);
+		generateStr.append("</value></invkind><doctype><value>");
+		generateStr.append(doctype);
+		generateStr.append("</value></doctype><docnr>");
+		generateStr.append(docnr);
+		generateStr.append("</docnr><docdate>");
+		generateStr.append(docdate);
+		generateStr.append("</docdate><custnr>");
+		generateStr.append(custnr);
+		generateStr.append("</custnr><custname>");
+		generateStr.append(custname);
+		generateStr.append("</custname><custtaxnr>");
+		generateStr.append(custtaxnr);
+		generateStr.append("</custtaxnr><custaddrtel>");
+		generateStr.append(custaddrtel);
+		generateStr.append("</custaddrtel><custbankacct>");
+		generateStr.append(custbankacct);
+		generateStr.append("</custbankacct><memo>");
+		generateStr.append(memo);
+		generateStr.append("</memo><memo2>");
+		generateStr.append(memo2);
+		generateStr.append("</memo2><refinvcode></refinvcode><refinvnr></refinvnr><rednoticenr></rednoticenr><issuer>");
+		generateStr.append(issuer);
+		generateStr.append("</issuer><checker>");
+		generateStr.append(checker);
+		generateStr.append("</checker><payee>");
+		generateStr.append(payee);
+		generateStr.append("</payee><sellerbankacct>");
+		generateStr.append(sellerbankacct);
+		generateStr.append("</sellerbankacct><selleraddresstel>");
+		generateStr.append(selleraddresstel);
+		generateStr.append("</selleraddresstel></invrecordhead>");
+
+		generateStr.append("<invrecorditem><prodnr>");
+		generateStr.append(prodnr);
+		generateStr.append("</prodnr><prodname>");
+		generateStr.append(prodname);
+		generateStr.append("</prodname><spec></spec><unit>");
+		generateStr.append(unit);
+		generateStr.append("</unit><quantity>");
+		generateStr.append(quantity);
+		generateStr.append("</quantity><price>");
+		generateStr.append(price);
+		generateStr.append("</price><amount>");
+		generateStr.append(amount);
+		generateStr.append("</amount><taxrate>");
+		generateStr.append(taxrate);
+		generateStr.append("</taxrate><tax></tax><includetax>");
+		generateStr.append(includetax);
+		generateStr.append("</includetax><discountvalue></discountvalue><discounttax></discounttax></invrecorditem>");
+		generateStr.append("</invrecord>");
+
+		generateStr.append("</issueinv></siiscmd>");
+		createSajtXmlFile(generateStr.toString(),obj.optString("contractnumber"),obj.optString("outno"),docdate.replaceAll("\\s", "_").replaceAll(":", "_"),"send");
+		return generateStr.toString();
+
+	}
+	/**
+	 * @Title: parseGenerateResponseXmlStr 开发票
+	 * @Description: sajt接口返回税金回写进系统
+	 * @param @param responseXmlStr
+	 * @param @throws Exception 设定文件
+	 * @return void 返回类型
+	 * @throws
+	 */
+	private void parseGenerateResponseXmlStr(String responseXmlStr) throws Exception {
+		System.out.println("responseXmlStr========"+responseXmlStr);
+		Document doc = DocumentHelper.parseText(responseXmlStr);
+		System.out.println(doc.asXML());
+		Element rootElt = doc.getRootElement();
+		System.out.println("根节点：" + rootElt.getName());
+		Iterator iterRecord = rootElt.element("sendbackinv").elementIterator("sendbackinvrecord");
+		List<RentInvoiceDownloadInfo> rentinvoiceList = new ArrayList<RentInvoiceDownloadInfo>();
+		List<FundInvoiceDownloadInfo> fundinvoiceList = new ArrayList<FundInvoiceDownloadInfo>();
+		while (iterRecord.hasNext()) {
+			Element record = (Element) iterRecord.next();
+			Element head = record.element("sendbackinvrecordhead");
+			// 业务系统流水号
+			String docnr = head.elementTextTrim("docnr");
+			String totaltax = record.elementTextTrim("totaltax");
+			BigDecimal taxMoney = new BigDecimal(totaltax);
+			Map<String, Object> propertiesMap = new HashMap<String, Object>();
+			propertiesMap.put("outNo", docnr);
+			if(docnr.startsWith("PF")){
+				List<FundInvoiceDownloadInfo> innerList = this.tableService.findEntityByProperties(FundInvoiceDownloadInfo.class, propertiesMap);
+				if (null != innerList && innerList.size() > 0) {
+					FundInvoiceDownloadInfo invoice = innerList.get(0);
+					invoice.setTaxMoney(taxMoney);
+					invoice.setIsExport("1");
+					fundinvoiceList.add(invoice);
+				}
+			}else{
+				List<RentInvoiceDownloadInfo> innerList = this.tableService.findEntityByProperties(RentInvoiceDownloadInfo.class, propertiesMap);
+				if (null != innerList && innerList.size() > 0) {
+					RentInvoiceDownloadInfo invoice = innerList.get(0);
+					invoice.setTaxMoney(taxMoney);
+					invoice.setIsExport("1");
+					rentinvoiceList.add(invoice);
+				}
+			}
+		}
+		if (rentinvoiceList.size() > 0) {
+			this.tableService.saveAllEntities(rentinvoiceList);
+		}
+		if (fundinvoiceList.size() > 0) {
+			this.tableService.saveAllEntities(fundinvoiceList);
+		}
+	}
+	
+	private void parsePrintResponseXmlStr(String responseXmlStr) throws Exception {
+		Document doc = DocumentHelper.parseText(responseXmlStr);
+		System.out.println(doc.asXML());
+		Element rootElt = doc.getRootElement();
+		System.out.println("根节点：" + rootElt.getName());
+		Iterator iterRecord = rootElt.element("sendbackinv").elementIterator("sendbackinvrecord");
+		List<RentInvoiceDownloadInfo> invoiceList = new ArrayList<RentInvoiceDownloadInfo>();
+		while (iterRecord.hasNext()) {
+			Element record = (Element) iterRecord.next();
+			Element head = record.element("sendbackinvrecordhead");
+			// 业务系统流水号
+			String docnr = head.elementTextTrim("docnr");
+			String totaltax = record.elementTextTrim("totaltax");
+			BigDecimal taxMoney = new BigDecimal(totaltax);
+			Map<String, Object> propertiesMap = new HashMap<String, Object>();
+			propertiesMap.put("outNo", docnr);
+			List<RentInvoiceDownloadInfo> innerList = this.tableService.findEntityByProperties(RentInvoiceDownloadInfo.class, propertiesMap);
+			if (null != innerList && innerList.size() > 0) {
+				RentInvoiceDownloadInfo invoice = innerList.get(0);
+				invoice.setTaxMoney(taxMoney);
+				invoiceList.add(invoice);
+			}
+		}
+		if (invoiceList.size() > 0) {
+			this.tableService.saveAllEntities(invoiceList);
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
+		String responseXmlStr = "<?xml version=\"1.0\" ?><siiscmd xmlns=\"http://www.aisino.com.cn\"><sendbackinv><sendbackinvrecord><sendbackinvrecordhead><binvkind><value>2</value></binvkind><binvcode>3100143320</binvcode><binvnr>10047366</binvnr><binvdate>201507071527</binvdate><bmachinenr>0</bmachinenr><bcancelled>0</bcancelled><invkind><value>2</value></invkind><doctype><value>1</value></doctype><docnr>600000385</docnr><docdate>201507031505</docdate><custnr>ZHXG</custnr><custname>中海集装箱运输（香港）有限公司</custname><custtaxnr>310022131312221</custtaxnr><custaddrtel>上海青州北路112号 32717322</custaddrtel><custbankacct>icbc 312031030131221</custbankacct><memo>清单编号:700171284|结算方式:ZD|</memo><memo2>CHB_BILLID:2108767|CHB_HANDLE_ADDRESS:GSFS</memo2><refinvcode></refinvcode><refinvnr></refinvnr><rednoticenr></rednoticenr><issuer>0284</issuer><checker>0284</checker><payee>0284</payee><sellerbankacct>招商银行上海分行江湾支行 214881399710001</sellerbankacct><selleraddresstel>上海分行路97号 33121001</selleraddresstel><totalamount>15900.0</totalamount><totaltax>954.0</totaltax></sendbackinvrecordhead><sendbackinvrecorditem><prodnr>10023</prodnr><prodname>堆存费</prodname><spec></spec><unit>/箱天</unit><quantity>1.0</quantity><price>16000.0</price><amount>16000.0</amount><taxrate>0.06</taxrate><tax>960.0</tax><discountvalue>100.0</discountvalue><discounttax>6.0</discounttax></sendbackinvrecorditem></sendbackinvrecord></sendbackinv></siiscmd>";
+		Document doc = DocumentHelper.parseText(responseXmlStr);
+		System.out.println(doc.asXML());
+		Element rootElt = doc.getRootElement();
+		System.out.println("根节点：" + rootElt.getName());
+		Iterator iterRecord = rootElt.element("sendbackinv").elementIterator("sendbackinvrecord");
+		while (iterRecord.hasNext()) {
+			Element record = (Element) iterRecord.next();
+			Element head = record.element("sendbackinvrecordhead");
+			String binvkind = head.element("binvkind").elementTextTrim("value");
+			Iterator iterItem = record.elementIterator("invrecorditem");
+			while (iterItem.hasNext()) {
+				Element item = (Element) iterItem.next();
+			}
+		}
+		createSajtXmlFile(responseXmlStr);
+	}
+
+	/**
+	 * @Title: createSajtXmlFile
+	 * @Description: 生成xml文件
+	 * @param @param responseXmlStr
+	 * @param @throws DocumentException 设定文件
+	 * @return void 返回类型
+	 * @throws
+	 */
+	private static void createSajtXmlFile(String responseXmlStr,String... param) throws Exception {
+		SAXReader saxReader = new SAXReader();
+		Document inpuDoc = saxReader.read(new ByteArrayInputStream(responseXmlStr.getBytes("UTF-8")));
+		OutputFormat format = OutputFormat.createPrettyPrint();
+		format.setEncoding("UTF-8");
+		String pa="";
+		if(null!=param){
+			for(String str:param){
+				pa+=str+"_";
+			}
+		}
+		String fileName = getSajtXmlFileDir() + pa+".xml";
+		XMLWriter writer = null;
+		try {
+			createNotExistDirs(fileName);
+			writer = new XMLWriter(new FileWriter(new File(fileName)), format);
+			writer.write(inpuDoc);
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (null != writer) {
+				writer.close();
+			}
+		}
+	}
+
+	private static File createNotExistDirs(String writedFileFullPath) throws Exception {
+		File file = new File(writedFileFullPath);
+		File parentFile = file.getParentFile();
+		if (null != parentFile) {
+			if (!parentFile.exists()) {
+				parentFile.mkdirs();
+			}
+		}
+		return file;
+	}
+	private static String getSajtXmlFileDir() {
+		String SystemDate = DateUtil.getSystemDate();
+		String sajtDirPath = FileUtil.getFilePathString(ResourceUtil.getFileUploadDataPath()) + ResourceUtil.getSajtFilePath() + "/";
+		String dirpath = SystemDate.replaceAll("-", "/") + "/";
+		return sajtDirPath + dirpath;
+	}
+
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root
+ xmlns="http://www.tracywindy.org/table"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+    <table>
+        <data>
+            <alldb>
+                <table_sql>
+                    <![CDATA[
+				  select tab1.rent_list as rentlist1,
+		                 tab1.plan_date as plandate1,
+		                 tab1.rent as rent1,
+		                 tab1.corpus as corpus1,
+		                 tab1.interest as interest1,
+		                 tab1.corpus_business as corpusbusiness1,
+		                 tab1.interest_business as interestbusiness1,
+		                 tab1.year_rate as yearrate1,
+		                 '前|后' as flag,
+		                 tab2.rent_list as rentlist2,
+		                 tab2.plan_date as plandate2,
+		                 tab2.rent as rent2,
+		                 tab2.corpus as corpus2,
+		                 tab2.interest as interest2,
+		                 tab2.corpus_business as corpusbusiness2,
+		                 tab2.interest_business as interestbusiness2,
+		                 tab2.year_rate as yearrate2
+		            from (select cfrp.CONTRACT_ID,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.RENT_LIST else CH.RENT_LIST end RENT_LIST,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.PLAN_DATE else CH.PLAN_DATE end PLAN_DATE,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.RENT else CH.RENT end RENT,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.CORPUS else CH.CORPUS end  CORPUS,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.INTEREST else CH.INTEREST end  INTEREST,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.CORPUS_BUSINESS else CH.CORPUS_BUSINESS end CORPUS_BUSINESS,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.INTEREST_BUSINESS else CH.INTEREST_BUSINESS end INTEREST_BUSINESS,
+		                           case when nvl(CH.his_id,'1')='1' then cfrp.YEAR_RATE else CH.YEAR_RATE end  YEAR_RATE
+		                         from CONTRACT_FUND_RENT_PLAN cfrp
+		                         left join CONTRACT_FUND_RENT_PLAN_his CH on cfrp.contract_id=ch.contract_id and cfrp.rent_list=ch.rent_list
+		                         and CH.DOC_ID = '{docid}'
+		                          and CH.mod_reason = 'his_rate_change'
+		                          and CH.mod_status = 'his_status_before' 
+		                        where cfrp.contract_id= '{cid}'
+		                       
+		                       ) tab1 
+		            left join (select info.id CONTRACT_ID,
+		                              case when nvl(CH.his_id,'1')='1' then temp.RENT_LIST else CH.RENT_LIST end  RENT_LIST,
+		                              case when nvl(CH.his_id,'1')='1' then temp.PLAN_DATE else CH.PLAN_DATE end  PLAN_DATE,
+		                              case when nvl(CH.his_id,'1')='1' then temp.RENT else CH.RENT end  RENT,
+		                              case when nvl(CH.his_id,'1')='1' then temp.CORPUS else CH.CORPUS end  CORPUS,
+		                              case when nvl(CH.his_id,'1')='1' then temp.INTEREST else CH.INTEREST end  INTEREST,
+		                              case when nvl(CH.his_id,'1')='1' then temp.CORPUS_BUSINESS else CH.CORPUS_BUSINESS end  CORPUS_BUSINESS,
+		                              case when nvl(CH.his_id,'1')='1' then temp.INTEREST_BUSINESS else CH.INTEREST_BUSINESS end INTEREST_BUSINESS,
+		                              case when nvl(CH.his_id,'1')='1' then temp.YEAR_RATE else CH.YEAR_RATE end YEAR_RATE
+		                         from Contract_Info info 
+		                         left join Contract_Fund_Rent_Plan_Temp temp on temp.contract_id=info.id and temp.DOC_ID = '{docid}'
+		                         left join Contract_Fund_Rent_Plan_His CH on CH.Contract_Id=info.id and CH.Rent_List=temp.rent_list 
+		                         and CH.DOC_ID = '{docid}'
+		                          and CH.mod_reason = 'his_rate_change'
+		                          and CH.mod_status = 'his_status_after'
+		                        where info.id = '{cid}'
+		                       
+		                       ) tab2 on tab1.CONTRACT_ID = tab2.CONTRACT_ID
+		                             and tab1.rent_list = tab2.rent_list		             
+		           <EXTRACTEND> order by  rentlist1,rentlist2<EXTRACTEND>
+			 ]]>
+             </table_sql>
+            </alldb>
+            <dataSource>dataSource</dataSource>
+            <show_sql>true</show_sql>
+        </data>
+    </table>
+</table-root>

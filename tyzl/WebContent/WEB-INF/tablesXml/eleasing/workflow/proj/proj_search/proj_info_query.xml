@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			   select  distinct
+                pro.id pid,
+                pro.proj_id  projid,
+                pro.proj_date projdate,
+                cust.cust_name custname,
+                d5.name_ industrytypename,
+                sta.status_name contractstatusname,
+                u1.realname_ projmanagename,
+                u1.id_ projmanage,
+                u2.realname_ projassistname,
+                u2.id_ projassist,
+                u3.realname_ projregistrarname,
+                dept.name_ projdeptname,
+                 dept.id_ projdept,
+                dict.name_ leasformname,
+                bcs.status_name statusname,
+                contractsupplier.seller
+                 from  proj_info pro 
+                 left join base_contract_status bcs on pro.proj_status=bcs.status_code
+                 left join cust_info cust on cust.id=pro.cust_id 
+                 left join base_contract_status sta on sta.status_code=pro.proj_status  
+                  left join(select equip.proj_id projid,to_char(wm_concat(custinfo.cust_name)) seller from (select proj_id,vndr from proj_equip group by proj_id,vndr) equip 
+                   left join cust_info custinfo on custinfo.id=equip.vndr  group by equip.proj_id
+                 ) contractsupplier on contractsupplier.projid=pro.id 
+                 left join T_DICTS_DATAS d1 on pro.proj_scale=d1.id_  
+                 left join T_DICTS_DATAS d2 on pro.leas_type=d2.id_ 
+                 left join T_DICTS_DATAS d5 on pro.industry_type=d5.id_ 
+                 left join t_dicts_datas dict on dict.code_=pro.leas_form 
+                 left join t_users u1 on pro.proj_manage=u1.id_  
+                 left join t_users u2 on pro.proj_assist=u2.id_  
+                 left join t_users u3 on pro.proj_registrar=u3.id_ 
+                 LEFT JOIN  T_DEPTS DEPT ON pro.proj_dept =DEPT.ID_
+           where 1=1 
+           /~projid: and pro.proj_id like '%{projid}%'~/
+           /~projectname: and pro.project_name like '%{projectname}%'~/
+           /~contractstatusname: and sta.status_name like '%{contractstatusname}%'~/
+           /~statusname: and sta.status_name like '%{statusname}%'~/
+           /~projmanagename: and u1.realname_ like '%{projmanagename}%'~/
+           /~contractid: and info.contract_id like '%{contractid}%'~/
+           /~contractnumber: and info.contract_number like '%{contractnumber}%'~/
+           /~custname: and cust.cust_name like '%{custname}%'~/
+           /~projdeptname: and dept.name_ like '%{projdeptname}%'~/
+           /~seller: and contractsupplier.seller like '%{seller}%'~/
+           /~industrytypename: and d5.name_ like '%{industrytypename}%'~/
+           /~leasformname: and pro.leas_form='{leasformname}'~/
+           /~condition: {condition} ~/
+           order by projdate desc 	
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+			   select 
+                pro.id pid,
+                pro.proj_id  projid,
+                pro.proj_date projdate,
+                cust.cust_name custname,
+                d5.name_ industrytypename,
+                sta.status_name contractstatusname,
+                u1.realname_ projmanagename,
+                u1.id_ projmanage,
+                u2.realname_ projassistname,
+                u2.id_ projassist,
+                u3.realname_ projregistrarname,
+                dept.name_ projdeptname,
+                dept.id_ projdept,
+                dict.name_ leasformname,
+                bcs.status_name statusname,
+                contractsupplier.seller
+                from  proj_info pro 
+                left join base_contract_status bcs on pro.proj_status=bcs.status_code
+                left join cust_info cust on cust.id=pro.cust_id 
+                left join base_contract_status sta on sta.status_code=pro.proj_status  
+                left join(
+                     select p.PROJ_ID projid, [seller]=stuff((select ','+[cust_name] 
+                     from CUST_INFO t where 
+                     id in(select vndr from proj_equip where PROJ_ID=p.PROJ_ID ) for xml path('')), 1, 1, '')
+                     from proj_equip p
+                     group by p.proj_id ) 
+                 contractsupplier on contractsupplier.projid=pro.id 
+                 left join T_DICTS_DATAS d1 on pro.proj_scale=d1.id_  
+                 left join T_DICTS_DATAS d2 on pro.leas_type=d2.id_ 
+                 left join T_DICTS_DATAS d5 on pro.industry_type=d5.id_ 
+                 left join t_dicts_datas dict on dict.code_=pro.leas_form 
+                 left join t_users u1 on pro.proj_manage=u1.id_  
+                 left join t_users u2 on pro.proj_assist=u2.id_  
+                 left join t_users u3 on pro.proj_registrar=u3.id_ 
+                 LEFT JOIN  T_DEPTS DEPT ON pro.proj_dept =DEPT.ID_
+           where 1=1 
+           /~projid: and pro.proj_id like '%{projid}%'~/
+           /~projectname: and pro.project_name like '%{projectname}%'~/
+           /~contractstatusname: and sta.status_name like '%{contractstatusname}%'~/
+           /~statusname: and sta.status_name like '%{statusname}%'~/
+           /~projmanagename: and u1.realname_ like '%{projmanagename}%'~/
+           /~contractid: and info.contract_id like '%{contractid}%'~/
+           /~contractnumber: and info.contract_number like '%{contractnumber}%'~/
+           /~custname: and cust.cust_name like '%{custname}%'~/
+           /~projdeptname: and dept.name_ like '%{projdeptname}%'~/
+           /~seller: and contractsupplier.seller like '%{seller}%'~/
+           /~industrytypename: and d5.name_ like '%{industrytypename}%'~/
+           /~leasformname: and pro.leas_form='{leasformname}'~/
+           /~condition: {condition} ~/
+           <EXTRACTEND> order by projdate desc 	<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+	  <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+					  SELECT 
+					  t.id,
+				      t.DEPLOYPROP_PDID deploypropPdid,
+			            t.WORKFLOW_PARAMS workflowParams,
+			            t.WORKFLOW_NAME workflowName,
+			            t.CONTRACT_ID contractId,
+			            t.CID cId,
+			            t.REMIND_USER remindUser,
+			            t.PROJECT_NAME projectName,
+			            t.DOC_ID docID,
+			            t.START_DATE_ startDate,
+			            case
+			              when status=0 then '未发起'
+			              when status=1 then '已发起'
+			              end statu,
+			            t.KEY_TWO keyTwo,
+			            t.KEY_THREE keyThree,
+			            t.KEY_ONE keyOne,
+			            t.CREATOR_ creator,
+			            t.CREATE_DATE createDate,
+			            t.MODIFICATOR_ modificator,
+			            t.MODIFY_DATE modifyDate
+			            FROM REMIND_TASK t
+			            
+			            where 1=1
+			            /~workflowname: AND t.WORKFLOW_NAME like '%{workflowname}%' ~/
+			            /~contractid: AND t.CONTRACT_ID like '%{contractid}%' ~/
+			            /~projectname: AND t.PROJECT_NAME like '%{projectname}%' ~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

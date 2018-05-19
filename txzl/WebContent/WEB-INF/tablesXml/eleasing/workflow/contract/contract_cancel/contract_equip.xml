@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+      SELECT CE.ID,
+             CE.EQUIP_NAME AS EQUIPNAME,
+             CE.MODEL_ AS MODEL,
+             CE.EQUIP_NUM AS EQUIPNUM,
+             CE.PRICE AS PRICE,
+             CE.EQUIP_PRICE AS EQUIPPRICE,
+             CE.TOTAL,
+             CE.NOWTOTAL,
+             CE.BRAND_ AS BRAND,
+             CE.VNDR AS VNDR,
+             CI3.CUST_NAME AS VNDRNAME,
+             CE.MANUFACTURER AS MANUFACTURER,
+             CI2.CUST_NAME AS MANUFACTURERNAME,
+             CE.DEVICE_TYPE AS DEVICETYPE,
+             DICT.NAME_ AS DEVICETYPENAME,
+             CE.EQUIP_DELIVERY_PLACE AS EQUIPDELIVERYPLACE,
+             CE.EQUIP_DELIVERY_DATE AS EQUIPDELIVERYDATE,
+             CE.EQUIP_PLACE AS EQUIPPLACE,
+             CE.CENOTE AS CENOTE
+        FROM CONTRACT_EQUIP CE
+        LEFT JOIN CUST_INFO CI2 ON CE.MANUFACTURER = CI2.ID
+        LEFT JOIN CUST_INFO CI3 ON CE.VNDR = CI3.ID
+        LEFT JOIN T_DICTS_DATAS DICT ON CE.DEVICE_TYPE = DICT.ID_
+       WHERE CE.CONTRACT_ID='{contract_id}'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

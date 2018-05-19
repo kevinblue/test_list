@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select de.id,
+			       vcia.custid custinfo,
+			       vcia.custname custinfoname,
+			       vcia.orgcodecardno code,
+			       c.custtype custtype,
+			       nvl(de.baidu, '无') baidu,
+			       nvl(de.execution_net, '无') executionnet， nvl(de.judgmentnet, '无') judgmentnet， nvl(de.negative_control, '无') negativecontrol,
+			       case
+			         when de.negative_control is not null then
+			          1
+			         else
+			          2
+			       end control
+			  from vi_cust_info_all vcia
+			  left join ASSET_NET_MONITOR_APPLY_DETAIL de
+			    on de.cust_id = vcia.custid
+			 inner join (select ren.custid custid,
+			                    wm_concat(ren.custtype) custtype,
+			                    ren.dunning_id
+			               from (select ci.cust_id custid,
+			                            '承租人' custtype,
+			                            vca.dunning_id
+			                       from contract_info ci
+			                       left join vi_contract_assets_manager vca
+			                         on ci.id = vca.id
+			                      where ci.contract_status = '31'
+			                      group by ci.cust_id, vca.dunning_id
+			                     union all
+			                     select cg.assuror custid,
+			                            '担保人' custtype,
+			                            vca.dunning_id
+			                       from contract_guarantee_method cg
+			                      inner join contract_info ci
+			                         on ci.id = cg.contract_id
+			                       left join vi_contract_assets_manager vca
+			                         on ci.id = vca.id
+			                      where ci.contract_status = '31'
+			                      group by cg.assuror, vca.dunning_id) ren
+			              where  ren.dunning_id ='{_TENWA_USERID}' 
+			              group by ren.custid, ren.dunning_id) c
+			    on vcia.custid = c.custid
+
+					
+				/~custinfoname: AND vcia.custname LIKE '%{custinfoname}%'~/
+				/~code: AND vcia.orgcodecardno LIKE '%{code}%'~/
+				
+	  ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

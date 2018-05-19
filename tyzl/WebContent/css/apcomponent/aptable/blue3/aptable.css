@@ -1,0 +1,120 @@
+.aptable .mini-panel-border .mini-grid-border{
+	border:0px;
+}
+.aptable .mini-panel-header{
+	padding-left:20px;
+	line-hegiht:30px;
+	vertical-align:bottom;
+}
+.aptable .tools-export-excel{
+	background:url(images/tools/excel.gif) no-repeat 50% 50%;
+	margin-right:20px;
+}
+/***query area***/
+.aptable div.aptable-queryarea-container > fieldset{
+	border: 1px solid #ddd;
+	padding-left:20px;
+}
+/* .aptable div.aptable-queryarea-container > fieldset > legend > a.expand-button{
+	display:inline-block;
+	background:url(images/tools/expand.gif) no-repeat;
+	height:8px;
+	width:8px;
+	margin-left:2px;
+	margin-right:2px;
+	vertical-align:middle;
+}
+.aptable div.aptable-queryarea-container > fieldset > legend > a.collapse-button{
+	display:inline-block;
+	background:url(images/tools/collapse.gif) no-repeat;
+	height:8px;
+	width:8px;
+	margin-left:2px;
+	margin-right:2px;
+	vertical-align:middle;
+}
+.aptable div.aptable-queryarea-container > fieldset.fieldset-hidden{
+	border-left:0px;
+	border-right:0px;
+	border-bottom:0px;
+} */
+.aptable .aptable-queryarea-table-container > table .item-hidden{
+	display:none;
+}
+.aptable .aptable-queryarea-table-container > table {
+	/* table-layout:fixed; */
+	margin:auto;
+	padding:auto;
+	border-collapse:collapse;
+}
+.aptable .aptable-queryarea-table-container > table a.query-button {
+	width:60px;
+}
+.aptable .aptable-queryarea-table-container > table td{
+	/* table-layout:fixed; */
+	border-collapse:collapse;
+}
+.aptable div.aptable-queryarea-table-container > table td.td-label{
+	padding: 3px 0px 3px 15px;
+}
+
+.aptable-copy-popup-window{
+	padding:15px 10px 5px 10px;
+	text-align: right;
+	line-hight: 40px;
+}
+.aptable-copy-popup-window a.mini-button{
+	width:60px;
+}
+.aptable-edit-form-popup-window form{
+	padding:8px 60px;
+}
+
+.aptable-edit-form-popup-window form table{
+	table-layout:fixed;
+	margin:auto;
+	padding:auto;
+	border-collapse:collapse;
+}
+.aptable-edit-form-popup-window form table td{
+	table-layout:fixed;
+	border-collapse:collapse;
+}
+.aptable-edit-form-popup-window form table td.td-label{
+	padding: 5px 0px 5px 15px;
+}
+
+.aptable-edit-form-popup-window form table td.td-label > hr{
+	border:none;
+	/* border-top: 1px dotted silver; */
+}
+
+.aptable-edit-form-popup-window form table td.td-input{
+	/* padding   : 5px 0px 5px 0px; */
+}
+.aptable-edit-form-popup-window  div.oper-footer a.mini-button{
+	width:80px;
+}
+.aptable-edit-form-popup-window  div.oper-footer{
+  text-align:center;
+  padding:5px;
+  padding-right:15px;
+}
+.aptable-edit-form-popup-window form table .item-hidden{
+	display:none;
+}
+.aptable-lazy-combobox{
+	border:1px solid red;
+}
+.aptable td.mini-grid-summaryCell{
+	border-left:0px  solid silver;
+	border-right:1px  solid silver;
+	font-weight:BOLD;
+}
+.aptable-editform-separator-info{
+	color:silver;
+	text-indent:20px;
+	width:100%;
+	/* border-bottom:1px dotted silver */
+}
+

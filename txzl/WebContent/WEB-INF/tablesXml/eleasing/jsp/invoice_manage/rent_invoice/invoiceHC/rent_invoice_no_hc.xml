@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select 
+            fdinfo.id as id,
+            fdinfo.invoice_no    as invoiceno,
+            fdinfo.invoice_money as invoicemoney,
+            case nvl(rii.tax_type,'corpusone') when  'corpusone' then '本金一次性开票' when  'rent' then '租金' when  'corpus' then '本金' when  'interest' then '利息' when 'penalty' then '罚息' end as feetype
+         
+            from rent_invoice_download_info fdinfo
+            left join rent_invoice_info rii on fdinfo.rent_invoice_id=rii.id
+            
+             where 1=1
+             --已经回导数据
+             and fdinfo.is_backimport='1'
+             --非红冲记录
+             and nvl(fdinfo.hc_status,0)=0
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,537 @@
+<%@page import="java.net.URLEncoder"%>
+<%@page import="com.tenwa.business.entity.User"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<%String id=request.getParameter("id");%>
+<title>法人客户信息管理</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<style>
+#id_table_cust_detail {
+	width: 100%;
+	border: 1px solid #99CCFF;
+}
+#id_table_cust_detail td{
+	padding-left: 10px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+#id_table_cust_detail td .mini-textbox-border{
+	background: #EEEEEE;
+}
+#id_table_cust_detail td .mini-buttonedit-border{
+	background: #EEEEEE;
+}
+#id_table_cust_detail .mini-buttonedit-buttons{
+	display: none;
+}
+#id_table_cust_detail .mini-textbox{
+	width: 100%;
+}
+#id_table_cust_detail .mini-buttonedit{
+	width: 100%;
+}
+</style>
+<script type="text/javascript">
+var custid ="<mini:param  name='id'/>";
+jQuery(function(){
+	if('<mini:param  name="isView"/>' == 'true'){
+        //控制编辑不显示
+		jQuery("#button_update").hide();
+	}
+	miniui_ext.setOddEvenRowsStyle("id_table_cust_detail");
+});
+</script>
+</head>
+<body>
+<div style="width: 100%;height: 100%;overflow: auto;">
+	<div id="form1" style="padding: 5px;">
+		<table id="id_table_cust_detail" cellpadding="0" cellspacing="0" align="center">
+			<tr   id="button_update">
+		        <td colspan="6" style="border-bottom: 1px solid #99CCFF;">
+		        	<a class="mini-button" iconCls="icon-edit" onclick="upd">编辑</a>&nbsp;
+		        	<a class="mini-button" iconCls="icon-close" onclick="onCancel">关闭</a>
+	        	</td>
+		    </tr>
+		    <tr>
+		        <td width="12%">客户名称：</td>
+		        <td width="28%">
+ 		        	<input name="custid" class="mini-textbox" style="display: none;"/>
+ 		        	<input name="companyid" class="mini-textbox" style="display: none;"/>
+		            <input name="custname" class="mini-textbox  asLabel"/>
+		        </td>
+		        <td width="10%"></td>
+		        <td width="12%">组织机构代码：</td>
+		        <td width="28%"> <input name="orgcode" class="mini-textbox  asLabel"/> </td>
+		        <td width="10%"></td>
+		    </tr>
+		    <tr>
+		        <td>客户规模（根据1104报表要求）：</td>
+		        <td ><mini:dict  name="custscale"  parentid="cust_scale" otherClass="asLabel"/> </td>
+		        <td></td>
+		        <td>客户来源：</td>
+		        <td><mini:dict  name="custsource"  parentid="cust_source" otherClass="asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>客户类别：</td>
+		        <td><div class="mini-combobox asLabel" name="custtype"></div>
+		        </td>
+		        <td></td>
+		        <td >客户内部行业：</td>
+		        <td><input  name="custkind" class="mini-combobox  asLabel" /></td>
+		        <td></td>
+		     </tr>
+		     <tr>
+		        <td>客户所属行业门类：</td>
+		        <td >
+					<input id="industry" name="industry" class="mini-combobox asLabel" textField="name" 
+	                  	   valueField="id"  
+						   dataField="datas"
+						   allowInput="false" 
+						   data-options="{_xmlFileName:'/eleasing/jsp/cust_info/cust_common/get_industry_bypid.xml'}" 
+						   onbeforeshowpopup="miniextonbeforeshowpopup"
+						   showNullItem="true" nullItemText="" emptyText=""/>
+		        </td>
+		        <td></td>
+		        <td>行业门类大类：</td>
+		        <td >
+					<input id="industrylevelbig" name="industrylevelbig" class="mini-combobox asLabel" textField="name" 
+	                  	   valueField="id"  
+						   dataField="datas"
+						   allowInput="false" 
+						   data-options="{_xmlFileName:'/eleasing/jsp/cust_info/cust_common/get_industry_all.xml'}" 
+						   onbeforeshowpopup="miniextonbeforeshowpopup"
+						   showNullItem="true" nullItemText="" emptyText=""/>
+		        </td>
+		        <td></td>
+		    </tr>
+<!-- 		    <tr>
+		        <td>行业门类中类：</td>
+		        <td >
+					<input id="industrylevelmiddle" name="industrylevelmiddle" class="mini-combobox asLabel" textField="name" 
+	                  	   valueField="id"  
+						   dataField="datas"
+						   allowInput="false" 
+						   data-options="{_xmlFileName:'/eleasing/jsp/cust_info/cust_common/get_industry_all.xml'}" 
+						   onbeforeshowpopup="miniextonbeforeshowpopup"
+						   showNullItem="true" nullItemText="" emptyText=""/>
+		        </td>
+		        <td></td>
+		        <td>行业门类小类：</td>
+		        <td >
+					<input id="industrylevelsmall" name="industrylevelsmall" class="mini-combobox asLabel" textField="name" 
+	                  	   valueField="id"  
+						   dataField="datas"
+						   allowInput="false" 
+						   data-options="{_xmlFileName:'/eleasing/jsp/cust_info/cust_common/get_industry_all.xml'}" 
+						   onbeforeshowpopup="miniextonbeforeshowpopup"
+						   showNullItem="true" nullItemText="" emptyText=""/>
+		        </td>
+		        <td></td>
+		    </tr> -->
+		      <tr>
+		        <td class="miniext-form-td">客户关联类型：</td>
+		        <td><mini:dict  name="relationtype" otherproperties=" label='客户关联类型' " parentid="relationType"/> </td>
+		        <td class="miniext-form-td"></td>
+		        <td> </td>
+		    </tr>
+		    <tr>
+		    	<td>纳税人类别：</td>
+		        <td><input  name="taxregtype" class="mini-combobox  asLabel"/>
+		        </td>
+		        <td></td>
+		        <td>纳税人识别号：</td>
+		        <td><input name="taxregcode" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>开户行：</td>
+		        <td><input name="taxbank" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>开户账号：</td>
+		        <td><input name="taxacc" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>开票地址：</td>
+		        <td><input name="invoiceadd" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		    	<td>开票电话：</td>
+		        <td><input name="invoicephone" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>国家：</td>
+		        <td><input name="country" class="mini-combobox  asLabel" /> </td>
+		        <td></td>
+		        <td>省份：</td>
+		        <td><input name="province" class="mini-combobox  asLabel" /> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>城市：</td>
+		        <td><input name="city" class="mini-combobox  asLabel"/> </td>
+		        <td></td>
+		        <td>区县：</td>
+		        <td><input name="county" class="mini-textbox  asLabel"/>
+		        </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>邮寄地址：</td>
+		        <td colspan="4"><input name="mailaddress" class="mini-textbox  asLabel" width="100%"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>法人代表：</td>
+		        <td><input name="personrep" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>法人身份证号：</td>
+		        <td><input name="personidcard" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>手机：</td>
+		        <td><input name="moblie" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>电话:</td>
+		        <td><input name="phone" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>邮编：</td>
+		        <td ><input name="postcode" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		        <td>传真：</td>
+		        <td>	<input name="fax" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>归属人：</td>
+		        <td><input name="belongingpeople" class="mini-textbox asLabel" vtype="maxLength:50"/></td>
+		        <td></td>
+		        <td>客户实际负责人：</td>
+		        <td ><input name="custactualpeople" class="mini-textbox asLabel" vtype="maxLength:50"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td class="miniext-form-td">联系人：</td>
+		        <td><input name="contact" class="mini-textbox asLabel" vtype="maxLength:50" /> </td>
+		        <td></td>		             
+		        <td class="miniext-form-td">联系人手机：</td>
+		        <td ><input name="contactmoblie" class="mini-textbox asLabel" vtype="maxLength:50"/> </td>
+		    </tr>
+		    <tr>
+		        <td class="miniext-form-td">联系人邮箱：</td>
+		        <td><input name="contactemail" class="mini-textbox asLabel" vtype="maxLength:50" /> </td>	
+		        <td></td>	             
+		        <td class="miniext-form-td">联系人电话：</td>
+		        <td ><input name="custactphone" class="mini-textbox asLabel" vtype="maxLength:50" /> </td>
+		    </tr>
+		    <tr>
+		        <td>是否有贷款卡：</td>
+		        <td >
+					<input name="creditcardyesorno" class="mini-combobox asLabel" textField="text" 
+	                  	   valueField="text"  
+						   data="[{text:'是'},{text:'否'}]"
+						   allowInput="false" 
+						   showNullItem="true" nullItemText=""
+						   emptyText=""
+						   onvaluechanged="oncreditcardyesorno"/>
+		        </td>
+		        <td></td>
+		        <td>贷款卡号：</td>
+		        <td ><input id="creditcard" name="creditcard" class="mini-textbox asLabel" vtype="maxLength:50"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>员工人数：</td>
+		        <td><input name="empnumber" class="mini-textbox asLabel" vtype="maxLength:50"/> </td>
+		        <td></td>
+		        <td>企业性质：</td>
+		        <td><input  name="ownership" class="mini-combobox  asLabel"	/>
+		        </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>营业执照号：</td>
+		        <td><input name="buslicense" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		        <td>注册资本：</td>
+		        <td><input name="regcapital" class="mini-textbox  asLabel" /> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>注册地址：</td>
+		        <td colspan="4"><input name="regaddress" class="mini-textbox  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>经营地址：</td>
+		        <td colspan="4"><input name="companyaddress" class="mini-textbox  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>公司网址：</td>
+		        <td colspan="4"><input name="companyurl" class="mini-textbox  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>经营方式：</td>
+		        <td colspan="4"><input name="operate" class="mini-textarea  asLabel" width="100%"/> </td>
+		    </tr>
+		    <tr>
+		        <td>经营范围<br/>(主营)：</td>
+		        <td colspan="4"><input name="operatemaster" class="mini-textarea  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>经营范围<br/>(兼营)：</td>
+		        <td colspan="4"><input name="operateminor" class="mini-textarea  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>客户概况：</td>
+		        <td colspan="4"><input name="custprobably" class="mini-textarea  asLabel" width="100%"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>组织机构代码证上传：</td>
+		        <td colspan="4" nowrap="nowrap">
+		        <a href="javascript:void(0)" onclick="showFile('custfile1')">预览</a> &nbsp;&nbsp;&nbsp;&nbsp;<a href='#' onclick='downloadUploadCustFile("custfile1id");'>下载</a>
+		        &nbsp;&nbsp;&nbsp;&nbsp;<input name="custfile1" class="mini-textbox  asLabel"  width="94%"/></td>
+		        <td><input id="custfile1id" name="custfile1id" class="mini-textbox" style="display: none;"/></td>
+		    </tr>
+		    <tr>
+		        <td>营业执照上传：</td>
+		        <td colspan="4" nowrap="nowrap">
+		        <a href="javascript:void(0)" onclick="showFile('custfile2')">预览</a>&nbsp;&nbsp;&nbsp;&nbsp; <a href='#' onclick='downloadUploadCustFile("custfile2id");'>下载</a>
+		        &nbsp;&nbsp;&nbsp;&nbsp;<input name="custfile2" class="mini-textbox  asLabel" width="94%"/></td>
+		        <td><input id="custfile2id" name="custfile2id" class="mini-textbox" style="display: none;"/></td>
+		    </tr>
+		    <tr>
+		        <td>税务登记证上传：</td>
+		        <td colspan="4" nowrap="nowrap">
+		        <a href="javascript:void(0)" onclick="showFile('custfile3')">预览</a>&nbsp;&nbsp;&nbsp;&nbsp; <a href='#' onclick='downloadUploadCustFile("custfile3id");'>下载</a>
+		        &nbsp;&nbsp;&nbsp;&nbsp;<input name="custfile3" class="mini-textbox  asLabel" width="94%"/></td>
+		        <td><input id="custfile3id" name="custfile3id" class="mini-textbox" style="display: none;"/></td>
+		    </tr>
+		    <tr>
+		        <td>法定代表人身份证：</td>
+		        <td colspan="4" nowrap="nowrap">
+		        <a href="javascript:void(0)" onclick="showFile('custfile4')">预览</a> &nbsp;&nbsp;&nbsp;&nbsp;<a href='#' onclick='downloadUploadCustFile("custfile4id");'>下载</a>
+		        &nbsp;&nbsp;&nbsp;&nbsp;<input name="custfile4" class="mini-textbox  asLabel" width="94%" /></td>
+		        <td><input id="custfile4id" name="custfile4id" class="mini-textbox" style="display: none;"/></td>
+		    </tr>
+		    <tr>
+		        <td>是否草稿：</td>
+		        <td>
+					<input id="draft" name="draft" class="mini-combobox asLabel" textField="text" 
+	                  	   valueField="text"  
+						   data="[{text:'是'},{text:'否'}]"
+						   allowInput="false" 
+						   showNullItem="true" nullItemText=""
+						   emptyText=""/>
+		        </td>
+		        <td></td>
+		        <td>是否废弃：</td>
+		        <td><div name="invalid" class="mini-combobox asLabel"></div> </td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>登记人：</td>
+		        <td><input name="creatorname" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		        <td>登记时间：</td>
+		        <td><input name="createdate" class="mini-datepicker  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>登记部门</td>
+		        <td><input name="deptmentname" class="mini-textbox asLabel"/></td>
+		        <td></td>
+		        <td></td>
+		        <td></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		    	<td>修改人：</td>
+		        <td><input name="modificatorname" class="mini-textbox  asLabel" /></td>
+		        <td></td>
+		        <td>修改时间：</td>
+		        <td><input name="modifydate" class="mini-datepicker  asLabel" /> </td>
+		        <td></td>
+		    </tr>
+		</table>
+	</div>
+
+	<div id="tabDeatils" class="mini-tabs" activeIndex="0" style="width: 100%;" bodyStyle="padding:0;border:0;">
+	    <div title="重要个人" name="relatedPerson" iconCls="icon-cut">
+	    	<jsp:include page="../cust_relatedperson/cust_relatedperson_list.jsp" ></jsp:include>
+	    </div>	   
+	    <div title="银行账号" name="bankAccount" iconCls="icon-cut"> 
+ 	    	<jsp:include page="../cust_account/cust_account.jsp" ></jsp:include> 
+ 	    </div> 	    
+	    <div title="走访调研" iconCls="icon-cut"> 
+ 	    	<jsp:include page="../cust_contact/cust_contact_list.jsp" ></jsp:include> 
+ 	    </div> 	    
+	    <div title="关联企业" name="custSharecompany" iconCls="icon-cut" >
+	    	<jsp:include page="../cust_share_company/cust_share_company.jsp" ></jsp:include>
+	    </div>
+	    <div title="股本结构" name="custStockHolder" iconCls="icon-cut" >
+	    	<jsp:include page="../cust_stock_holder/cust_stock_holder.jsp" ></jsp:include>
+	    </div>
+	    <div title="历史交易记录" name="custHistory" iconCls="icon-cut" >
+	    	<jsp:include page="../cust_history/cust_history_list.jsp" ></jsp:include>
+	    </div>
+	    <div title="财务报表分析" name="custFinancialReport" iconCls="icon-cut">
+	    	<jsp:include page="../cust_finance/cust_finance_report.jsp" ></jsp:include>
+	    </div>
+	    <div title="财务报表附件" name="custFinancialReport" iconCls="icon-cut">
+	    	<jsp:include page="../cust_finance/cust_finance.jsp" ></jsp:include>
+	    </div>
+	</div>
+	
+	<div id="showfile" class="mini-window" title="预览" showMaxButton="true"
+		style="width: 60%; height: 60%;" showCloseButton="true"  showModal="true"
+		allowResize="true" allowDrag="true" >
+		<div id="imag">
+		</div>
+	</div>
+	<div id="addfile" class="mini-window" title="上传"
+		style="width: 400px; height: 100px;" showModal="true"
+		allowResize="true" allowDrag="true">
+		<iframe style="display:none;" name="attachment_file_upload_real_submit_frame"></iframe>
+	<form action="" id="id_uploadCustFileForm" enctype="multipart/form-data"  target="attachment_file_upload_real_submit_frame" method="post">
+		<input type="hidden" name="cust_id" id="cust_id" class='mini-hidden'>
+		<input type="hidden" name="module" id="id_attachmentFileModule" class='mini-hidden' value="custfile">
+		<input type="hidden" name="attachmentFileDictId" id="attachmentFileDictId" class='mini-hidden'>
+		<input type="hidden" name="attachmentFileUploadInfoId" id="id_attachmentFileUploadInfoId" class='mini-hidden'>
+		<input type="hidden" name="attachmentFileUnionKey" id="id_attachmentFileUnionKey" value="" class='mini-hidden'>
+		<table align="center" style="width:90%">
+		<tr><td class="input_label_desc"></td><td class="input_value" id="id_upload_location"><input type="file" name="name_upload_file_name" id="id_uploadAttachmentFile" /><span class="content-required">*</span></td></tr>
+		<tr class="content-separator">
+			<td colspan="2" style="text-align:center;">
+			<a class="mini-button" onclick="__uploadActionSubmit"><span>确定</span></a>
+			<a class="mini-button" onclick="javascript:{mini.get('addfile').hide();}"><span>取消</span></a>
+			</td>
+		</tr>
+		</table>
+	</form>
+</div>
+<script>
+mini.parse();
+var form = new mini.Form("form1");
+//跨页面传递的数据对象，克隆后才可以安全使用
+$.ajax({
+    url: urlPrefix+"/eleasing/jsp/cust_info/cust_company/get_custinfocompany_byid.xml&id=<mini:param  name='id'/>",
+    cache: false,
+    success: function (text) {
+    	var result = mini.decode(text);
+    	miniui_ext.restoreFromDataSpecialChar(result.datas[0]);
+        form.setData(result.datas[0]);
+        miniui_ext.initcomboboxloaddata("form1",result.datas[0]);
+        miniui_ext.initformreadOnly("form1");//设置表单为只读
+        form.setChanged(false);
+    }
+});
+function upd(){
+	var urlFlag = getRootPath()+"/leasing/cust_info/cust_company/input_cust_company_list.bi?id=<mini:param  name='id'/>";
+	var saveUrl = getRootPath() + "/acl/updateCustLaw.acl";
+	mini.open({
+        url: urlFlag+"&opertype=update&saveurl="+saveUrl,
+        title: "编辑法人信息", width: 800, height: 500,
+        onload: function () {
+        	
+        },
+        ondestroy: function (action) {
+        	if("savesuccess" == action){
+        		window.location.reload();
+        	}
+        }
+    });
+}
+function showFile(filedict){
+	var url = getRootPath() + '/table/getTableData.action';
+	var params = { xmlFileName:'/common/queryCustImages.xml',"filedict":filedict};
+
+	params.custid=custid;
+
+	mini.mask({
+	    el: document.body,
+	    cls: 'mini-mask-loading'
+	});
+	tenwa.ajaxRequest({
+        url:url,
+        params:params,
+        method:'post',
+        success:function(res){
+            var result = JsonUtil.decode(res.responseText);
+		    var datas = result['datas'];
+		    if(datas && datas.length > 0){
+		    	jQuery("#imag").html('');
+		    	jQuery.each(datas, function(index, appImage){
+		    		var img = createAttachmentImageDiv(appImage,filedict);
+		    		if(img){
+			    		jQuery("#imag").append(img);
+		    		}
+		    	});
+		    } else {
+		    	jQuery("#imag").html('');
+		    }
+		    mini.unmask(document.body);
+        },
+        failure:function(res){
+        	mini.unmask(document.body);
+        }
+    });
+	mini.get("showfile").show();
+}
+//根据单个图片数据获取一个document
+function createAttachmentImageDiv(appImage,filedict){
+	var $div = jQuery('<div/>');
+	if(appImage){
+		$div.addClass("img-box");
+		$div.attr("imageid", appImage.id);
+		var $image = jQuery("<img/>");
+		$image.attr("height", appImage.height);
+		$image.attr("width", appImage.width);
+		$image.attr("realUrl", appImage.imagepath);
+		$image.attr("alt", appImage.title);
+		$image.attr("src", getRootPath()+"/acl/qeryCustfile.acl?filedict="+filedict+"&custid="+custid+"&userid="+"<mini:param name='loginUser.id'/>");
+		$image.appendTo($div);
+	}
+	return $div;
+}
+//下载附件
+function downloadUploadCustFile(fileDetailId) {
+	var uploadAttachmentFileDetailId=mini.get(fileDetailId).getValue();
+	var newAction = getRootPath() + "/attachmentfile/downloadAttachmentFile.action?";
+	newAction += "uploadAttachmentFileDetailId=" + uploadAttachmentFileDetailId;
+	var form=$("#id_uploadCustFileForm")[0];
+	with (form) {
+		action = newAction;
+		submit();
+	}
+}
+$(function(){
+	var text=mini.getbyName("custfile1");
+	text.setBorderStyle("border:none;");
+	var text=mini.getbyName("custfile2");
+	text.setBorderStyle("border:none;");
+	var text=mini.getbyName("custfile3");
+	text.setBorderStyle("border:none;");
+	var text=mini.getbyName("custfile4");
+	text.setBorderStyle("border:none;");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>合同变更</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+var currentClientWidth = document.documentElement.clientWidth;
+var currentClientHeight = document.documentElement.clientHeight;
+jQuery(function(){
+	tenwa.createTable({
+		id: "contract_change",
+		renderTo: "id_table_container_contract_change",
+		width: currentClientWidth,
+		height: currentClientHeight,
+		lazyLoad: false,
+		title: "合同变更",
+		remoteOper : false,
+		showPager: true,
+		pageSize: 20,
+/* 		tools: [{
+			html: '二次出具',
+			plain: true,
+			iconCls: 'icon-addfolder',
+			handler: function(miniTable, buttonText){
+				var row = miniTable.getSelected();
+				if (row) {
+					var multiform = new mini.Form("multiform");
+					var multieditWindow = mini.get("multieditWindow");
+					multieditWindow.show();
+				} else {
+					mini.alert('请选中需要操作的数据！！！');
+				}
+			}
+		}], */
+		tools:[
+			   {
+				html:'合同变更',
+				plain:true,
+				iconCls:'icon-addfolder',
+				handler:function(miniTable, buttonText) {
+					var row = miniTable.getSelected();
+					if(row){
+					  //alert(row);
+						var attachmentParams = "contract_id="+row.id;
+						
+						startProcess("二次出具流程-1",attachmentParams); 
+						//mini.get("multieditWindow").hide();
+					}else{
+						mini.alert("请选中要操作的数据！");
+					}
+				
+				}
+			}         
+		],
+		queryButtonColSpan: 2,
+		queryButtonNewLine:true,
+		xmlFileName: '/eleasing/workflow/contract/contract_change/contract_change_list.xml',
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			{field:'projid', header:'项目编号',queryConfig:{}},	
+			{field: 'cust_name', header: '客户名称',width:135,queryConfig:{width:165,newLine: false}},
+			{field: 'project_name', header: '项目名称',queryConfig:{width:165}},
+			{field: 'contract_number', header: '业务合同编号',width:110,queryConfig:{width:165,newLine:true}},			
+			{field: 'contract_id', header: '合同编号',width:110,queryConfig:{width:165,newLine:false}},
+			{field:'cleanleasemoney',dataType:"currency",header:'合同金额'},
+			{field: 'industry_type', header: '内部行业',width:80},
+			{field: 'projmanagename', header: '项目经理',width:80},
+			{field: 'contractstatus', header: '项目状态',width:80},
+			{field: 'card_no', header: '身份证/注册号/统一社会信用代码',width:175,queryConfig:{width:165}},			
+			{field: 'department', header: '出单部门'}
+			
+		]
+	});
+});
+</script>
+</head>
+<body>
+<div id="multieditWindow" class="mini-window" title="请选择" style="width:30%;height:130px;" showModal="true" allowResize="true" allowDrag="true">
+	<div id="multiform" >
+		<table class="fillTable" cellspacing="0" cellpadding="10px" style="width:100%;" >
+			<tr class="tr-even">
+				<td class="td-content-title" style="width:80px;">是否拆包：</td>
+				<td class="td-content">
+					<div name="proj_info.businesstype" id="proj_info.businesstype" class="mini-combobox"
+						data="[{text:'是',id:'business_type.yes'},{text:'否',id:'business_type.no'}]"
+						textField="text" valueField="id"
+						value="business_type.yes" required="true"
+					></div>
+				</td>
+				</tr>
+				<tr>
+				<td align="center" colspan="2">
+					<a class="mini-button " iconCls="icon-save"  onclick="startPro">&nbsp;&nbsp;确定&nbsp;&nbsp;</a>
+					<span class="separator"></span>
+					<a class="mini-button " iconCls="icon-close"  onclick='cancel'>&nbsp;&nbsp;取消&nbsp;&nbsp;</a>
+				</td>
+			</tr>   
+		</table>
+	</div>
+</div>
+<div id="id_table_container_contract_change"></div>
+</body>
+</html>
+<script type="text/javascript">
+/* function cancel(){
+	mini.get("multieditWindow").hide();
+}
+function startPro(){
+	var businesstyp = mini.get("proj_info.businesstype").getValue();
+	var row = mini.get("contract_change").getSelected();
+	if(row){
+		var attachmentParams = "contract_id="+row.id+"&businesstype="+businesstyp;
+		startProcess("二次出具流程-1",attachmentParams); 
+		mini.get("multieditWindow").hide();
+	}else{
+		mini.alert("请选中要操作的数据！");
+	}
+} */
+</script>

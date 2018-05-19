@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--注意点模糊查询请用  like replace('%{ebdataid}%',' ') 可去掉前后空格-->
+<!-- 复杂的列名取值说明：1. 【剩余金额=到账金额-流程中用掉的网银】  
+					2.  查询所有网银信息考虑    是否作废为0 表示作废
+         -->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+            select 
+                e.id id,
+                e.cust_id custid,
+                cust.cust_name custidname,
+                e.client_name clientname,
+                e.ebdata_id  ebdataid,
+                e.sn sn,
+                e.fact_money factmoney,
+                e.fact_date factdate,
+                e.no_with_money nowithmoney,
+                nvl(cf.fundmoney,0) fundmoney,
+                nvl(cr.rent,0) rentmoney,
+                nvl(pro.process_amount,0)  procmoney,
+                nvl(cf.fundmoney,0)+ nvl(cr.rent,0)+nvl(pro.process_amount,0) hadmoney,
+                e.fact_money-e.no_with_money-nvl(cf.fundmoney,0)- nvl(cr.rent,0)-nvl(pro.process_amount,0) mayopemoney,
+                e.own_bank ownbank,
+                e.own_account ownaccount,
+                e.own_acc_number ownaccnumber,
+                e.client_bank clientbank,
+                e.client_account clientaccount,
+                e.client_acc_number clientaccnumber,
+                e.upload_date  uploaddate,
+                e.summary summary,
+                nvl(e.invalid_,'否') invalid
+        from fund_ebank_data e
+        left outer join cust_info cust on e.cust_id =cust.id
+        left outer join 
+        (
+           select sum(process_amount) process_amount ,ebdata_id from fund_ebank_process 
+            where 1=1
+            /~flowunid:flow_unid<>'{flowunid}'~/
+            group by  ebdata_id
+        )pro on pro.ebdata_id=e.id
+        left outer join 
+        ( select sum(fact_money) fundmoney,ebank_number from contract_fund_fund_charge group by ebank_number
+        )cf on cf.ebank_number=e.id
+          left outer join 
+        ( select sum(isnull(rent,0))+sum(isnull(penalty,0)) rent,ebank_number from contract_fund_rent_income group by ebank_number
+        )cr on cr.ebank_number=e.id
+         where 1=1
+         --配置参数查sql
+         /~sn: and e.sn    like '%{sn}%' ~/ 
+         /~clientbank: and e.client_bank     like '%{clientbank}%' ~/ 
+         /~clientaccount: and e.client_account   like '%{clientaccount}%' ~/ 
+         /~clientaccnumber: and client_acc_number    like '%{clientaccnumber}%' ~/ 
+         /~clientname: and e.client_name   like '%{clientname}%' ~/ 
+         /~factdateStart: and e.fact_date    >= '{factdateStart}' ~/ 
+         /~factdateEnd: and e.fact_date    <= '{factdateEnd}' ~/ 
+         /~uploaddateStart: and  to_char(to_date(e.upload_date,'yyyy-mm-dd hh24:mi:ss.sssss'),'yyyy-mm-dd')      >= '{uploaddateStart}' ~/ 
+         /~uploaddateEnd: and  to_char(to_date(e.upload_date,'yyyy-mm-dd hh24:mi:ss.sssss'),'yyyy-mm-dd')   <= '{uploaddateEnd}' ~/ 
+         /~factmoney: and e.fact_money   like replace('%{factmoney}%',' ') ~/ 
+         /~custidname: and cust.cust_name  like '%{custidname}%' ~/ 
+         /~uploaddate: and e.upload_date   like '%{uploaddate}%' ~/ 
+         /~invalid: and nvl(e.invalid_,'否') = '{invalid}'~/     
+         /~ebdataid: and e.ebdata_id like '%{ebdataid}%'~/
+         /~id: and e.id='{id}'~/
+         /~ismayopemoney: and  e.fact_money-e.no_with_money-nvl(cf.fundmoney,0)- nvl(cr.rent,0)-nvl(pro.process_amount,0)>0~/
+         /~ismaymoney:{ismaymoney}~/
+         /~factmoneyMin: and e.fact_money>={factmoneyMin}~/
+        /~factmoneyMax: and e.fact_money<={factmoneyMax}~/
+         <EXTRACTEND> order by factdate desc <EXTRACTEND>
+         ]]> 
+    </table_sql>
+    </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

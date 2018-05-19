@@ -1,0 +1,51 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"    pageEncoding="UTF-8"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<!-- 隐藏域 -->
+<input type="hidden" name="fund_standard_interest.id" value="<mini:param  name="fund_standard_interest.id" />"/>
+  <div id="form_interest">
+    <div class="mini-panel" title="央行利率基本信息" showCollapseButton="true" style="width: 100%;">
+		<table class="fillTable"  id="fund_standard_interest" cellspacing="0" cellpadding="0">
+		  <tr class="tr-even">
+			    <td class="td-content-title" width="12%">利率开始执行日期：</td>
+			    <td class="td-content"  width="38%"><input name="fund_standard_interest.startdate" id="fund_standard_interest.startdate" value="<mini:param  name="fund_standard_interest.startdate" />"  class="mini-textbox"    /></td>    
+		  		<td class="td-content-title" width="12%"></td>
+		  		<td class="td-content"  width="38%"></td>
+		  </tr>
+		  <tr class="tr-odd">
+			    <td class="td-content-title" width="12%">利息调整幅度_六月：</td>
+			    <td class="td-content" width="38%"><input name="fund_standard_interest.ratehalf" id="fund_standard_interest.ratehalf" class="mini-textbox"  value="<mini:param  name="fund_standard_interest.ratehalf" />"  ></td>
+			    <td class="td-content-title" width="12%">利息央行基准_六月：</td>
+			    <td class="td-content" width="38%"><input name="fund_standard_interest.baseratehalf" id = "fund_standard_interest.baseratehalf" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.baseratehalf" />"></td>			    
+		  </tr>
+		  <tr class="tr-even">		  
+			    <td class="td-content-title">利息调整幅度_1年：</td>
+			    <td class="td-content" ><input  name="fund_standard_interest.rateone" id="fund_standard_interest.rateone" class="mini-textbox"  value="<mini:param  name="fund_standard_interest.rateone" />"></td>
+			    <td class="td-content-title">利息央行基准_1年：</td>
+			    <td class="td-content"><input name="fund_standard_interest.baserateone" id = "fund_standard_interest.baserateone" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.baserateone" />"></td>		   
+		  </tr>
+		  <tr class="tr-odd">
+			    <td class="td-content-title">利息调整幅度_3年：</td>
+			    <td class="td-content"><input name="fund_standard_interest.ratethree" id = "fund_standard_interest.ratethree" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.ratethree" />"></td>
+			    <td class="td-content-title">利息央行基准_3年：</td>
+			    <td class="td-content"><input name="fund_standard_interest.baseratethree" id = "fund_standard_interest.baseratethree" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.baseratethree" />"></td>		    
+		  </tr>
+		  <tr class="tr-even">
+			    <td class="td-content-title">利息调整幅度_5年：</td>
+			    <td class="td-content"><input name="fund_standard_interest.ratefive" id = "fund_standard_interest.ratefive" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.ratefive" />"></td>
+			    <td class="td-content-title">利息央行基准_5年：</td>
+			    <td class="td-content"><input name="fund_standard_interest.baseratefive" id = "fund_standard_interest.baseratefive" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.baseratefive" />"></td>			    
+		  </tr>
+		  <tr class="tr-odd">	  
+			    <td class="td-content-title">利息调整幅度_5年以上：</td>
+			    <td class="td-content"><input name="fund_standard_interest.rateabovefive" id = "fund_standard_interest.rateabovefive" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.rateabovefive" />"></td>		    
+			    <td class="td-content-title">利息央行基准_5年以上：</td>
+			    <td class="td-content"><input name="fund_standard_interest.baserateabovefive" id = "fund_standard_interest.baserateabovefive" class="mini-textbox"     value="<mini:param  name="fund_standard_interest.baserateabovefive" />"></td>
+		  </tr>
+		</table>
+	</div>
+</div>
+<script language="javascript">
+jQuery(function(){
+	miniui_ext.disableFormFields("form_interest");
+});
+</script>

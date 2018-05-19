@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		     select name, a1, a2, a3,a4,a5,a5-a4 a6,ROUND(a5/a4,2) a7 from (           
+    select code code,name, a1, a2, a3,a4,a5
+  from (  
+            
+          select distinct '大前年四季度' as str,
+          oip.code code,
+              case oip.financename 
+            when '经营活动现金流入小计' then '经营性现金流入额'
+            when '经营活动产生的现金流量净额' then '经营性现金流净额'
+            when '投资活动产生的现金流量净额' then  '投资性现金流净额'
+            when '筹资活动产生的现金流量净额' then  '融资性现金流净额'
+           when '现金及现金等价物净增加额' then  '净现金流'
+             when '二、营业利润（亏损以“－”号填列）' then  '营业利润'
+             else  oip.financename end  name,
+                vv1.data as data
+            from ODBC_IMPORT_PATROL_FINANCE_01 oip
+            left join (select  fs.subject_name name, fd.subject_data as data from financial_subjects  fs
+               left join financial_data fd on fd.fina_sub_id = fs.id
+               and to_date(fd.financial_date, 'yyyy-mm-dd') <=
+                to_date('{lesseefinancial.threeagoend}', 'yyyy-mm-dd')
+            and to_date(fd.financial_date, 'yyyy-mm-dd') >=
+                to_date('{lesseefinancial.threeagostart}', 'yyyy-mm-dd')
+               left join cust_info ci on ci.id = fd.cust_id
+                where  ci.id = '{lesseefinancial.guarantee}'
+            
+            ) vv1 on vv1.name = oip.financename
+        union 
+        
+            select distinct '前年四季度' as str,
+            oip.code code,
+                case oip.financename 
+            when '经营活动现金流入小计' then '经营性现金流入额'
+            when '经营活动产生的现金流量净额' then '经营性现金流净额'
+            when '投资活动产生的现金流量净额' then  '投资性现金流净额'
+            when '筹资活动产生的现金流量净额' then  '融资性现金流净额'
+           when '现金及现金等价物净增加额' then  '净现金流'
+             when '二、营业利润（亏损以“－”号填列）' then  '营业利润'
+             else  oip.financename end  name,
+                vv1.data as data
+            from ODBC_IMPORT_PATROL_FINANCE_01 oip
+            left join (select  fs.subject_name name, fd.subject_data as data from financial_subjects  fs
+               left join financial_data fd on fd.fina_sub_id = fs.id
+               and to_date(fd.financial_date, 'yyyy-mm-dd') <=
+                to_date('{lesseefinancial.twoagoend}', 'yyyy-mm-dd')
+            and to_date(fd.financial_date, 'yyyy-mm-dd') >=
+                to_date('{lesseefinancial.twoagostart}', 'yyyy-mm-dd')
+               left join cust_info ci on ci.id = fd.cust_id
+                where  ci.id = '{lesseefinancial.guarantee}'
+            
+            ) vv1 on vv1.name = oip.financename 
+       union
+          select distinct '去年四季度' as str,
+          oip.code code,
+                case oip.financename 
+            when '经营活动现金流入小计' then '经营性现金流入额'
+            when '经营活动产生的现金流量净额' then '经营性现金流净额'
+            when '投资活动产生的现金流量净额' then  '投资性现金流净额'
+            when '筹资活动产生的现金流量净额' then  '融资性现金流净额'
+           when '现金及现金等价物净增加额' then  '净现金流'
+             when '二、营业利润（亏损以“－”号填列）' then  '营业利润'
+             else  oip.financename end  name,
+                vv1.data as data
+            from ODBC_IMPORT_PATROL_FINANCE_01 oip
+            left join (select  fs.subject_name name, fd.subject_data as data from financial_subjects  fs
+               left join financial_data fd on fd.fina_sub_id = fs.id
+               and to_date(fd.financial_date, 'yyyy-mm-dd') <=
+                to_date('{lesseefinancial.lastend}', 'yyyy-mm-dd')
+            and to_date(fd.financial_date, 'yyyy-mm-dd') >=
+                to_date('{lesseefinancial.laststart}', 'yyyy-mm-dd')
+               left join cust_info ci on ci.id = fd.cust_id
+                where  ci.id = '{lesseefinancial.guarantee}'
+            
+            ) vv1 on vv1.name = oip.financename  
+          union 
+          select distinct '去年同季度' as str,
+          oip.code code,
+                case oip.financename 
+            when '经营活动现金流入小计' then '经营性现金流入额'
+            when '经营活动产生的现金流量净额' then '经营性现金流净额'
+            when '投资活动产生的现金流量净额' then  '投资性现金流净额'
+            when '筹资活动产生的现金流量净额' then  '融资性现金流净额'
+           when '现金及现金等价物净增加额' then  '净现金流'
+             when '二、营业利润（亏损以“－”号填列）' then  '营业利润'
+             else  oip.financename end  name,
+                vv1.data as data
+            from ODBC_IMPORT_PATROL_FINANCE_01 oip
+            left join (select  fs.subject_name name, fd.subject_data as data from financial_subjects  fs
+               left join financial_data fd on fd.fina_sub_id = fs.id
+                and to_date(fd.financial_date, 'yyyy-mm-dd') <=
+                to_date('{lesseefinancial.lastend2}', 'yyyy-mm-dd')
+            and to_date(fd.financial_date, 'yyyy-mm-dd') >=
+                to_date('{lesseefinancial.laststart2}', 'yyyy-mm-dd')
+               left join cust_info ci on ci.id = fd.cust_id
+                where  ci.id = '{lesseefinancial.guarantee}'
+           
+            ) vv1 on vv1.name = oip.financename  
+                 union 
+          select distinct '报告季度' as str,
+          oip.code code,
+                case oip.financename 
+            when '经营活动现金流入小计' then '经营性现金流入额'
+            when '经营活动产生的现金流量净额' then '经营性现金流净额'
+            when '投资活动产生的现金流量净额' then  '投资性现金流净额'
+            when '筹资活动产生的现金流量净额' then  '融资性现金流净额'
+           when '现金及现金等价物净增加额' then  '净现金流'
+             when '二、营业利润（亏损以“－”号填列）' then  '营业利润'
+             else  oip.financename end  name,
+                vv1.data as data
+            from ODBC_IMPORT_PATROL_FINANCE_01 oip
+            left join (select  fs.subject_name name, fd.subject_data as data from financial_subjects  fs
+               left join financial_data fd on fd.fina_sub_id = fs.id
+                and to_date(fd.financial_date, 'yyyy-mm-dd') <=
+                to_date('{lesseefinancial.thisend}', 'yyyy-mm-dd')
+            and to_date(fd.financial_date, 'yyyy-mm-dd') >=
+                to_date('{lesseefinancial.thisstart}', 'yyyy-mm-dd')
+               left join cust_info ci on ci.id = fd.cust_id
+                where  ci.id = '{lesseefinancial.guarantee}'
+           
+            ) vv1 on vv1.name = oip.financename  
+                    ) v 
+                                
+            pivot(sum(data) --聚合操作函数
+            
+       for str --行转列标准
+       in('大前年四季度' as a1, '前年四季度' as a2, '去年四季度' as a3 , '去年同季度' as a4 , '报告季度' as a5) --行转列列取值和顺序
+       )
+  ) vv  order by vv.code
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

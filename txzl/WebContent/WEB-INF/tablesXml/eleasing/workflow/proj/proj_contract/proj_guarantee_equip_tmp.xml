@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	   SELECT *FROM (SELECT P.ID id,
+       p.PROJ_ID AS projInfo,
+       p.CONTRACTID as contractid,
+       p.DOC_ID as docid,
+       EQUIP_NAME AS equipname,
+       P.GUARANTOR AS guarantor,
+       C.CUST_NAME AS guarantorname,
+       EQUIP_INVOICE AS equipinvoice,
+       P.GUARANTYVALUE AS guarantyvalue,
+       PRESENT_VALUE AS presentvalue,
+       DICT1.NAME_ AS equipguaranteetypename,
+       P.EQUIP_GUARANTEE_TYPE AS equipguaranteetype,
+       NOTARY_FLAG AS notaryflag,
+       NOTARY_FLAG AS NOTARYFLAGNAME,
+       RECORD_MECH AS recordmech,
+       PURCHASE_LIFE AS purchaselife,
+       CGENOTE AS cgenote
+       FROM PROJ_GUARANTEE_EQUIP_TMP P
+       LEFT JOIN CUST_INFO C ON P.GUARANTOR = C.ID
+       LEFT JOIN T_DICTS_DATAS DICT1 ON P.EQUIP_GUARANTEE_TYPE = DICT1.ID_) P
+       where 1=1 
+       /~projid: AND projInfo ='{projid}' ~/
+       /~docid: AND docid ='{docid}' ~/     
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

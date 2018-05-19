@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- V8凭证查询  -->
+      <table_sql> 
+	        <![CDATA[
+		          SELECT 
+		          VCC.ID  ID,
+		          CI.ID  CUSTID,
+		          VCC.FINANCIAL_CODE FINANCIALCODE,
+		          VCC.FINANCIAL_CODE_VENDOR FINANCIALCODE_VENDOR,
+		          CI.CUST_NAME CUSTNAME,
+		          CI.CUST_NUMBER CUSTNUMBER,
+		          VCIA.CUSTTYPENAME CUSTTYPENAME
+		        FROM VOUCHERASS_CUST_CONFIG VCC 
+		        RIGHT JOIN CUST_INFO CI ON CI.ID = VCC.CUST_NUMBER
+		        left join CONTRACT_INFO contract on contract.CUST_ID=ci.id
+		        LEFT JOIN VI_CUST_INFO_ALL  VCIA ON VCIA.CUSTID = CI.ID
+		        WHERE 1=1 
+				/~custname:and CI.CUST_NAME like '%{custname}%'~/
+				/~custnumber:and CI.CUST_NUMBER like '%{custnumber}%'~/
+				
+			]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

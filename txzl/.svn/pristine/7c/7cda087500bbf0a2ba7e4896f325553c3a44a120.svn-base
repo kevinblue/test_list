@@ -1,0 +1,178 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<input style="display:none;"	class="mini-textarea" id="id_json_mortgage_info_list_str" name="json_mortgage_info_list_str" value='${empty json_mortgage_info_list_str ? "[]" : json_mortgage_info_list_str }'></input>
+
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true' || isViewHistoryTask == true){showTools = false;};
+	tenwa.createTable({
+		id: "mortgage_info_list",
+		renderTo: "id_table_mortgage_info_list",
+		width: globalClientWidth - 30,
+		height: 365,
+		lazyLoad: true,
+		title: "",
+		allowCellWrap: true,
+		remoteOper : false,
+		showPager: false,
+		showToolbar: showTools,
+		tools: ['add', '-', 'edit', '-', 'remove'],
+		data: JsonUtil.decode('${empty json_mortgage_info_list_str ? "[]" : json_mortgage_info_list_str }'),
+		columns: [
+			{field:'id', header:'id', visible:false},
+			{field:'mortgage_name1', header:'抵押物一名称', visible: true,
+				     formEditorConfig:{
+				    	 labelWidth:110,
+				    	 required:true,
+					     fieldVisible: true}
+			},
+			{field:'mortgage_old_val1', header:'原抵押物价值',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_new_val1', header:'最新评估价值',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_proportion1', header:'抵押率',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_insurance1', header:'抵押物一是否保险',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_safeNum1', header:'保险单号码',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_safeTerm1', header:'保险期限',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_firstPeople1', header:'第一受益人',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_signDay1', header:'抵押合同签署日',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_startDate1', header:'担保时效起始日期',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_endDate1', header:'担保时效截至日期',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_currentStatus1', header:'抵押物目前状态',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_name2', header:'抵押物二名称',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_old_val2', header:'原抵押物价值',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_new_val2', header:'最新评估价值',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_proportion2', header:'抵押率',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+			,
+			{field:'mortgage_insurance2', header:'抵押物二是否保险',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_safeNum2', header:'保险单号码',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_safeTerm2', header:'保险期限',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_firstPeople2', header:'第一受益人',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_signDay2', header:'抵押合同签署日',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_startDate2', header:'担保时效起始日期',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_endDate2', header:'担保时效截至日期',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			},
+			{field:'mortgage_currentStatus2', header:'抵押物目前状态',formEditorConfig:{
+				newLine:true,required:true,
+				labelWidth:110,
+		    	 required:true,
+			     fieldVisible: true}
+			}
+		]
+	});
+});
+</script>
+<div id="id_table_mortgage_info_list" style="width:100%;height:100%;"></div>

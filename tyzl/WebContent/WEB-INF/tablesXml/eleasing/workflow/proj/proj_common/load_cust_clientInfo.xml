@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			select info.cust_name client,
+			info.id id,
+			info.cust_name clientconsigner,
+			info.cust_name clientlinkman,
+			a.*
+			 from CUST_INFO info left join (
+			 select company.cust_id custid,company.person_rep clientperson,
+			 company.post_code clientpostcode,company.company_address clientaddress,
+			 company.moblie clientmobilenumber,company.phone clienttel,
+			 company.fax clientfax,company.contact_email clientemail from CUST_INFO_COMPANY company 
+			 union all 
+			 select person.cust_id custid,cust.cust_name clientperson,
+			 person.post_code clientpostcode,person.mail_add clientaddress,
+			 person.mobile_number clientmobilenumber,person.phone_ clienttel,
+			 person.fax_number clientfax,person.email_ clientemail from cust_info_person person left join CUST_INFO cust on person.cust_id=cust.id) a on info.id=a.custid
+			 WHERE info.id = '{cust_id}'
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

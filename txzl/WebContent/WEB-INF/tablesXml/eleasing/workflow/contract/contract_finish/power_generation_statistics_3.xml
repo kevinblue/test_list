@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		
+ 
+ SELECT a.contract_id contractid,
+       (a.corpus - nvl(b.corpus, 0)) / 10000 as value1, --融资余额
+       nvl(a.rentlist, 0) - nvl(b.rentlist, 0) as value2, --剩余期数
+       nvl(vco.countnum, 0) value3, --逾期总期数
+       nvl(vco.countrent, 0) as value4, --逾期总金额
+       nvl(a.rent, 0) - nvl(b.rent, 0) as value5 --应收租赁款余额
+  FROM (SELECT cf.contract_id,
+               sum(cf.corpus) corpus,
+               max(cf.rent_list) rentlist,
+               sum(cf.rent) rent
+          FROM contract_fund_rent_plan cf
+         GROUP BY cf.contract_id) a
+  LEFT JOIN (SELECT ci.contract_id,
+                    sum(ci.corpus) corpus,
+                    max(ci.plan_list) rentlist,
+                    sum(ci.rent) rent
+               FROM contract_fund_rent_income ci
+              WHERE ci.hire_date <= '{lesseefinancial.thisend}'
+              GROUP BY ci.contract_id) b
+    on a.contract_id = b.contract_id
+  LEFT JOIN (SELECT
+  outlist.contract_id contract_id,--合同id
+  wm_concat(outlist.rent_list) rentlist,--逾期的每期期数明细
+   wm_concat(to_char(outlist.outrent,'fm999,999,999,990.00')) outrent,--逾期的每期金额
+sum(outlist.countnum) countnum, --,--逾期总期数
+to_char(sum(nvl(outlist.outrent,0)),'fm999,999,999,990.00')  countrent --逾期总金额
+FROM (
+SELECT 
+1 countnum,
+jihua.*,
+nvl(jihua.rent,0)-nvl(shiji.inc_rent,0) outrent, 
+shiji.inc_rent inc_rent --每笔计划金额对应的已收金额
+FROM contract_fund_rent_plan jihua
+LEFT JOIN (
+SELECT cfri.plan_id,
+       nvl(sum(cfri.rent), 0) + nvl(sum(cfri.rent_adjust), 0) inc_rent  --计划日期之前实收租金
+  FROM contract_fund_rent_income cfri
+  LEFT JOIN contract_fund_rent_plan cfrp
+    on cfri.plan_id = cfrp.id
+ WHERE cfri.plan_id = cfrp.id
+   and cfri.hire_date <= cfrp.plan_date
+ GROUP BY cfri.plan_id
+ ) shiji on shiji.plan_id=jihua.id
+WHERE jihua.rent>nvl(shiji.inc_rent,0) and
+jihua.plan_date<='{lesseefinancial.thisend}'
+）outlist
+GROUP BY outlist.contract_id
+           ) vco
+    on a.contract_id = vco.contract_id
+ WHERE a.contract_id = '{contractidselect}'
+
+                                    
+
+                                 
+                                    
+ 
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

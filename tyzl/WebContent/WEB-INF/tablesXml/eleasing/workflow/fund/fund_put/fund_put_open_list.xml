@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 筛选： 1 设备款未投放完毕       2 合同审批通过 状态 >=21  <31
+ 字段说明：
+ 未收资金合计 = 应收资金合计 - 已收资金合计 - 调整资金合计
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 				select info.id
+ 				,nvl(chag.fact_money,0)factmoney
+ 				,pln.planmoney-nvl(chag.fact_money,0) overmoney
+ 				,pln.planmoney
+		        ,info.contract_status
+		        ,info.contract_id contractid
+		        ,info.contract_number contractnumber
+		        ,info.project_name projectname
+		        ,us.realname_ projmanagename
+		        ,info.cust_name custname
+		        ,proj.proj_id projid,
+		        info.PROJ_MANAGE projmanage,
+		        info.PROJ_DEPT projdept,
+		        info.CONTRACTSTATUS
+		         from vi_contract_info  info 		         
+		        left join proj_info proj on info.proj_id=proj.id		         
+		        left join cust_info cust on info.cust_id=cust.id		        
+		        left join t_users us on us.id_=info.proj_manage		        
+		        left join(select sum(pln.plan_money) planmoney,pln.contract_id 
+		                   from contract_fund_fund_plan pln 
+		                   where pln.fee_type='feetype10'
+		                   group by contract_id
+		        )pln 
+		        on pln.contract_id=info.id
+		        left join (select sum(fact_money) fact_money ,sup_contract_id 
+                       from contract_fund_fund_charge cc
+                       left join contract_info ci on cc.contract_id=ci.id
+                       where fee_type='feetype10'
+                       group by ci.sup_contract_id
+	            )chag
+	            on chag.sup_contract_id =info.id
+				where 1=1 and  info.CONTRACT_ID  is not null
+				and info.contract_status >=21
+				and info.contract_status < 100
+				--配置参数查sql
+				/~contractid: and info.id='{contractid}' ~/ 
+                /~projid: and proj.proj_id    like '%{projid}%' ~/ 
+                /~projectname: and info.project_name     like '%{projectname}%' ~/ 
+                /~custname: and info.cust_name    like '%{custname}%' ~/ 
+                /~projmanagename: and us.realname_     like '%{projmanagename}%' ~/ 
+                /~contractnumber: and info.contract_number    like '%{contractnumber}%' ~/ 
+                /~ismaymoney:{ismaymoney}~/
+				<EXTRACTEND>order by projid desc<EXTRACTEND>   
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

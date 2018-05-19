@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				 insert into LOAN_RENT_PLAN_TO_INTEREST
+  (id,
+   plan_list,
+   plan_date,
+   interest,
+   create_date,
+   modify_date,
+   meno,
+   loan_id,
+   currency,
+   pay_interest,
+   open_invoice,
+   up_id,
+   creator_,
+   modificator_,
+   pay_date,
+   balance,
+   interest_rate)
+  SELECT sys_guid(),
+         i.service_number,
+         i.date_of_interest,
+         round(i.interest, 2),
+         to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss'),
+         '',
+         '',
+         l.id,
+         'currency_type1',
+         '',
+         'notary_flag.02',
+         '',
+         'Administrator',
+         '',
+         i.cease_date,
+         i.interest,
+         i.interest_rate
+    FROM INTEREST_PROVISION_INFO i
+    LEFT JOIN LOAN_ACCOUNT l
+      on l.loan_contract_id = i.contract_no
+   WHERE 1=1  = '07'
+
+				/~dateid: and to_char(to_date(pay_date, 'yyyy-mm-dd'), 'mm') = '{dateid}'~/
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

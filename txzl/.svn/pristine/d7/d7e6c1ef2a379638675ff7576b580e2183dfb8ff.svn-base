@@ -1,0 +1,427 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>保函管理</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript">
+seajs.use(["${pageContext.request.contextPath}/js/tenwa/init.js"]);
+	jQuery(function() {
+		seajs
+				.use(
+						[ "js/apcomponent/aptable/aptable.js" ],
+						function(ApTable) {
+							new ApTable(
+									{
+										id : 'table_guarantee_info_id',
+										renderTo : "id_table_render_table1",
+										width : globalClientWidth,
+										height : globalClientHeight,
+										iconCls : 'icon-node',
+										hiddenQueryArea : false,
+										multiSelect : true,
+										queryButtonColSpan : 4,
+										queryButtonNewLine : false,
+										editFormPopupWindowWidth : 800,
+										editFormPopupWindowHeight : 450,
+										title : '保函管理',
+										remoteOper : true,
+										pageSize : 15,
+										showPager : true,
+										lazyLoad : false,
+										loadMode : 'ajax',
+										queryButtonColSpan : 6,
+										queryButtonNewLine : false,
+										entityClassName : 'com.tenwa.leasing.entity.guaranteemanagement.GuaranteeInfo',
+										frozenStartColumn : 0,
+										frozenEndColumn : 2,
+										xmlFileName : '/eleasing/jsp/guarantee_manage/guarantee_manage_info_list.xml',
+										tools : [ 'add', '-', 'edit', '-',
+												'remove', '-', 'exportExcel' ],
+										columns : [
+												{
+													type : 'indexcolumn'
+												},
+												{
+													type : 'checkcolumn'
+												},
+												{
+													field : 'id',
+													header : '编号',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : true,
+														fieldVisible : false
+													}
+												},
+												
+												{
+													field : 'projnameidname',
+													header : '项目名称',
+													visible : true,
+													width:130,
+													queryConfig : {},
+													formEditorConfig : {
+														fieldVisible : false,
+													}
+												},												
+												{
+													field : 'guaranteestate',
+													header : '保函状态',
+													visible : true,
+													formEditorConfig : {
+														fieldVisible : false,
+														fillFromFieldName : 'guaranteestateid',
+														fillProperty : 'name'
+													}
+												},
+												{
+													field : 'guaranteestateid',
+													header : '保函状态',
+													visible : false,
+													formEditorConfig : {
+														newLine : false,
+														type : 'combobox',
+														textField : 'name',
+														required : true,
+														valueField : 'value',
+														fieldVisible : true,
+														params : {
+															pid : 'guaranteestate',
+															xmlFileName : '/combos/comboDict.xml'
+														}
+													}
+												},
+												{
+													//采购合同名字
+													field : 'contractname',
+													header : '采购合同名称',
+													queryConfig:{},
+													formEditorConfig:{
+														newLine:true,
+														valueField:'value'
+													}
+												}, 
+												{
+													field : 'contractidname',
+													header : '采购合同名编号',
+													width:120,
+													queryConfig:{},
+													formEditorConfig:{
+														type : 'text',
+														fieldVisible :false
+													}
+												}, 
+												{
+													field : 'cnsid',
+													header : '采购合同名编号',
+													visible:false,
+													queryConfig:{width:200},
+													formEditorConfig:{
+														labelWidth : 120,
+														type : 'queryinput',
+														textField:'contractnumber',
+														valueField:'cnsid',
+														onSelect : function($me,queryInput,rowData) {
+															mini.getbyName("contractidname").setValue(rowData.contractnumber); 
+															loadContractNameAjax($me,queryInput,rowData);
+															var clientBankQueryInput = getMiniuiExtObject("table_guarantee_info_id_editFormPopupWindow_form_cnsid");
+														},
+														params:{
+															projid : 'xxx',
+															xmlFileName:'/eleasing/jsp/guarantee_manage/guarantee_contract_number.xml'
+														},
+														allowInput:false,
+														required : true,
+														fieldVisible : true
+													}
+												},
+												{
+													field : 'applyrefund',
+													header : '是否申请退还',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													dateFormat : "yyyy-MM-dd",
+													formEditorConfig : {
+														newLine : true,
+														required : true,
+														labelWidth : 100,
+														width : 200,
+														type : 'combobox',//表单域类型
+														valueField : 'value',
+														textField : 'name',
+														allowInput : false,
+														showNullItem : false,
+														defaultValue : '是',
+														data : [ {
+															name : "是",
+															value : "是"
+														}, {
+															name : "否",
+															value : "否"
+														} ],
+
+													}
+												},
+												{
+													field : 'guaranteename',
+													header : '保函名称',
+													visible : true,
+													queryConfig : {
+														newLine : true
+													},
+													formEditorConfig : {
+														fieldVisible : false,
+														fillFromFieldName : 'guaranteenameid',
+
+														fillProperty : 'name'
+
+													}
+												},
+												{
+													field : 'guaranteenameid',
+													header : '保函名称',
+													visible : false,
+													formEditorConfig : {
+														newLine : false,
+														type : 'combobox',
+														textField : 'name',
+														required : false,
+														showNullItem : "true",
+														nullItemText : "",
+														valueField : 'value',
+														fieldVisible : true,
+														params : {
+															pid : 'guaranteename',
+															xmlFileName : '/combos/comboDict.xml'
+														}
+													}
+												},
+												{
+													field : 'guaranteeid',
+													header : '保函编号',
+													visible : true,
+													formEditorConfig : {
+														newLine : true,
+														fieldVisible : true
+													}
+												},
+												
+												{
+													field : 'guaranteetype',
+													header : '保函类型',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													queryConfig : {},
+													formEditorConfig : {
+														newLine : false,
+														labelWidth : 100,
+														width : 200,
+														required : false,
+														type : 'text'
+													}
+												},
+												
+
+												{
+													field : 'openbank',
+													header : '保函开立银行',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													queryConfig : {
+													},
+													formEditorConfig : {
+														labelWidth : 100,
+														newLine : true,
+														width : 200,
+														required : false,
+														type : 'text'
+													}
+												},
+
+												{
+													field : 'relatedequipment',
+													header : '相关设备',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : false,
+														type : 'text',
+														labelWidth : 100,
+														width : '100%',
+														required : false
+													}
+												},
+
+												{
+													field : 'effectivedate',
+													header : '生效日期',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													dateFormat : "yyyy-MM-dd",
+													formEditorConfig : {
+														newLine : true,
+														type : 'date',
+														labelWidth : 100,
+														width : '100%',
+														format : 'yyyy-MM-dd',
+														required : false
+													},
+													queryConfig : {
+														type : 'date',
+														format : 'yyyy-MM-dd',
+														newLine : true
+													}
+												},
+												{
+													field : 'expirydate',
+													header : '失效日期',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													dateFormat : "yyyy-MM-dd",
+													formEditorConfig : {
+														newLine : false,
+														type : 'date',
+														labelWidth : 100,
+														width : '100%',
+														format : 'yyyy-MM-dd',
+														required : false
+													},
+													queryConfig : {
+														type : 'date',
+														format : 'yyyy-MM-dd',
+														newLine : false
+													}
+												},
+												{
+													field : 'money',
+													header : '金额（元）',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : true,
+														labelWidth : 100,
+														width : 200,
+														required : false,
+														type : 'text',
+														vtype:'float'
+													}
+												},
+												{
+													field : 'suppliername',
+													header : '供应商名称',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : false,
+														type : 'text',
+														required : false,
+														labelWidth : 100,
+														width : 200,
+
+														allowInput : 'true'
+													}
+												},
+												{
+													field : 'relevantcontract',
+													header : '相关合同',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : true,
+														type : 'text',
+														required : false,
+														labelWidth : 100,
+														width : 200
+													}
+												},
+												{
+													field : 'page',
+													header : '页数',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														type : 'text',
+														labelWidth : 100,
+														width : 200,
+														readonly : false
+													}
+												},
+												{
+													field : 'guaranteeposition',
+													header : '保函位置',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : true,
+														required : false,
+														type : 'text',
+														labelWidth : 100,
+														width : 200
+													}
+												}, {
+													field : 'note',
+													header : '备注',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													formEditorConfig : {
+														newLine : true,
+														colspan : 3,
+														width : "100%",
+														type : 'textarea'
+													}
+												}
+
+										]
+									});
+						});
+	});
+	
+	//发送ajax获取合同名
+	function loadContractNameAjax($me,queryInput,rowData){
+		var conid = queryInput.value;  
+		$.ajax({
+			cache : false,
+			async : false,
+	        type: "post",
+	        url : getRootPath()+ "/acl/loadContractName.acl",
+	        data: {conid:conid},
+	        success: function (data){
+	        	//debugger;
+	        	mini.getbyName("contractname").setValue(data);
+	        }
+	    })
+	}
+	
+</script>
+</head>
+<body>
+	<div id="mini_test_form">
+		<div id="id_table_render_table1"></div>
+	</div>
+</body>
+</html>

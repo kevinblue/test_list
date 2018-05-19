@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+   <!--行业门类表 已审核  -->
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select td.id_ id, td.name_ name
+
+  from t_depts td
+ where
+
+ td.pid_ = '402811814a22c45f014a2356b6300035'
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	 
+    </data>
+  </table>
+</table-root>

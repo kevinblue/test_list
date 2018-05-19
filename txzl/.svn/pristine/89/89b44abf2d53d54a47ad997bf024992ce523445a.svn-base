@@ -1,0 +1,176 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+<script type="text/javascript">
+
+function importMiniTableCallBack(message, tableid) {
+	var info = eval("(" + message + ")");
+	mini.alert(info.message);
+	mini.get("id_minitableimport").hide();
+	mini.unmask(document.body);
+	mini.get(tableid).reload();
+	
+	var tabledate = info.tabledate;
+	//console.info(info);
+	if ("" != tabledate) {
+		var grid = mini.get(tableid);
+		grid.set({
+			data : mini.decode(tabledate)
+		});
+	}		
+}
+	jQuery(function() {
+		var showTools = true;
+		if('${param.isView}' == 'true'){showTools = false;}
+		seajs.use(
+						[ "js/apcomponent/aptable/aptable.js" ],
+						function(ApTable) {
+							new ApTable(
+									{
+										id : 'table_proj_wind_resource',
+										renderTo : "id_table_proj_wind_resource",
+										width : globalClientWidth - 20,
+										height : 420,
+										iconCls : 'icon-node',
+										hiddenQueryArea : false,
+										multiSelect : false,
+										title:'',
+										exportTitle : '风资源分析',
+										queryButtonColSpan : 4,
+										queryButtonNewLine : false,
+										importTargetClass :'com.tenwa.leasing.entity.proj.ProjWindResource',
+										importDataIndex : '2',
+										importHeaderIndex : '1',
+										importprojDevelop :projid,
+										importOrExPortCallBack:'SetprojDevelop',
+										
+										editFormPopupWindowWidth : 800,
+										editFormPopupWindowHeight : 450,
+										remoteOper : true,
+										pageSize : 15,
+										showPager : true,
+										lazyLoad : false,
+										loadMode : 'ajax',
+										queryButtonColSpan : 6,
+										queryButtonNewLine : true,
+										entityClassName : 'com.tenwa.leasing.entity.proj.ProjWindResource',
+										frozenStartColumn : 0,
+										frozenEndColumn : 2,
+										xmlFileName : '/eleasing/workflow/proj/proj_wind/proj_wind_resource_info_list.xml',
+										params:{projid:projid},
+										showToolbar: showTools,
+										tools : [ 'add', '-', 'edit', '-','remove', '-', 'exportExcel','-','importExcel'],
+										columns : [
+												{
+													type : 'indexcolumn'
+												},
+												{
+													type : 'checkcolumn'
+												},
+												{
+													field : 'id',
+													header : '编号',
+													headerAlign : 'center',
+													width : 200,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : true,
+														fieldVisible : false
+													}
+												},
+											   {field : 'projid',
+												header : '项目ID',
+												headerAlign : 'center',
+												width : 100,
+												allowSort : true,
+												visible : false,
+												formEditorConfig : {
+													readOnly : true,
+													fieldVisible : false,
+													value : projid
+												}
+											},
+											{field:'w_e_terrain',header:'风电场地地形特征',width:150,formEditorConfig:{width : 200,labelWidth:100,type : 'combobox',
+												textField : 'name',
+												valueField : 'value',
+												allowInput : false,
+												showNullItem : false,
+												required:true,
+												data : [ {
+													name : "平坦地形",
+													value : "平坦地形"
+												}, {
+													name : "丘陵",
+													value : "丘陵"
+												} ,{
+													name : "山地",
+													value : "山地"
+												} ,{
+													name : "潮间带",
+													value : "潮间带"
+												} ,{
+													name : "海上",
+													value : "海上"
+												}]}},
+												{field:'w_e_landform',header:'风电场地地貌特征',width:150,formEditorConfig:{width : 200,labelWidth:100}},
+											//	{field:'w_e_terrain',header:'风电场地地形特征',formEditorConfig:{width : 200,labelWidth:100}}, 
+												/* {field:'w_e_landform',header:'风电场地地貌特征',formEditorConfig:{width : 200,labelWidth:100,type : 'combobox',
+													textField : 'name',
+													valueField : 'value',
+													allowInput : false,
+													showNullItem : false,
+													
+													data : [ {
+														name : "平坦地形",
+														value : "平坦地形"
+													}, {
+														name : "丘陵",
+														value : "丘陵"
+													} ,{
+														name : "山地",
+														value : "山地"
+													} ,{
+														name : "潮间带",
+														value : "潮间带"
+													} ,{
+														name : "海上",
+														value : "海上"
+													}]}}, */
+																										
+												{field:'w_t_num',header:'测风塔编号',formEditorConfig : {newLine:true,width : 200,labelWidth:100}},
+												{field:'w_t_height',header:'测风塔高度(m)',formEditorConfig : {width : 200,labelWidth:100}},
+												{field:'w_t_location',header:'测风塔位置',formEditorConfig :{newLine:true,width : 200,labelWidth:100}},
+												{field:'w_t_representative',header:'测风塔代表性',formEditorConfig : {width : 200,labelWidth:100}},
+												{field:'windperiod',header:'测风时段',formEditorConfig : {newLine:true,width : 200,labelWidth:100}},
+												{field:'effectivedataintegrity',width:120,header:'有效数据完整率(%)',formEditorConfig:{width : 200,labelWidth:100}}, 
+												{field:'windspecification',header:'测风数据是否符合规范',width:150,formEditorConfig:{newLine:true,width : 200,labelWidth:100,type : 'combobox',
+													textField : 'name',
+													valueField : 'value',
+													allowInput : false,
+													showNullItem : false,
+													defaultValue : '是',
+													data : [ {
+														name : "是",
+														value : "是"
+													}, {
+														name : "否",
+														value : "否"
+													} ]}}, 
+												{field:'annualmv',header:'平均速度(m/s)',formEditorConfig:{width : 200,labelWidth:100}},
+												{field:'airdensity',header:'空气密度(kg/m3)',formEditorConfig:{newLine:true,width : 200,labelWidth:100}},
+												{field:'dominant_w_d',header:'主导风向',formEditorConfig:{newLine:false,width : 200,labelWidth:100}},
+												{field:'windshear',header:'平均风切变',formEditorConfig:{newLine:true,width : 200,labelWidth:100}},
+												{field:'characteristic',header:'特征湍流强度',formEditorConfig:{newLine:false,width : 200,labelWidth:100}},
+												{field:'extremeclimaticevent',header:'极端气候条件',formEditorConfig:{newLine:true,width : 200,labelWidth:100}},
+												{field:'fiftyyearmaxwind',header:'50年一遇最大风速(m/s)',width:150,formEditorConfig:{newLine:false,width : "100%",labelWidth:100}}
+												]
+
+
+									});
+						});
+	});
+	
+	
+</script>
+<div id="id_table_proj_wind_resource"></div>

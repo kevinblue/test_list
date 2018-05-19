@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        SELECT 
+	        cd.id,
+			cd.doc_name AS docname,
+			cd.doc_no num
+			From contract_doc_list cd
+			where 1=1
+			and doc_name <>'资料名称'
+            /~contract_id: AND cd.CONTRACT_ID='{contract_id}' ~/
+            <EXTRACTEND> order by num asc <EXTRACTEND>
+			]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

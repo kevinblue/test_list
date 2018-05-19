@@ -1,0 +1,97 @@
+package com.tenwa.leasing.action.factoring.factoring_payment;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Component;
+
+import com.reckon.entity.contract.reckon.fund.ContractFundRentPlanBefore;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.kernal.utils.AppStaticUtil;
+import com.tenwa.leasing.action.fund.fund_payment.FundPaymentEndAction;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.fund.ContractFundRentPlan;
+import com.tenwa.leasing.service.fund.fundcomm.FundCommMethod;
+import com.tenwa.leasing.service.vouchersFactory.FundPaymentVoucherService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+@WorkflowAction(name = "factoringPaymentEndAction", description = "流程结束动作", workflowName = "保理付款流程")
+@Component(value = "factoringPaymentEndAction")
+public class FactoringPaymentEndAction implements JbpmBaseAction {
+	Logger logger = Logger.getLogger(FundPaymentEndAction.class);
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "fundCommMethod")
+	private FundCommMethod fundCommMethod;
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "fundPaymentVoucherService")
+	private FundPaymentVoucherService fundPaymentVoucherService;
+	
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {  
+		    //删除流程互斥
+			WorkflowUtil.deleteWorkFlowConflict(this.baseService, variablesMap);  
+			 String contractid = variablesMap.get("contract_id");
+			 ContractInfo ci = this.tableService.findEntityByID(ContractInfo.class, contractid);
+			 Map<String , Object> queryMap = new HashMap<String, Object>();
+			 queryMap.put("contractId", ci);
+			 List<ContractFundRentPlanBefore> beforeList = this.baseService.findEntityByProperties(ContractFundRentPlanBefore.class, queryMap);
+			 List<ContractFundRentPlan> afterList = this.baseService.findEntityByProperties(ContractFundRentPlan.class, queryMap);
+			 //ContractFundRentPlan表里面没数据才插入。
+			 if(afterList.size()==0&&beforeList.size()>0){
+				//遍历所有beforeList数据，复制给onhire，然后保存
+					for(ContractFundRentPlanBefore before:beforeList){
+					ContractFundRentPlan onhire = new ContractFundRentPlan();
+							BeanUtils.copyProperties(before, onhire);
+							this.baseService.saveEntity(onhire);
+					}
+			 }
+			//保存客户类型
+			fundCommMethod.updateCustInfoFromPayMent(variablesMap);
+			//保存实际投放
+		    fundCommMethod.saveFundFundCharge("json_payment_current_str", variablesMap);
+		    if(ci.getContractStatus()!=AppStaticUtil.CONTRACT_START){
+		    	ci.setContractStatus(AppStaticUtil.CONTRACT_START);
+		    }
+		   //生成凭证
+//		    fundPaymentVoucherService.createVoucherReceiveFund(variablesMap);	
+		    fundCommMethod.savePaymentEndDate("json_payment_current_str", variablesMap);
+		    //throw  new  BusinessException("错了");
+	}
+	  
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+	@Override
+	public void back(HttpServletRequest request,Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+}

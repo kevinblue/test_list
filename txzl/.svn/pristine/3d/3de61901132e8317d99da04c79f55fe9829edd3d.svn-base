@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- V8凭证查询  -->
+      <table_sql> 
+	        <![CDATA[
+		         select 
+		         cpil.id  as id,
+		         cpil.ERP_PAYMENT_ID          erppaymentid,
+		         cpil.NUM_UUID         		 numuuid,
+		          cpil.LAST_UPDATE         	 lastupdate,
+		         ci.project_name              projname,
+		         cpil.PAYMENT_CONTRACT_ID     paymentcontractid,
+		         cpil.PAYMENT_PROCESS_ID      paymentprocessid,
+		         cpil.payment_type_id   	paymenttypeid,
+		         tdd.name_					paymenttypeidname,
+		         cpil.PAYMENT_METHOD_TYPE_ID  paymentmethodtypeid,
+		         cpil.FEE_TYPE_NAME         feetypename,
+		         cpil.PAYMENT_ACCOUNTS      paymentaccounts,
+		         cpil.DEPOSIT_BANK_NAME     depositbankname,
+		         cpil.DEPOSIT_ACCOUNTS_NAME  depositaccountsname,
+		         cpil.DEPOSIT_ACCOUNTS       depositaccounts,
+		         cpil.DEPOSIT_BANK_TYPE      depositbanktype,
+		         cpil.DEPOSIT_PROVINCE       depositprovince,
+		         cpil.DEPOSIT_CITY      	 depositcity,
+		         cpil.PRIORITY_FLAG 		priorityflag,
+		         cpil.BANK_NUMBER  			banknumber,
+		         cpil.UNION_BANK_NUMBER		unionbanknumber,
+		         cpil.AMOUNT				amount,
+		         cpil.PAYMENT_STATUS      paymentstatus,
+		         case 
+		         when cpil.PAYMENT_STATUS='A'	then '正在处理中'
+		         when cpil.PAYMENT_STATUS='1'   then '传输失败'
+		         when cpil.PAYMENT_STATUS='S'	then '付款成功'
+		         when cpil.PAYMENT_STATUS='F'	then '付款失败'
+		          else '正在处理中' 
+		          end	paymentstatusname,
+		         cpil.ERROR_REASON			errorreason,
+		         cpil.CREATOR_  			creator,
+		         t.realname_   				creatorid,
+		         cpil.CREATE_DATE			createdate,
+		         cpil.MODIFICATOR_          modificator,
+		         t1.realname_         modificatorid,
+		         cpil.MODIFY_DATE     modifydate,
+		         bf.fileaddress bffileaddress,
+			       bf.FILENAME bfFILENAME,
+			       bf.CREATEDATE bfCREATEDATE,
+			       bf.fileid bffileid,
+			       bf.REALNAME bfREALNAME,
+			       bf.filekey filekey
+		         
+		         from contract_payment_interface_log  cpil
+		      left  join t_users  t on cpil.CREATOR_=t.id_
+		      left  join t_users  t1 on cpil.MODIFICATOR_=t1.id_
+		       left join contract_info ci on ci.contract_id=cpil.payment_contract_id
+		       left join t_dicts_datas  tdd  on tdd.id_= cpil.payment_type_id 
+		        left join (select  A.file_key as filekey,
+            wm_concat( A.file_address) as fileaddress,
+            wm_concat( A.FILE_NAME )   AS FILENAME,
+            wm_concat( A.CREATE_DATE)  AS CREATEDATE,
+            wm_concat(A.id)            as fileid,
+            wm_concat(U.REALNAME_  )   AS REALNAME
+               from base_file A
+               LEFT JOIN T_USERS U ON A.CREATOR_ = U.ID_
+               where A.file_key is not null
+               and A.invalid_ ='是'
+               and a.model_name = 'PayMentLog'
+               group by A.file_key
+              ) bf on bf.filekey = cpil.id
+		       where 1=1
+		       /~projname:and ci.project_name like '%{projname}%'~/
+		       /~paymentcontractid:and cpil.PAYMENT_CONTRACT_ID like '%{paymentcontractid}%'~/		       
+		       /~depositbankname:and cpil.DEPOSIT_BANK_NAME like '%{depositbankname}%'~/		       
+			   /~depositaccountsname:and  cpil.DEPOSIT_ACCOUNTS_NAME like '%{depositaccountsname}%'~/	
+			   /~priorityflag:and cpil.PRIORITY_FLAG like '%{priorityflag}%'~/
+			   /~paymenttypeidname:and tdd.name_ like '%{paymenttypeidname}%'~/
+			   order by cpil.create_date desc
+				
+			]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

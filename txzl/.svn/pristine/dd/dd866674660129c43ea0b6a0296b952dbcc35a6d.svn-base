@@ -1,0 +1,113 @@
+package com.reckon.bean;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 
+ * @author ykl
+ * @version 1.0
+ * @copyright (C) TENWA 2017
+ * @date 2017-3-1
+ * @desc (收入折现流程使用)
+ */
+public class IncomeDiscount {
+	private String contractId;		//合同id
+	private String docId;		
+	private String finaIrr;		//内含报酬率(每月）
+	private String taxratio;		//税率
+	private String acqCost;		//购置成本
+	private String totalMoney;	//租金总额
+	private List<String> cashDetailList = new ArrayList<String>();//每期现金流
+	private List<String> financeIncomeWithTax 	= new ArrayList<String>();//融资收入（含税）
+	private List<String> financeincomeWithoutTax = new ArrayList<String>();//融资收入（不含税）
+	private List<String> investmentDecrease = new ArrayList<String>();//租赁投资净额减少额
+	private List<String> overInvestmentDecrease = new ArrayList<String>();//租赁投资净额余额
+	private List<String> overDueAccounts = new ArrayList<String>();//长期应收款-原值(剩余应收款)
+	private List<String> unconfirmedProfit = new ArrayList<String>();//未确认融资收益=overDueAccounts-overInvestmentDecrease
+	private List<String> acountDate = new ArrayList<String>();//记账月份，精确到月
+	public String getFinaIrr() {
+		return finaIrr;
+	}
+	public void setFinaIrr(String finaIrr) {
+		this.finaIrr = finaIrr;
+	}
+	public String getTotalMoney() {
+		return totalMoney;
+	}
+	public void setTotalMoney(String totalMoney) {
+		this.totalMoney = totalMoney;
+	}
+	public List<String> getCashDetailList() {
+		return cashDetailList;
+	}
+	public void setCashDetailList(List<String> cashDetailList) {
+		this.cashDetailList = cashDetailList;
+	}
+	public List<String> getFinanceIncomeWithTax() {
+		return financeIncomeWithTax;
+	}
+	public void setFinanceIncomeWithTax(List<String> financeIncomeWithTax) {
+		this.financeIncomeWithTax = financeIncomeWithTax;
+	}
+	public List<String> getFinanceincomeWithoutTax() {
+		return financeincomeWithoutTax;
+	}
+	public void setFinanceincomeWithoutTax(List<String> financeincomeWithoutTax) {
+		this.financeincomeWithoutTax = financeincomeWithoutTax;
+	}
+	public List<String> getInvestmentDecrease() {
+		return investmentDecrease;
+	}
+	public void setInvestmentDecrease(List<String> investmentDecrease) {
+		this.investmentDecrease = investmentDecrease;
+	}
+	public List<String> getOverInvestmentDecrease() {
+		return overInvestmentDecrease;
+	}
+	public void setOverInvestmentDecrease(List<String> overInvestmentDecrease) {
+		this.overInvestmentDecrease = overInvestmentDecrease;
+	}
+	public List<String> getOverDueAccounts() {
+		return overDueAccounts;
+	}
+	public void setOverDueAccounts(List<String> overDueAccounts) {
+		this.overDueAccounts = overDueAccounts;
+	}
+	public List<String> getUnconfirmedProfit() {
+		return unconfirmedProfit;
+	}
+	public void setUnconfirmedProfit(List<String> unconfirmedProfit) {
+		this.unconfirmedProfit = unconfirmedProfit;
+	}
+	public List<String> getAcountDate() {
+		return acountDate;
+	}
+	public void setAcountDate(List<String> acountDate) {
+		this.acountDate = acountDate;
+	}
+	public String getAcqCost() {
+		return acqCost;
+	}
+	public void setAcqCost(String acqCost) {
+		this.acqCost = acqCost;
+	}
+	public String getContractId() {
+		return contractId;
+	}
+	public void setContractId(String contractId) {
+		this.contractId = contractId;
+	}
+	public String getDocId() {
+		return docId;
+	}
+	public void setDocId(String docId) {
+		this.docId = docId;
+	}
+	public String getTaxratio() {
+		return taxratio;
+	}
+	public void setTaxratio(String taxratio) {
+		this.taxratio = taxratio;
+	}
+}

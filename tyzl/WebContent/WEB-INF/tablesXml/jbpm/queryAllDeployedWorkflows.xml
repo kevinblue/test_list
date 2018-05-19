@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	             SELECT 	T_JBPM_DESIGNER_TRANSFER.ID_, 
+							T_JBPM_DESIGNER_TRANSFER.CREATE_TIME_, 
+							T_JBPM_DESIGNER_TRANSFER.DEPLOYED_TIME_, 
+							T_JBPM_DESIGNER_TRANSFER.JPDL_VERSION_, 
+							T_JBPM_DESIGNER_TRANSFER.KEY_, 
+							T_JBPM_DESIGNER_TRANSFER.UPDATE_TIME_, 
+							T_JBPM_DESIGNER_TRANSFER.VERSION_, 
+							T_JBPM_DESIGNER_TRANSFER.WORKFLOW_DEFINITION_, 
+							T_JBPM_DESIGNER_TRANSFER.WORKFLOW_NAME_, 
+		                    T_JBPM_DESIGNER_TRANSFER.MAX_DOT_X_     as maxdotx,
+		              		T_JBPM_DESIGNER_TRANSFER.MAX_DOT_Y_     as maxdoty,
+							JBPM4_DEPLOYMENT.DBID_ AS JBPM4_DEPLOYMENT_DBID_,
+							POSITION_
+				 FROM T_JBPM_DESIGNER_TRANSFER LEFT JOIN JBPM4_DEPLOYMENT
+				 ON JBPM4_DEPLOYMENT.JBPM_WORKFLOW_DESIGNER_ID_ = T_JBPM_DESIGNER_TRANSFER.ID_
+				 WHERE  JBPM4_DEPLOYMENT.DBID_ IS NOT NULL
+				 /~queryText:
+				     AND (
+				          UPPER(T_JBPM_DESIGNER_TRANSFER.WORKFLOW_NAME_) like '%{queryText}%'
+				       OR UPPER(T_JBPM_DESIGNER_TRANSFER.DISPLAY_NAME_) like '%{queryText}%'
+				     )
+				 ~/
+				 /~globalQueryText:
+				     AND (
+				          UPPER(T_JBPM_DESIGNER_TRANSFER.WORKFLOW_NAME_) like '%{globalQueryText}%'
+				       OR UPPER(T_JBPM_DESIGNER_TRANSFER.DISPLAY_NAME_) like '%{globalQueryText}%'
+				     )
+				 ~/
+				 <EXTRACTEND>  ORDER BY POSITION_ <EXTRACTEND> 
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

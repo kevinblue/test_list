@@ -1,0 +1,385 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyLoadMask.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/comm/miniui_ext.js"></script>
+<script type="text/javascript">
+document.addEventListener('visibilitychange',function(){ //浏览器切换事件
+    if(document.visibilityState=='hidden') { //状态判断
+        return;
+    }else {
+    	mini.get("create_report_list").reload();
+    }
+});
+
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true'||isViewHistoryTask==true){showTools = false;}
+	//获取父页面中保存在hidden域的值
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "create_report_list",
+			renderTo: "id_table_create_report_list",
+			width: globalClientWidth - 20,
+			height: 350,
+			lazyLoad: false,
+			title: "生成经评模型",
+			isClickLoad:false,
+			remoteOper : false,
+			dataFormat:"yyyy-MM-dd",
+			showPager: false,
+			multiSelect: true,
+			showToolbar: showTools,
+			tools: ['remove','-',
+			        {
+						html : '生成经评模型',
+						plain : true,
+						iconCls : 'icon-save',
+						handler : function(miniTable, buttonText) {
+							    var cdates=miniTable.getData();
+							 for(var i=0;i<cdates.length;i++){
+						           if(!cdates[i].filename == null||!cdates[i].filename==undefined ||!cdates[i].filename==""){
+						          	 mini.alert("租赁系统-经评模型模板已生成,无需重复生成");
+						          	 return;
+						           }
+							    }	
+							var multiform = new mini.Form("multiform");
+								var multieditWindow = mini.get("multieditWindow");
+								multiform.clear();
+								multieditWindow.show();  
+						}
+			        },'-',
+			        {
+						html : '统计数据',
+						plain : true,
+						iconCls : 'icon-save',
+						handler : function(miniTable, buttonText) {
+							mini.mask({el: document.body,cls: 'mini-mask-loading',html: '数据统计中 请稍等...'});
+							 var indexAndid = {};
+							    var cdates=miniTable.getData();
+								 var dontsave ="";
+							 for(var i=0;i<cdates.length;i++){
+								 if(cdates[i].savestate){
+								 indexAndid[cdates[i].filekey] = cdates[i].id
+								 }else{
+									 dontsave=dontsave+"["+(i+1)+"]"
+									
+								 }
+							    }
+							 if(dontsave!=""){
+								 mini.unmask(document.body);
+								 mini.alert("文件"+dontsave+"未编辑保存！");
+								 return;
+							 }
+							 $.ajax({
+							        url: getRootPath()+"/acl/getExcelValue.acl",
+							        type: "post",
+							        cache: false, 
+							        dataType : "json",
+							        data :{"indexAndid":JSON.stringify(indexAndid),"projectid":projectid,"flowUnid":flowUnid},
+							        async : false,
+							        success: function (text) {
+							        	mini.unmask(document.body);
+							        	if(text=="0"){
+							        		mini.alert("文件缺失，请重新生成！");
+							        	}else{
+							        		mini.get("evaluation_model_statistics1").reload();
+						        			mini.get("evaluation_model_statistics2").reload();
+						        			mini.alert("统计完成！");
+							        	}
+							        },
+							        error : function() {  
+							        	mini.unmask(document.body);
+							            mini.alert("有文件未编辑保存，请检查！");  
+							        }
+							    });
+						}
+			        }
+			        ],
+			          operValidate:function(miniTable, rowdata, operFlag){
+			        	  if(operFlag=="add"){
+			        		  return true;
+			        	  }
+			        	 if(rowdata.length==8){
+			        		 return true;
+			        	 }else if(rowdata.length==0){
+			        		 mini.alert("请选择文件！");
+					        	return false;
+			        	 }else{
+			        		 mini.alert("请全选删除！");
+					        	return false;
+			        	 }
+			        },
+			     removeOperCallBack: function(miniTable,rowDatas){
+				        	dropCreateFile3(rowDatas);
+					},  
+				/*  validateForm:function(miniTable, miniForm, editFormItemOperFlag, addIndex){
+					 $("#create_report_list_editFormPopupWindow").empty();;
+					 //mini.get("create_report_list_editFormPopupWindow_form");
+					 mini.get("create_report_list").reload();
+					 //mini.unmask(document.body);
+					 return false;
+				 }, */
+			xmlFileName : '/eleasing/workflow/proj/proj_credit/credit_report_list.xml',
+			params :{
+					flowUnid:flowUnid,
+					modelname:'租赁系统-经评模型模板'
+			},
+			columns: [
+				{type: 'indexcolumn'},
+				{type: 'checkcolumn'},
+				{field: 'id', header: 'id', visible: false},
+				{field: 'filename', header: '文件名称',formEditorConfig : {
+					fieldVisible : false
+				}},
+				{field: 'filekey', header: '文件序号', visible: false},
+				{field: 'savestate', header: '保存状态', visible: false},
+				{field: 'createdate', header: '文件生成时间',dateFormat : "yyyy-MM-dd HH:mm:ss",formEditorConfig : {
+					fieldVisible : false
+				}},
+				{field: 'operation', header: '操作',renderer:function(e){ var cfalg=showTools;
+				var temp=e;
+				return showOperator2(temp,cfalg);},formEditorConfig : {
+					fieldVisible : false
+				}
+				},
+				
+				
+				
+				{field: '11', header: '小时数选择', visible: false,
+					formEditorConfig : {
+						    fieldVisible : true,
+							type : 'combobox',//表单域类型
+							required : true,//是否必填
+							multiSelect : false,//combo是否可以多选
+							valueField : 'id',//table显示值
+							textField : 'text',//combox显示值
+							//labelWidth : 100,//该域标签宽度
+						    data:[{text:'年等效满负荷小时数',value:'1'},{text:'P90',value:'2'},{text:'P75',value:'3'},{text:'P50',value:'4'}]
+					}},
+				{field: '22', header: '风电场设备(含税)(万元)',visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}},
+				{field: '33', header: '建筑、安装工程(万元)', visible: false,formEditorConfig : {
+					required : true,
+					newLine : true,
+					fieldVisible : true
+				}},
+				{field: '44', header: '建设用地费(万元)', visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}},
+				{field: '55', header: '其他费用(万元)', visible: false,formEditorConfig : {
+					required : true,
+					newLine : true,
+					fieldVisible : true
+				}},
+				{field: '66', header: '预备费(万元)', visible: false,formEditorConfig : {
+					required : true,
+					fieldVisible : true
+				}}
+			]	
+		});
+	});
+});
+function generativeEvaluationModel(){
+	
+}
+function getParamsEngraved(parameterSelection,windFarmEquipmentInput,engineeringInput,landInput,otherInput,preliminaryFeeInput){
+	var params={};
+	params["parameter.parameterSelection"] = parameterSelection;
+	params["parameter.windFarmEquipmentInput"]=parseFloat(windFarmEquipmentInput);
+	params["parameter.engineeringInput"]=parseFloat(engineeringInput);
+	params["parameter.landInput"]=parseFloat(landInput);
+	params["parameter.otherInput"]=parseFloat(otherInput);
+	params["parameter.preliminaryFeeInput"]=parseFloat(preliminaryFeeInput);
+	params["projectid"]= projectid;
+	console.info(params);
+    return params;
+}
+function dateSformat(date){
+	return date.replace('-','年').replace('-','月')+'日';
+} 
+
+function getQuarter(time){
+	if(time!=null && time!=""){
+		time = mini.formatDate(time,"MM");
+		return Math.floor((time%3==0)?(time/3):(time/3+1));
+	}else{
+		return "";
+	}
+}
+
+function showOperator2(temp,cfalg){
+	var id = temp.record.id;
+	var savestate = temp.record.savestate;
+	var base = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>"+"&nbsp;&nbsp;"+
+	            "<a href='javascript:void(0);' onclick='editoverdue(\"" + id + "\")'>在线编辑</a>"+
+	            "&nbsp;&nbsp;"+'<span><font color="#708090">'+savestate+"<font></span>";
+	return base;
+}
+function editoverdue(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+	var currentPageClientHeight =  document.documentElement.clientHeight;
+	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"2"});
+}
+function downloadFile(Id){
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+Id});
+} 
+function  readCreateWord(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+ 	var currentPageClientHeight =  document.documentElement.clientHeight;
+ 	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"1"});
+}
+
+//删除生成的文件。把文件注为无效
+function dropCreateFile3(rowDatas){
+	var plandata = rowDatas;
+	var ids=[];
+	for(var i=0;i<plandata.length;i++){
+		ids.push(plandata[i].id);
+	}
+    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除合同 请稍等...'});
+	var url="/leasing/template/dropCreateFileAndValue.action";
+	var param=[];
+	param["ids"]=ids+"";
+	ajaxRequest({
+		url:getRootPath()+url,
+		method:'POST',
+		success:function(rs){
+		var message= rs.responseText;
+			message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+			mini.unmask(document.body);
+			mini.alert(message);
+			mini.get("evaluation_model_statistics1").reload();
+			mini.get("evaluation_model_statistics2").reload();
+		},
+		async:false,
+		failure:function(res){
+			mini.unmask(document.body);
+		},
+		params:param
+	});
+}
+function submitMultiDataWindReport(e){
+	var projid = mini.get("id_proj_id_str").getValue();
+     mini.get(multieditWindow).hide();
+     //showLoadMask();
+     mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在生成文件 请稍等...'});
+	 $.ajax({
+         type: "post",
+         url:'${pageContext.request.contextPath}/acl/lvaluationModel.acl',
+         data: {projid:projid},
+         dataType: "json",
+         success: function(data){
+        	 //hideLoadMask();
+        	 if(data=="0"){
+        	     mini.unmask(document.body);
+        		 mini.alert("该项目概率小时数缺失，请到项目一览中补充！");
+                 return;
+        	 }else{
+        		    var parameterSelection = mini.get("id_parameterSelection_list").getValue();//小时数
+        		    var windFarmEquipmentInput = mini.get("id_WindFarmEquipment_input").getValue();//风电场设备（含税）
+        		    var engineeringInput = mini.get("id_engineering_input").getValue();//建筑、安装工程
+        		    var landInput = mini.get("id_land_input").getValue();//建设用地费
+        		    var otherInput = mini.get("id_other_input").getValue();//其他费用
+        		    var preliminaryFeeInput = mini.get("id_PreliminaryFee_input").getValue();//预备费
+        		    mini.get(multieditWindow).hide();
+        		    if(parameterSelection==""||windFarmEquipmentInput==""||engineeringInput==""||landInput==""||otherInput==""||preliminaryFeeInput==""){
+        		    	mini.alert("有必填项未填！");
+        		    	return;
+        		    }
+        			var params=getParamsEngraved(parameterSelection,windFarmEquipmentInput,engineeringInput,landInput,otherInput,preliminaryFeeInput);
+        			var fileTeplate=new fileTemplateConfig({
+        				isAttachment : false,
+        				attachmentParams: {
+        					module:'WorkflowAttchmentFiles',
+        					jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+        					attachmentFileDictId : 'root.FileType.Type3.TEST01',
+        					identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+        					identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+        					identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+        					identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+        					identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+        					identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+        					identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+        					identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+        					identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+        					identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val(),
+        					//此处开始自定义参数
+        					evaluationModel:true,//判断是否生成多个,有此参数就生成多个
+        					parameterSelection:parameterSelection,//小时数,参数变量
+        					windFarmEquipmentInput:windFarmEquipmentInput, //风电场设备（含税）
+        					engineeringInput :engineeringInput,//建筑、安装工程
+        					projectid:projectid,//项目id
+        					flowunid:flowUnid
+        				},
+        				templateno : 'F-201706007',
+        				tableid : 'create_report_list',
+        				modelname : '租赁系统-经评模型模板',
+        				returntype : 'listtocurpage',
+        				parames : params
+        			});
+        			fileTeplate.createFile();
+        			__userOperationClose(); 
+        			mini.unmask(document.body);
+        			mini.get("create_report_list").reload();
+        			mini.get("evaluation_model_statistics2").reload();
+        			mini.get("evaluation_model_statistics2").reload();
+        	 }
+                    
+                  }
+     });
+};
+function __userOperationClose(){
+	mini.get(multieditWindow).hide();
+}
+</script>
+<div id="id_table_create_report_list"></div>
+<div id="multieditWindow" class="mini-window" title="经评模型" style="width:47%;height:40%;" showModal="true" allowResize="true" allowDrag="true">
+        <div id="multiform">
+            <table>
+                <tr>
+                    <td style="width:10%">小时数选择：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" id= "id_parameterSelection_list" name="windfarmreportMonth" required="true" class="mini-combobox miniext-form-fit" textField="text"   valueField="value"    data="[{text:'年等效满负荷小时数',value:'1'},{text:'P90',value:'2'},{text:'P75',value:'3'},{text:'P50',value:'4'}]"   allowInput="false"    value="第一季度"	  text="1"/>
+                    </td>
+                    <td style="width:10%">风电场设备(含税)(万元)：</td>
+                    <td  style="width:30%;" >
+                      <input style="width:90%" name="WindFarmEquipment_input" id="id_WindFarmEquipment_input"  required="true" label="风电场设备（含税）" class="mini-textbox"  type="text" value="${requestScope['WindFarmEquipment_input']}">
+                    </td>
+                </tr>  
+                
+                <tr>
+                    <td style="width:10%">建筑、安装工程(万元)：</td>
+                    <td style="width:30%;" >
+                       <input style="width:90%" name="engineering_input" id="id_engineering_input"  required="true" label="建筑、安装工程" class="mini-textbox"  type="text" value="${requestScope['engineering_input']}">
+                    </td>
+                    <td style="width:10%">建设用地费(万元)：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" name="land_input" id="id_land_input"  required="true" label="建设用地费" class="mini-textbox"  type="text" value="${requestScope['id_land_input']}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%">其他费用(万元)：</td>
+                    <td  style="width:30%;" >
+                       <input style="width:90%" name="other_input" id="id_other_input"  required="true" label="其他费用" class="mini-textbox"  type="text" value="${requestScope['other_input']}">
+                    </td>
+                     <td style="width:10%">预备费(万元)</td>
+                    <td style="width:30%;" >
+                       <input style="width:90%" name="PreliminaryFee_input" id="id_PreliminaryFee_input"   required="true" label="预备费" class="mini-textbox"  type="text" value="${requestScope['PreliminaryFee_input']}">
+                    </td>
+                </tr>  
+                <tr>
+                    
+                    <td align="right" colspan="2" style="width:10%">
+                        <a class="mini-button" onclick="submitMultiDataWindReport">&nbsp;&nbsp;确定&nbsp;&nbsp;</a>
+                    </td>
+                    <td align="left" colspan="2" style="width:10%">
+                        <a class="mini-button" onclick='__userOperationClose'>&nbsp;&nbsp;取消&nbsp;&nbsp;</a>
+                    </td>
+                </tr>   
+            </table>
+        </div>
+	</div>

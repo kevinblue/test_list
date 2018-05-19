@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        		<![CDATA[
+			        	select
+	                        f.ID                	AS id,
+	                        ci.CONTRACT_ID      	AS contractidname,
+	                        f.CONTRACT_ID       	AS contractid,
+	                        f.APPLICATION_NUMBER    AS applicationnumber,
+	                        f.CREATE_DATE         	AS createdate,
+	                        f.EXPLAINATION        	AS explaination,
+	                        ci.CONTRACT_NUMBER      AS contractnumber,
+	                        ci.PROJECT_NAME         AS projectname,
+	                        cust.CUST_NAME        	AS custname,
+	                        ce.PURCHASER_NAME   	AS purchasername,
+	                        ce.INVOICE_CODE     	AS invoicecodename,
+	                        f.INVOICE_CODE      	AS invoicecode
+	                    from factoring_controversy f
+	                    left join factoring_controversy_relieve fcr on fcr.factoring_controversy_id=f.id
+	                    left join contract_info ci on ci.id=f.contract_id
+	                    left join cust_info cust on cust.id=ci.cust_id
+	                    left join contract_equip ce on ce.id = f.invoice_code
+	                    where fcr.status<=1 or fcr.status is null
+			                /~contractidname: AND ci.CONTRACT_ID LIKE '%{contractidname}%'~/
+							/~contractnumber: AND ci.CONTRACT_NUMBER LIKE '%{contractnumber}%'~/
+							/~custname: AND cust.CUST_NAME LIKE '%{custname}%'~/
+							/~projectname: AND ci.PROJECT_NAME LIKE '%{projectname}%'~/
+							/~applicationnumber: AND f.APPLICATION_NUMBER LIKE '%{applicationnumber}%'~/
+							/~createdateStart: AND f.CREATE_DATE >= '{createdateStart}'~/
+							/~createdateEnd: AND f.CREATE_DATE <= '{createdateEnd}'~/
+							/~explaination: AND f.EXPLAINATION LIKE '%{explaination}%'~/
+							/~invoicecodename: AND ce.INVOICE_CODE LIKE '%{invoicecodename}%'~/
+							/~purchasername: AND ce.PURCHASER_NAME LIKE '%{purchasername}%'~/
+						<EXTRACTEND>ORDER BY applicationnumber <EXTRACTEND>
+				 	]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

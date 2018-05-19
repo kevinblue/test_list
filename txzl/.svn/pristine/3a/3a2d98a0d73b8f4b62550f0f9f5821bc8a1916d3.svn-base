@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+			select 
+		        ipi.id id,
+		        ipi.date_id dateid,
+		        ip.didate didate,
+		        ipi.service_number servicenumber,
+		        ipi.contract_no contractno,
+		        ipi.enterprise_customer enterprisecustomer,
+		        ipi.enterprise_customer_name enterprisecustomername,
+		        ipi.currency currency,
+		        ipi.interest_rate interestrate,
+		        ipi.balance balance,
+		        ipi.interest interest,
+		        ipi.date_of_interest dateofinterest,
+		        ipi.cease_date ceasedate
+		        from INTEREST_PROVISION_INFO ipi
+		        left join INTEREST_PROVISION ip on ipi.date_id=ip.id
+				where 1=1
+				 /~dateid: and ipi.DATE_ID = '{dateid}'~/ 
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

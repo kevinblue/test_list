@@ -1,0 +1,319 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>合同签约</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+var currentClientWidth = document.documentElement.clientWidth;
+var currentClientHeight = document.documentElement.clientHeight;
+jQuery(function(){
+	//租赁合同列表
+	tenwa.createTable({
+		id: "contract_sign",
+		renderTo: "id_table_contract_signing_status1",
+		width: currentClientWidth,
+		height: currentClientHeight,
+		lazyLoad: false,
+		title: "相关合同签约状态",
+		remoteOper : false,
+		showPager: true,
+		pageSize: 20,
+		tools: [
+				{
+					html:'相关合同签约状态',
+					plain:true,
+					iconCls:'icon-addfolder',
+					handler:function(miniTable, buttonText) 
+					{
+						var row = miniTable.getSelected();
+						if(row){
+							showEbankInfo(row);
+						}else{
+							mini.alert("请选中要操作的数据！");
+						}
+					}
+				}
+				 			
+			],
+		queryButtonColSpan: 2,
+		queryButtonNewLine:true,
+		xmlFileName: '/eleasing/workflow/contract/contract_comm/contract_signing_status_query.xml',
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'contractid', header: 'id', visible: false},
+			{field: 'id', header: 'id', visible: false},
+			{field:'projid', header:'项目编号',queryConfig:{}},	 
+			{field: 'cust_name', header: '客户名称',width:135,queryConfig:{width:165,newLine: false}},
+			{field: 'project_name', header: '项目名称',queryConfig:{width:165}},
+			{field: 'contract_number', header: '业务合同编号',width:110,queryConfig:{width:165,newLine: true}},			
+			{field: 'contract_id', header: '合同编号',width:110,queryConfig:{width:165,newLine:false}},
+			{field:'cleanleasemoney',dataType:"currency",header:'合同金额'},
+			{field: 'industry_type', header: '内部行业'},
+			{field: 'projmanagename', header: '项目经理'},
+			{field: 'contractstatus', header: '项目状态'},
+			{field: 'card_no', header: '身份证/注册号/统一社会信用代码',width:175,queryConfig:{width:165}},		
+			{field: 'department', header: '出单部门'}
+			
+			
+		]
+	});
+});
+  //相关合同table-1
+	tenwa.createTable({
+		id:"contract_signing_status2",
+		renderTo:"id_table_contract_signing_status3",
+		width:'100%',
+		height:'100%',
+		lazyLoad:false,
+		remoteOper:false,
+		showPager:true,
+		queryButtonColSpan:8,
+		queryButtonNewLine:true,
+		pageSize:20,
+		/* tools:[{
+			html:'查看合同详情1',
+			plain:false,
+			iconCls:'icon-add',
+			handler:function(miniTable, buttonText){
+				var row = miniTable.getSelected();
+				if(row){
+					showEbankInfo2(row);
+				}else{
+					mini.alert("请选中要操作的数据！");
+				}
+			}
+		}], */
+		params:{
+			conid:"xx"
+		},
+		xmlFileName : '/eleasing/workflow/contract/contract_comm/contract_sign_status_details.xml',
+		columns: [
+	                 { type : 'checkcolumn'},
+						{ header:'序号',type : 'indexcolumn'},
+						{field:'id',
+							header:'主键',
+							visible: false,
+							formEditorConfig:{
+								fieldVisible: false,
+								
+							}
+						},
+						{field:'contractname',
+							header:'合同名称',
+							visible: true,
+							formEditorConfig:{
+								 required:true,
+								fieldVisible: false,
+							}
+						},
+						{field:'contractnumber',
+							header:'合同编号',
+							visible: true,
+							formEditorConfig:{
+								 required:true,
+								fieldVisible: false,
+							}
+						},
+						
+						{field:'oldcontnum',
+							header:'修改前合同编号',
+							visible: false,
+							formEditorConfig:{
+								fieldVisible: false,
+							}
+						},
+						
+						
+						
+						{field:'contractsubject',
+							header:'合同主体',
+							visible: true,
+							formEditorConfig:{
+								fieldVisible: false,
+								valueField:'value'
+							}
+						},
+						
+						{
+							field:'contracttypename',
+							visible:true,
+							header:'合同类型',
+			   		         formEditorConfig:{
+						         fieldVisible:false,
+						             }
+						},{
+							field : 'signstatus',
+							header : '签约状态',
+							headerAlign : 'center',width: 150,
+							formEditorConfig : {
+								newLine : true,
+								width : 495,
+								colspan : 6,
+								height : 55,
+								type : 'textarea',
+								fieldVisible:false
+							}
+						},
+						{field: 'whetherpledge', header: '抵质押状态'},
+						
+					
+						{
+							field:'contractperson',
+							visible:false,
+							header:'签约人',
+							 formEditorConfig:{
+						          newLine:true,
+						            width:"100%",
+						             type:'queryinput',
+						         required:true,
+						        textField:'realname',
+						       valueField:'id',
+						       allowInput:false,
+						     fieldVisible:true,
+						            width:'100%',
+						          colspan:3,
+						           params:{xmlFileName:'/test/user.xml'}}
+						},
+						{
+							field:'contractpersonname',
+							visible:true,
+							header:'签约人',
+							 formEditorConfig:{
+						     fieldVisible:false,
+						        }},
+
+						{
+							field:'signingtime',
+							visible:true,
+							header:'签约时间',
+							formEditorConfig:{
+				                  type:'date',
+				                 vtype:'date',
+				                format:'yyyy-MM-dd',
+				                newLine:true,
+				            allowInput:false}
+						},
+						{
+							field:'contractingplace',
+							visible:true,
+							header:'签约地点',
+			   		         formEditorConfig:{
+			   		        	newLine:true,
+						         fieldVisible:true,
+						         type:'textarea'
+						             }
+						},
+						{
+							field:'fileid',
+							visible:false,
+							header:'文件id',
+			   		         formEditorConfig:{
+						         fieldVisible:false,
+						             }
+						},
+						
+						
+						{
+							field:'contracttype',
+							visible:false,
+							header:'合同类型',
+			   		         formEditorConfig:{
+			   			              newLine:true,
+						             required:true,
+						          multiSelect:false, 
+						            textField:'name',
+						           valueField:'value',
+						           showNullItem:"true",
+						           nullItemText:"",
+						         fieldVisible:false}},
+						         {
+										field : 'mark',
+										header : '备注',
+										headerAlign : 'center',width: 150,
+										formEditorConfig : {
+											newLine : true,
+											width : 495,
+											colspan : 6,
+											height : 55,
+											type : 'textarea',
+											fieldVisible:false
+										}
+									},
+									{field:'bfrealname',header:'上传文件信息', width: 400,
+								   		renderer: function(e){
+								   			//debugger;
+								   		  var fileHtmlTd = '';
+								   		  //文件id
+								   		 var idStr = e.record.fileid;
+								   		if(idStr == null || idStr == undefined || idStr == ''){
+								   			return "还未上传附件！";
+								   		}
+								   		 var idArray = idStr.split(",");
+								   		//文件名
+								   	     var filenameStr = e.record.filename;
+								   	      var filenameArray = filenameStr.split(",");
+								   	    //上传时间
+								   	    //debugger;
+								   	    var createdateStr = e.record.createdate;
+								   	    var createdateArray;
+								   	    if(typeof(createdateStr)== 'object'){
+								   	    	var date=tenwa.toDate(createdateStr+"","yyyy-MM-dd hh:mm:ss");
+								   	    	var ss=tenwa.toChar(date,"yyyy-MM-dd hh:mm:ss");
+								   	    	createdateArray = ss.split(",");
+								   	    }else{
+								   		    createdateArray = createdateStr.split(",");
+								   	    }
+								   	    //上传人
+								   	    var realnameStr = e.record.realname;
+								   	    var realnameArray = realnameStr.split(",");
+								   	     //拼table
+								   	     var renderHtml1 = "<table style='border:0px solid #FFF;'>";
+								   	     var renderHtml2 = "</table>";
+								   	     for(var i=0;i<filenameArray.length;i++){
+								   	   	 var fnStr = filenameArray[i];
+								   	   	fileHtmlTd +="<tr style='border:0px solid #FFF;'>"+
+								   	   	                     "<td style='border:0px solid #FFF;'>"+
+								   	                                  "<a href='javascript:void(0);' onclick='downloadFile(\""+ idArray[i] + "\")'>"+"["+fnStr+"]"+"</a>"+
+								   	                         "</td>"+
+								   	                         "<td style='border:0px solid #FFF;'>"+
+								   	                                  "【"+   realnameArray[i]+"】"+
+								   	                         "</td>"+
+								   	                         "<td style='border:0px solid #FFF;'>"+
+								   	                                  "【"+ createdateArray[i]+"】"+
+								   	                         "</td>"+
+								   	   	                "</tr>";
+								   	             } 
+								   	     return renderHtml1+fileHtmlTd+renderHtml2;  
+								   	}}
+					] 
+	});
+
+</script>
+</head>
+<body>
+<div id="id_table_contract_signing_status1"></div>
+<div id="id_table_contract_signing_status2" class="mini-window" title="相关合同状态" style="width:1000px;height:500px;" showModal="true" allowResize="true" allowDrag="true">
+	<div id="id_table_contract_signing_status3" style="width:100%;height:100%;"></div>
+</div>
+</body>
+<script type="text/javascript">
+function downloadDdrFile(DdrFileId) {
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+DdrFileId});
+} 
+function showEbankInfo(row)
+{
+	var editWindow = mini.get("id_table_contract_signing_status2");
+	editWindow.show();
+	var usergrid = mini.get("contract_signing_status2");
+	usergrid.setParams({conid:row.contractid});
+	usergrid.reload();
+}
+</script>
+</html>

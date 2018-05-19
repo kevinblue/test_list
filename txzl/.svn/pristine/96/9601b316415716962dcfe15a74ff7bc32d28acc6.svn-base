@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+SELECT ci.*, nvl(cf.filingstatus, '未归档') filingstatus
+  FROM VI_CONTRACT_INFO CI
+  left join (select c.contract_id,
+                    case
+                      when min(nvl(c.filing_status, '未归档')) = '未归档' then
+                       '未归档'
+                      when max(nvl(c.filing_status, '未归档')) = '已归档' then
+                       '已归档'
+                      else
+                       '部分归档'
+                    end filingstatus
+               from contract_filing c
+              group by contract_id) cf
+    on cf.contract_id = ci.id
+ WHERE CI.CONTRACT_STATUS > 20 and nvl(cf.filingstatus, '未归档') <> '未归档'
+ and ci.business_type!='business_type.factoring'
+ /~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+
+<EXTRACTEND> order by filingstatus desc <EXTRACTEND>
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+--内部账户转款(转入)
+select b.*,sys_guid() id from (
+select '内部账户转款(转入)' fundtype,
+       a.id aaa,
+       a.fund_plan_no fundplanno,
+       a.inner_account_name receiptcount,
+       a.inner_account amount,
+       a.plan_time receipttime,
+       a.inner_account_unit paymentunit,
+       a.inner_account_type plannameid,
+       t1.name_ plannameidname,
+       a.inner_account_note note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.inner_account_type
+ where a.inner_account is not null
+union
+--回款
+select '回款' amounttype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.return_amount_name receiptcount,
+       a.return_amount amount,
+       a.plan_time receipttime,
+       a.return_amount_unit paymentunit,
+       a.return_amount_type plannameid,
+       t1.name_ plannameidname,
+       a.return_amount_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.return_amount_type
+ where a.return_amount is not null
+union
+--资金下拨
+select '资金下拨' amounttype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.fund_allocated_name receiptcount,
+       a.fund_allocated amount,
+       a.plan_time receipttime,
+       a.fund_allocated_unit paymentunit,
+       a.fund_allocated_type plannameid,
+       t1.name_ plannameidname,
+       a.fund_allocated_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.fund_allocated_type
+ where a.fund_allocated is not null
+union
+--内部借款
+select '内部借款' amounttype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.inner_borrow_name receiptcount,
+       a.inner_borrow amount,
+       a.plan_time receipttime,
+       a.inner_borrow_unit paymentunit,
+       a.inner_borrow_type plannameid,
+       t1.name_ plannameidname,
+       a.inner_borrow_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.inner_borrow_type
+ where a.inner_borrow is not null
+union
+--外部借款
+select '外部借款' amounttype,
+       a.id id,
+       a.fund_plan_no fundplanno,
+       a.outter_borrow_name receiptcount,
+       a.outter_borrow amount,
+       a.plan_time receipttime,
+       a.outter_borrow_unit paymentunit,
+       a.outter_borrow_type plannameid,
+       t1.name_ plannameidname,
+       a.outter_borrow_note
+  from deposit_interest_detail a
+  left join t_dicts_datas t1
+    on t1.id_ = a.outter_borrow_type
+ where a.outter_borrow is not null) b
+where 1=1 and b.amount<>'0' 
+	       	/~plantimeStart: and b.receipttime >= '{plantimeStart}' ~/
+            /~plantimeEnd: and b.receipttime <= '{plantimeEnd}' ~/
+			 <EXTRACTEND> ORDER BY  receipttime,fundplanno	<EXTRACTEND>		
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

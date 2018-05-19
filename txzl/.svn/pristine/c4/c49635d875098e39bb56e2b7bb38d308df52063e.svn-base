@@ -1,0 +1,126 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>起租后合同变更</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+var currentClientWidth = document.documentElement.clientWidth;
+var currentClientHeight = document.documentElement.clientHeight;
+jQuery(function(){
+	tenwa.createTable({
+		id: "onhire_contract_change",
+		renderTo: "id_table_container_onhire_contract_change",
+		width: currentClientWidth,
+		height: currentClientHeight,
+		lazyLoad: false,
+		title: "资产变更",
+		remoteOper : false,
+		showPager: true,
+		pageSize: 20,
+		tools:[{
+			html: '资产变更',
+			plain: false,
+			iconCls: 'icon-addfolder',
+			handler: function(miniTable, buttonText){
+				var row = miniTable.getSelected();
+				if (row) {
+					var multiform = new mini.Form("multiform");
+					var multieditWindow = mini.get("multieditWindow");
+					multieditWindow.show();
+				} else {
+					mini.alert('请你选择需要发起资产变更的合同！');
+				}
+			}
+		}],
+		queryButtonColSpan: 2,
+		queryButtonNewLine:true,
+		xmlFileName: '/eleasing/workflow/contract/onhire_contract_change/onhire_contract_change_list.xml',
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			 {field:'projid', header:'项目编号',queryConfig:{}},	
+			{field: 'cust_name', header: '客户名称',width:135,queryConfig:{width:165,newLine: false}},
+			{field: 'project_name', header: '项目名称',queryConfig:{width:165,newLine:false}},
+			{field: 'contract_number', header: '业务合同编号',width:110,queryConfig:{width:165,newLine: true}},			
+			{field: 'contract_id', header: '合同编号',width:110,queryConfig:{width:165,newLine:false}},
+			{field: 'card_no', header: '身份证/组织机构代码',queryConfig:{width:165}},
+			{field: 'industry_type', header: '内部行业'},
+			{field: 'projmanagename', header: '项目经理'},
+			{field: 'department', header: '出单部门'},
+			{field: 'contractstatus', header: '合同状态'}
+		]
+	});
+});
+
+function cancel(){
+	var multieditWindow = mini.get("multieditWindow");
+	multieditWindow.hide();
+}
+
+function startPro(){
+	var sub=mini.get("proj_info.subchangecontent").getText();
+	var subnot=mini.get("proj_info.subnotchangecontent").getText();
+	if(sub==""&&subnot==""){
+		mini.alert("请先选择变更内容！");
+	}else{
+		var row = mini.get("onhire_contract_change").getSelected();
+		if(row){
+			var attachmentParams = "contract_id="+row.id+"&proj_info.subchangecontent="+sub+"&proj_info.subnotchangecontent="+subnot;
+			startProcess("资产变更-1",attachmentParams); 
+			mini.get("multieditWindow").hide();
+		}else{
+			mini.alert("请选中要操作的数据！");
+		}
+
+	}
+}
+</script>
+</head>
+<body>
+<div id="id_table_container_onhire_contract_change"></div>
+<div id="multieditWindow" class="mini-window" title="请选择" style="width:40%;height:170px;" showModal="true" allowResize="true" allowDrag="true">
+	<div id="multiform" >
+		<table class="fillTable" cellspacing="0" cellpadding="10px" style="width:100%;" >
+			<tr id="sub">
+				<td class="td-content-title" style="width:120px;">实质性变更内容：</td>
+				<td class="td-content-title">
+					<div class="mini-combobox miniext-form-fit" id="proj_info.subchangecontent" name="proj_info.subchangecontent"
+						Width="100%" textField="name" valueField="value" name="custtype"
+					    data-options="{_xmlFileName:'/combos/comboDict.xml',_params:{pid:'sub_change_content'}}"   
+					    multiSelect="true" onbeforeshowpopup="miniextonbeforeshowpopup" allowInput="false" dataField="datas"
+					    showClose="true" oncloseclick="onCloseClick" 
+					    emptyText="" required="true" label='实质性变更内容'
+					    onvaluechanged="custtypeonvaluechanged"></div>
+				</td>
+			</tr>
+			<tr id="subnot">
+				<td class="td-content-title" style="width:120px;">非实质性变更内容：</td>
+				<td class="td-content-title">
+					<div  name="proj_info.subnotchangecontent" class="mini-combobox" label="非实质性变更内容" textField="name"  required="true"
+				             Width="100%"      	   valueField="value"  id="proj_info.subnotchangecontent"
+									   dataField="datas"
+									   allowInput="false" 
+									   data-options="{_params:{pid:'subnot_change_content'}}" 
+									   onbeforeshowpopup="onbeforeshowpopup"
+									   onvaluechanged="comboboxChanged" /></div>
+				</td>
+			</tr>
+			<tr>
+				<td align="center" colspan="2">
+					<a class="mini-button " iconCls="icon-save"  onclick="startPro">&nbsp;&nbsp;确定&nbsp;&nbsp;</a>
+					<span class="separator"></span>
+					<a class="mini-button " iconCls="icon-close"  onclick='cancel'>&nbsp;&nbsp;取消&nbsp;&nbsp;</a>
+				</td>
+			</tr>   
+		</table>
+	</div>
+</div>
+</body>
+</html>

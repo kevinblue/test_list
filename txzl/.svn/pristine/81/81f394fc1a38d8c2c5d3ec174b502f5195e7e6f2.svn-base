@@ -1,0 +1,532 @@
+  <%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/init.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyLoadMask.js"></script>
+<script type="text/javascript">
+var ifonlyread =  window.isCompletedTask||false;
+var tabname = "${param.tab_name}";
+var tabkey = "${param.tab_key}";
+var dockey = "${param.doc_key}";
+var isViewStr = "${param.isView}";
+var isView = true;
+if(isViewStr == 'true'){isView = false;};
+var tools;
+//月报
+var tools1 = [{
+	html:'上传文件',
+	plain:true,
+	iconCls:'icon-addfolder',
+	handler:function(miniTable, buttonText) {
+		upDdrFile("windfarmreportmonth");
+		
+		}
+},'-',
+{
+	html : '风电场月度运行报告',
+	plain : true,
+	iconCls : 'icon-save',
+	handler : function(miniTable, buttonText) {
+			
+		
+		var params=getParamswindreport();
+	     var cdates=miniTable.getData();
+	     for(var i=0;i<cdates.length;i++){
+                if(cdates[i].filename=="风电场月度运行报告模板.docx"){
+               	 mini.alert("风电场月度运行报告模板已生成,无需重复生成");
+                }
+		    }	
+		var fileTeplate=new fileTemplateConfig({
+			isAttachment : true,
+			attachmentParams: {
+				module:'WorkflowAttchmentFiles',
+				jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+				attachmentFileDictId : 'root.FileType.Type3.TEST01',
+				identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+				identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+				identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+				identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+				identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+				identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+				identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+				identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+				identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+				identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val()
+			},
+			templateno : 'F-201703001',
+			tableid : 'wind_farm_report_month',
+			modelname : '风电场月度运行报告模板',
+			returntype : 'listtonewpage',
+			parames : params
+		});
+		if(cdates.length==0){
+		fileTeplate.createFile();
+		if (mini.get("id_customworkflowattachment")) {
+			mini.get("id_customworkflowattachment").reload();
+			mini.get("id_workflowhisAttachment").reload();
+		}
+		}
+		saveCallBack();
+	}
+}         
+];
+    //年报
+    var tools2 = [{
+		html:'上传文件',
+		plain:true,
+		iconCls:'icon-addfolder',
+		handler:function(miniTable, buttonText) {
+			upDdrFile("windfarmreportyear");
+			
+			}
+	},'-',
+	{
+		html : '风电场年度运行报告',
+		plain : true,
+		iconCls : 'icon-save',
+		handler : function(miniTable, buttonText) {
+				
+			
+			var params=getParams2();
+		     var cdates=miniTable.getData();
+		     for(var i=0;i<cdates.length;i++){
+                    if(cdates[i].filename=="风电场年度运行报告模板.docx"){
+                   	 mini.alert("风电场年度运行报告模板已生成,无需重复生成");
+                    }
+			    }	
+			var fileTeplate=new fileTemplateConfig({
+				isAttachment : true,
+				attachmentParams: {
+					module:'WorkflowAttchmentFiles',
+					jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+					attachmentFileDictId : 'root.FileType.Type3.TEST01',
+					identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+					identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+					identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+					identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+					identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+					identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+					identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+					identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+					identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+					identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val()
+				},
+				templateno : 'F-201703005',
+				tableid : 'wind_farm_report_year',
+				modelname : '天信风电项目年度运行报告模版',
+				returntype : 'listtonewpage',
+				parames : params
+			});
+			if(cdates.length==0){
+			fileTeplate.createFile();
+			if (mini.get("id_customworkflowattachment")) {
+				mini.get("id_customworkflowattachment").reload();
+				mini.get("id_workflowhisAttachment").reload();
+			}
+			}
+			saveCallBack();
+		}
+    }         
+];
+    if(reportkeyword =="年度报告"){
+    	tools = tools2;
+    }else{
+    	tools = tools1;
+    }
+
+seajs.use(["${pageContext.request.contextPath}/js/tenwa/init.js"]);
+jQuery(function() {
+	  
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id:'due_diligence_report2',
+				renderTo:'table_due_diligence_report2',
+				width:globalClientWidth,
+				height:350,
+				title:tabname,
+				iconCls:'icon-node',
+				multiSelect:false,
+				hiddenQueryArea:false,//是否将查询区域折叠起来
+				queryButtonColSpan:2,
+				showPager:false,		
+				tools:tools,
+				
+				params:{
+					flowunid:flowUnid,
+					tabkey:tabkey,
+					dockey:dockey
+					
+				},
+				xmlFileName:'/eleasing/workflow/proj/proj_credit/wind_farm_report_file.xml',
+				columns:[ 
+				    {type:'indexcolumn'},
+				   	{field:'id',header:'id',visible:false},
+				   
+				   	{field:'bffilename',header:'文件类型名称'},
+				   	{field:'filekey',header:'bf文件类别',visible:false},
+				   	{field:'dockey',header:'流程类别',visible:false},
+					{field:'bfrealname',header:'上传文件信息', width:'30%',
+				   		renderer: function(e){
+				   		  var fileHtmlTd = '';
+				   		  //文件id
+				   		 var idStr = e.record.bffileid;
+				   		if(idStr == null || idStr == undefined || idStr == ''){
+				   			return "还未上传文件！";
+				   		}
+				   		var idArray = idStr.split(",");
+				   		//文件名
+				   	     var filenameStr = e.record.bffilename;
+				   	      var filenameArray = filenameStr.split(",");
+				   	    //上传时间
+				   	    //debugger;
+				   	    var createdateStr = e.record.bfcreatedate;
+				   	    var createdateArray;
+				   	    if(typeof(createdateStr)== 'object'){
+				   	    	var date=tenwa.toDate(createdateStr+"","yyyy-MM-dd hh:mm:ss");
+				   	    	var ss=tenwa.toChar(date,"yyyy-MM-dd hh:mm:ss");
+				   	    	createdateArray = ss.split(",");
+				   	    }else{
+				   		    createdateArray = createdateStr.split(",");
+				   	    }
+				   	    //上传人
+				   	    var realnameStr = e.record.bfrealname;
+				   	    var realnameArray = realnameStr.split(",");
+				   	     //拼table
+				   	     var renderHtml1 = "<table style='border:0px solid #FFF;'>";
+				   	     var renderHtml2 = "</table>";
+				   	     for(var i=0;i<filenameArray.length;i++){
+				   	   	 var fnStr = filenameArray[i];
+				   	   	 if(ifonlyread==true){
+					   	   	fileHtmlTd +="<tr style='border:0px solid #FFF;'>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		                                  "<a href='javascript:void(0);' onclick='downloadDdrFile(\""+ idArray[i] + "\")'>"+"["+fnStr+"]"+"</a>"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+   realnameArray[i]+"】"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+ createdateArray[i]+"】"+
+		                         "</td>"+
+		   	                "</tr>";
+				   	   	 }else{
+					   	   	fileHtmlTd +="<tr style='border:0px solid #FFF;'>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		   	                             "<a href='javascript:void(0);' onclick='removeUploadDdrFilebyId(\""+ idArray[i] + "\");'style='color:red;'>"+"[删除]"+"</a>"+
+		   	                     "</td>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		                                  "<a href='javascript:void(0);' onclick='downloadDdrFile(\""+ idArray[i] + "\")'>"+"["+fnStr+"]"+"</a>"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+   realnameArray[i]+"】"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+ createdateArray[i]+"】"+
+		                         "</td>"+
+		   	                "</tr>";
+				   	   	 }
+				   	   	
+				   	             } 
+				   	     return renderHtml1+fileHtmlTd+renderHtml2; 
+				   		}}
+					          
+					         /*  {
+									field: 'create', 
+									header: '操作',
+									visible:isView,
+								    renderer:function(e){
+								    	if(ifonlyread==true){
+								    		return "";
+								    	}else{
+								    		var id = e.record.dockey;
+											return "<a href='javascript:void(0);' onclick='upDdrFile(\"" + id + "\")'>上传文件</a>";    	
+								    	}
+								}} */
+				   
+				]
+			});
+		});
+	});
+	
+function downloadDdrFile(DdrFileId) {
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+DdrFileId});
+} 
+//上传附件
+function upDdrFile(id) {
+	var filekey = id;
+	var attachmentParams=getAttachmentParams("BusinessAdjustment.01","${currentProcessInstanceDBID}");
+	var uploadutil = new uploadUtil({
+			isAttachment : true,
+			attachmentParams:attachmentParams,
+			url : '/leasing/file/uploadFile.action',
+			tableid : "due_diligence_report",
+		    modelname : tabname,
+		    parames : {
+					flowUnid : flowUnid,
+					filekey : filekey　　　
+				},
+				jscallback : 'reloadcustcontactfile'
+		});
+	uploadutil.createFileAndShow();
+}
+
+//删除附件
+function removeUploadDdrFilebyId(uploadAttachmentFileDetailId) {
+	mini.confirm("确认删除？", "删除？", function(action){
+		//debugger;
+		if(action=="ok"){
+			var ids=[];
+				ids.push(uploadAttachmentFileDetailId);
+		    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除合同 请稍等...'});
+			var url="/leasing/template/dropCreateFile.action";
+			var param=[];
+			param["ids"]=ids+"";
+			param["isAttachment"]=true;//连带级联操作删除自定义方法
+			ajaxRequest({
+				url:getRootPath()+url,
+				method:'POST',
+				success:function(rs){
+				var message= rs.responseText;
+					message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+					mini.unmask(document.body);
+					mini.get("due_diligence_report2").reload();
+	        		loadcustomworkflowattachment();
+					mini.alert(message);
+				},
+				async:false,
+				failure:function(res){
+					mini.unmask(document.body);
+				},
+				params:param
+			});
+		}else{
+			return;
+		}
+	});
+}
+function reloadcustcontactfile(message){
+	mini.alert(message);
+	loadcustomworkflowattachment();
+	mini.get("id_uploadfile").hide();
+	mini.unmask(document.body);
+	mini.get("due_diligence_report2").reload();
+	
+}
+function dateSformat(date){
+	return date.replace('-','年').replace('-','月')+'日';
+} 
+
+function getQuarter(time){
+	if(time!=null && time!=""){
+		time = mini.formatDate(time,"MM");
+		return Math.floor((time%3==0)?(time/3):(time/3+1));
+	}else{
+		return "";
+	}
+}
+
+function showOperator(temp,cfalg){
+	
+	var id = temp.record.id;
+	var base = "<a href='javascript:void(0);' onclick='showRecorder(\"" + id + "\")'>记录</a>";
+	var base2 = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>";
+	var base3 = "<a href='javascript:void(0);' onclick='editoverdue(\"" + id + "\")'>编辑</a>";
+	var base4 = "<a href='javascript:void(0);' onclick='readCreateWord(\"" + id + "\")'>查看</a>";
+	var base5 = "<a href='javascript:void(0);' onclick='printCreateWord(\"" + id + "\")'>打印</a>";
+	var tempright="2"
+	var filename=temp.record.filename;
+	if(filename=="生成客户巡视报告.docx"&&cfalg){
+	    return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4;
+	}else{
+		return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3;
+	}
+}
+function editoverdue(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+	var currentPageClientHeight =  document.documentElement.clientHeight;
+	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"2"});
+}
+function downloadFile(Id){
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+Id});
+} 
+function  readCreateWord(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+ 	var currentPageClientHeight =  document.documentElement.clientHeight;
+ 	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"1"});
+}
+
+//删除生成的文件。把文件注为无效
+function dropCreateFile(rowDatas){
+	var plandata = rowDatas;
+	var ids=[];
+	for(var i=0;i<plandata.length;i++){
+		ids.push(plandata[i].id);
+	}
+    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除合同 请稍等...'});
+	var url="/leasing/template/dropCreateFile.action";
+	var param=[];
+	param["ids"]=ids+"";
+	ajaxRequest({
+		url:getRootPath()+url,
+		method:'POST',
+		success:function(rs){
+		var message= rs.responseText;
+			message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+			mini.unmask(document.body);
+			mini.alert(message);
+		},
+		async:false,
+		failure:function(res){
+			mini.unmask(document.body);
+		},
+		params:param
+	});
+}
+//保存成功提交后，后台返回
+function saveCallBack() {
+	return true;
+}
+
+function getParamswindreport(){
+	var params={};
+	params["flowunid"]=flowUnid;
+	//params["contract_id"]="${requestScope['contract_info.id']}";
+	//报表时间
+	params['projinfo.projcustname3'] = reportdate;
+	//项目名称
+	params['projinfo.projcustname1'] = mini.get("projectname").getValue();
+	params['projinfo.projcustname2'] = mini.get("projectname").getValue();
+    //承租人
+	params['projinfo.lessee'] = mini.get("lessee").getValue();
+	//风电场位置
+	params['projinfo.position'] = mini.get("position").getValue();
+	//地形
+	params['projinfo.terrain'] = mini.get("terrain").getValue();
+	//风电场经度
+	params['projinfo.longitude']=mini.get("longitude").getValue();
+	//风电场纬度
+	params['projinfo.latitude']=mini.get("latitude").getValue();
+	//机型
+	params['projinfo.type']=mini.get("type").getValue();
+	//数量
+	params['projinfo.number']=mini.get("number").getValue();
+	//投产时间
+	params['projinfo.productiontime']=mini.get("production_time").getValue();
+	//风电场月度运行报表
+	params['unitoperationdata']=JsonUtil.encode(mini.get('unit_operation_data').getData());
+	params['unitfailuredata']=JsonUtil.encode(mini.get('unit_failure_data').getData());
+	params['lossdata']=JsonUtil.encode(mini.get('loss_data').getData());
+	
+	//全场累计各月运行报表
+	params['cumulativeoperatingreport1']=JsonUtil.encode(mini.get('cumulative_operating_report1').getData());
+	params['cumulativeoperatingreport2']=JsonUtil.encode(mini.get('cumulative_operating_report2').getData());
+	params['cumulativeoperatingreport3']=JsonUtil.encode(mini.get('cumulative_operating_report3').getData());
+	
+	//运行状况分析
+	params['summary.lable_31']=mini.get("3.1").getValue();
+	//故障数据分析
+	params['summary.lable_32']=mini.get("3.2").getValue();
+	//损失电量分析
+	params['summary.lable_33']=mini.get("3.3").getValue();
+	//功率曲线分析
+	params['summary.lable_34']=mini.get("3.4").getValue();
+	
+	//月度运行报告结论
+	//损失电量分析
+	params['summary.lable_41']=mini.get("4.1").getValue();
+	//功率曲线分析
+	params['summary.lable_42']=mini.get("4.2").getValue();
+	return params;
+}
+function getParams2(){
+	var params={};
+	params["flowunid"]=flowUnid;
+	//params["contract_id"]="${requestScope['contract_info.id']}";
+	//项目信息
+	params['windfarmdatalistyear1']=JsonUtil.encode(mini.get('wind_farm_data_list_year').getData());
+	params['windfarmdatalistyear2']=JsonUtil.encode(mini.get('wind_farm_data_list_year').getData());
+	
+	//全场累计各月运行报表
+	params['cumulativeoperatingreport1']=JsonUtil.encode(mini.get('cumulative_operating_report_year1').getData());
+   // var windspeed = averageValue("cumulative_operating_report_year1","windspeed");
+	//alert("windspeed:"+windspeed); 
+	params['cumulativeoperatingreport2']=JsonUtil.encode(mini.get('cumulative_operating_report_year2').getData());
+	params['cumulativeoperatingreport3']=JsonUtil.encode(mini.get('cumulative_operating_report_year3').getData());
+	
+	
+	//报表年份 
+	params['summary.reportdate'] = reportdate;
+	//运行状况分析
+	params['summary.lable_31']=mini.get("3.1").getValue();
+	//故障数据分析
+	params['summary.lable_32']=mini.get("3.2").getValue();
+	//损失电量分析
+	params['summary.lable_33']=mini.get("3.3").getValue();
+	//功率曲线分析
+	params['summary.lable_34']=mini.get("3.4").getValue();
+	
+	//月度运行报告结论
+	//损失电量分析
+	params['summary.lable_41']=mini.get("4.1").getValue();
+	//功率曲线分析
+	params['summary.lable_42']=mini.get("4.2").getValue();
+	return params;
+}
+
+function showOperator(temp,cfalg){
+	var id = temp.record.id;
+	var base = "<a href='javascript:void(0);' onclick='showRecorder(\"" + id + "\")'>记录</a>";
+	var base2 = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>";
+	var base3 = "<a href='javascript:void(0);' onclick='editoverdue(\"" + id + "\")'>编辑</a>";
+	var base4 = "<a href='javascript:void(0);' onclick='readCreateWord(\"" + id + "\")'>查看</a>";
+	var base5 = "<a href='javascript:void(0);' onclick='printCreateWord(\"" + id + "\")'>打印</a>";
+	var tempright="2"
+	var filename=temp.record.filename;
+	if(filename=="风电场月度运行报告模板.docx"&&cfalg){
+	    return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4;
+	}else{
+		return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3;
+	}
+}
+//求和
+function sum(tableid,valuekey){
+	var sumdata=0;
+	var tablevalue = mini.get(tableid).getData();
+	for(var i = 0;i<tablevalue.length;i++ ){
+		var row = tablevalue[i];
+		sumdata = sumdata +row.projectname
+	}
+	return sumdata;
+}
+//求平均值
+function averageValue(tableid,valuekey){
+	var str=eval("var " + valuekey);
+	var valuekey = valuekey;
+	var averageValue=0;
+	var tablevalue = mini.get(tableid).getData();
+	for(var i = 0;i<tablevalue.length;i++ ){
+		var row = tablevalue[0];
+		console.info(row.str);
+		//averageValue = averageValue +row.str
+	}
+	return averageValue/(tablevalue.length);
+}
+function editoverdue(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+	var currentPageClientHeight =  document.documentElement.clientHeight;
+	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"2"});
+}
+function downloadFile(Id){
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+Id});
+} 
+function  readCreateWord(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+ 	var currentPageClientHeight =  document.documentElement.clientHeight;
+ 	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"1"});
+}
+
+</script>
+<div id="table_due_diligence_report2"></div>

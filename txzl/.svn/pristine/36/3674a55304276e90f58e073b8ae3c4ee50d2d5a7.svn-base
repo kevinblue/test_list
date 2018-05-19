@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+诉讼结论登记
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+        select 
+        w.*,
+		d.name_ conclusiontypename ,
+		w.CONCLUSION_TYPE CONCLUSIONTYPE
+		from law_litigation_conclusion w 
+		left join t_dicts_datas d on  w.CONCLUSION_TYPE = d.code_
+		where 1=1  
+		/~lawApproval: AND w.lawapproval_id = '{lawApproval}' ~/
+		/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+		/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+		/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+		/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+		/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+		/~contractstatus: and ci.contract_status in ({contractstatus})~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

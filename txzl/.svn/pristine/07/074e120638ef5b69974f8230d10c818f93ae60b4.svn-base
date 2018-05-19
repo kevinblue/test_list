@@ -1,0 +1,510 @@
+package com.reckon.service.impl;
+
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
+
+import com.reckon.bean.CashDetailTemp;
+import com.reckon.bean.ConditionBean;
+import com.reckon.bean.FundPlanBean;
+import com.reckon.bean.FundRentPlanBean;
+import com.reckon.commons.helper.RentCalculateHelper;
+import com.reckon.entity.contract.reckon.condition.FundPutPlan;
+import com.reckon.entity.contract.reckon.fund.FundFundPlanConfig;
+import com.reckon.service.FundFundChargePlanService;
+import com.reckon.util.MoneyUtils;
+import com.tenwa.business.service.TableService;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+@Service(value = "fundFundChargePlanService")
+public class FundFundChargePlanServiceImpl implements FundFundChargePlanService {
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	private static Logger log = Logger.getLogger(FundFundChargePlanServiceImpl.class);
+	
+	/*
+	 * @author sea
+	 */
+	public Map<String, Object> createFundChargePlan(ConditionBean condition,String ...feetype) throws Exception {
+		List<FundPlanBean> ffcpList = new ArrayList<FundPlanBean>();
+		List<FundFundPlanConfig> configs = null;
+		String hql = "from FundFundPlanConfig config where isFactory = ? ";
+		if(condition.getIsFactory()){
+			hql += " and feeType <> 'fac_feetype4'";
+			configs = this.tableService.findResultsByHSQL(hql, true);
+		}else{
+			if(feetype != null && feetype.length > 0 ){
+				configs = this.tableService.findResultsByNamedParamHSQL("from FundFundPlanConfig config where feeType in (:feeType)", new String[]{"feeType"}, new Object[]{feetype});
+			}else{
+				configs = this.tableService.findResultsByHSQL(hql, false);
+			}
+		}
+		//合同号
+		String contractId = (condition.getContractId() == null || condition.getContractId().equals("null")) ? "" :  condition.getContractId();
+		//项目号
+		String projId = (condition.getProjId() == null || condition.getProjId().equals("null")) ? "" :  condition.getProjId() ;
+		//客户编号
+		String custId =  condition.getCustId() == null || condition.getCustId().equals("null") ? "" : condition.getCustId();
+		//文档号
+		String docId = condition.getDocId();
+		//客户名称
+		String custName = "";
+		String businessId = contractId;
+		Boolean isCustCondition = false;
+		CustInfo cust = null;
+		if(contractId != null && !contractId.isEmpty()){
+			businessId = contractId;
+			ContractInfo ci = tableService.findEntityByID(ContractInfo.class, contractId);
+			if(ci != null){
+				cust = ci.getCustId(); 
+				businessId = ci.getContractId();
+			}
+		} else if(projId != null && !projId.isEmpty()){
+			businessId = projId;
+			ProjInfo pi = tableService.findEntityByID(ProjInfo.class, projId);
+			if(pi != null){
+				cust = pi.getCustInfo(); 
+				businessId = pi.getProjId();
+			}
+		}else{
+			isCustCondition = true;
+		}
+		if(cust == null ){
+			cust = tableService.findEntityByID(CustInfo.class, custId);
+		}
+		if(isCustCondition){
+			businessId = cust.getCustName();
+		}
+		custName = cust == null ?  "租金计算器模拟客户" : cust.getCustName();
+		condition.setCustname(custName);
+		//循环构建资金计划的对象集合FundPlanBean
+		for (int i = 0; i < configs.size(); i++) {
+			FundFundPlanConfig config = configs.get(i);
+			//取值
+			String temp = "";
+			Object obj = null;
+			obj  = this.getCondtionInfo(condition, config.getFeeTypeFied());
+			if(obj instanceof String){
+				temp = (String)obj;
+			}
+			if(obj instanceof BigDecimal){
+				temp = ((BigDecimal)obj).toString();
+			}
+			if (temp != null && !temp.equals("")) {
+				if (Double.parseDouble(temp) > 0) {
+					if(config.getFeeType().equals("feetype10")){
+						List<FundPutPlan> ffps=condition.getFpps();
+						for(FundPutPlan fp:ffps){
+							FundPlanBean ffcp = new FundPlanBean();
+							ffcp.setPosition(config.getPosition());
+							ffcp.setContractId(businessId);
+							ffcp.setDocId(docId);
+							ffcp.setPlanDate(fp.getPlanDate());
+							ffcp.setFieldName(config.getFeeTypeFied());
+							ffcp.setPlanMoney(fp.getPlanMoney().toString());
+							ffcp.setFeeTypeName(config.getFeeTypeName());
+							ffcp.setFeeType(config.getFeeType());//款项名称
+							
+							ffcp.setPayTypeName(config.getPayTypeName());
+							ffcp.setPayType(config.getPayTypeCode());
+							ffcp.setPaymentId(fp.getPaymentId().toString());
+							ffcp.setSettleMethod(config.getSettleMethod());
+		                    ffcp.setSettleMethodName(config.getSettleMethodName());
+		                    ffcp.setFundType(fp.getFundType()==null?"":fp.getFundType().getId());
+		                    ffcp.setFundTypeName(fp.getFundType()==null?"":fp.getFundType().getName());
+		                    if(fp.getDevicename()!=null){
+			                    ffcp.setDevicename(fp.getDevicename().getId());
+			                    ffcp.setDevicenamename(fp.getDevicename().getName());
+		                    }
+		                    ffcp.setFpnote(fp.getFpnote());
+		                    //资金收付款对象
+							if (config.getPayTypeCode().equalsIgnoreCase("pay_type_in")) {
+								ffcp.setPayObj(custName);//客户名称
+								ffcp.setPayCust(cust == null ? "" : cust.getId());
+								ffcp.setPayCustName(custName);
+							}  
+							if (config.getPayTypeCode().equalsIgnoreCase("pay_type_out")) {
+								ffcp.setPayObj("");//公司名称 由于无法确定流出的对象，值为空
+							}
+							ffcp.setIsPrePay("否");//
+							ffcpList.add(ffcp);
+						}
+						
+					}
+					else if(config.getFeeType().equals("feetype16")){
+						//过滤掉保证金抵扣，在后续再计算
+						continue;
+					}
+					else{
+						//金额要做保留2位四舍五入处理
+						if(config.getFeeType().equals("feetype7") && condition.getInsureMoneyType().equals("insure_type3")){
+		                    	continue;
+		                }
+						temp = MoneyUtils.formatNumberDoubleTwo(temp);
+							
+						FundPlanBean ffcp = new FundPlanBean();
+						ffcp.setPosition(config.getPosition());
+						ffcp.setContractId(businessId);
+						ffcp.setDocId(docId);
+						//ffcp.setPlanDate(conditionMap.get("framework_condition." + feeTypeDate[i]));
+						//开始日期和结束日期的确定
+						if(config.getFeeTypeDate().equalsIgnoreCase("startdate")){
+							ffcp.setPlanDate(condition.getStartDate());
+						}else if(config.getFeeTypeDate().equalsIgnoreCase("endDate")){
+							ffcp.setPlanDate(condition.getEndDate());
+						}else if(config.getFeeTypeDate().equalsIgnoreCase("leaseamtdate")){//TODO 其他方式的待定
+							ffcp.setPlanDate(condition.getLeaseAmtDate());
+						}else{
+							ffcp.setPlanDate("");
+						}
+						ffcp.setFieldName(config.getFeeTypeFied());
+						ffcp.setPlanMoney(temp);
+						ffcp.setFeeTypeName(config.getFeeTypeName());
+						ffcp.setFeeType(config.getFeeType());//款项名称
+						ffcp.setPayTypeName(config.getPayTypeName());
+						ffcp.setPayType(config.getPayTypeCode());
+						ffcp.setPaymentId(config.getPaymentNumb());
+						ffcp.setSettleMethod(config.getSettleMethod());
+	                    ffcp.setSettleMethodName(config.getSettleMethodName());
+	                    
+	                    //资金收付款对象
+						if (config.getPayTypeCode().equalsIgnoreCase("pay_type_in")) {
+							ffcp.setPayObj(custName);//客户名称
+							ffcp.setPayCust(cust == null ? "" : cust.getId());
+							ffcp.setPayCustName(custName);
+						}  
+						if (config.getPayTypeCode().equalsIgnoreCase("pay_type_out")) {
+							ffcp.setPayObj("");//公司名称 由于无法确定流出的对象，值为空
+						}
+						ffcp.setIsPrePay("否");//
+						ffcpList.add(ffcp);
+					}
+				}
+			}
+		}
+		//
+		Collections.sort(ffcpList);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("cust",cust);
+		result.put("fundchargeplan", ffcpList);
+		return result;
+	}
+	public void createFundChargePlanNew(ConditionBean condition,FundRentPlanBean frpb,List<FundPlanBean>ffcpList,String ...feetype) throws Exception {
+		List<FundFundPlanConfig> configs = null;
+		String hql = "from FundFundPlanConfig config where isFactory = ? ";
+		if(condition.getIsFactory()){
+			hql += " and feeType <> 'fac_feetype4'";
+			configs = this.tableService.findResultsByHSQL(hql, true);
+		}else{
+			if(feetype != null && feetype.length > 0 ){
+				configs = this.tableService.findResultsByNamedParamHSQL("from FundFundPlanConfig config where feeType in (:feeType)", new String[]{"feeType"}, new Object[]{feetype});
+			}else{
+				configs = this.tableService.findResultsByHSQL(hql, false);
+			}
+		}
+		//合同号
+		String contractId = (condition.getContractId() == null || condition.getContractId().equals("null")) ? "" :  condition.getContractId();
+		//项目号
+		String projId = (condition.getProjId() == null || condition.getProjId().equals("null")) ? "" :  condition.getProjId() ;
+		//客户编号
+		String custId =  condition.getCustId() == null || condition.getCustId().equals("null") ? "" : condition.getCustId();
+		//文档号
+		String docId = condition.getDocId();
+		//客户名称
+		String custName = "";
+		String businessId = contractId;
+		Boolean isCustCondition = false;
+		CustInfo cust = null;
+		if(contractId != null && !contractId.isEmpty()){
+			businessId = contractId;
+			ContractInfo ci = tableService.findEntityByID(ContractInfo.class, contractId);
+			if(ci != null){
+				cust = ci.getCustId(); 
+				businessId = ci.getContractId();
+			}
+		} else if(projId != null && !projId.isEmpty()){
+			businessId = projId;
+			ProjInfo pi = tableService.findEntityByID(ProjInfo.class, projId);
+			if(pi != null){
+				cust = pi.getCustInfo(); 
+				businessId = pi.getProjId();
+			}
+		}else{
+			isCustCondition = true;
+		}
+		if(cust == null ){
+			cust = tableService.findEntityByID(CustInfo.class, custId);
+		}
+		if(isCustCondition){
+			businessId = cust.getCustName();
+		}
+		custName = cust == null ?  "租金计算器模拟客户" : cust.getCustName();
+		condition.setCustname(custName);
+		BigDecimal totalCautionMoney=new BigDecimal("0");//总保证金	
+		//将租金计划，和收付计划拼成临时现金流（不包括保证金抵扣的）,用于保证金倒退抵扣所用
+		List<CashDetailTemp>cashdetailtemp=generateTempCashDetail(frpb,ffcpList);
+//		List<String> rentlist=frpb.getRentList();
+//		List<String> datelist=frpb.getPlanDateList();
+		//循环构建资金计划的对象集合FundPlanBean
+		for (int i = 0; i < configs.size(); i++) {
+			FundFundPlanConfig config = configs.get(i);
+			//取值
+			String temp = "";
+			Object obj = null;
+			obj  = this.getCondtionInfo(condition, config.getFeeTypeFied());
+			if(obj instanceof String){
+				temp = (String)obj;
+			}
+			if(obj instanceof BigDecimal){
+				temp = ((BigDecimal)obj).toString();
+			}
+			if (temp != null && !temp.equals("")) {
+				if (Double.parseDouble(temp) > 0) {
+					 if(config.getFeeType().equals("feetype16")){//保证金抵扣(抵扣最后几期租金，到租金不为负，即比租金小即可)
+						int j=0;
+						int size=cashdetailtemp.size();
+						String plandate="";
+						String rentmoney="";
+						String handmoney="";
+						temp = MoneyUtils.formatNumberDoubleTwo(temp);
+						totalCautionMoney=new BigDecimal(temp);//总保证金
+						do{
+							plandate=cashdetailtemp.get(size-1-j).getPlanDate();//获取倒数第（j+1）的日期
+							rentmoney=cashdetailtemp.get(size-1-j).getPlanmoney();//租金金额
+							handmoney=cashdetailtemp.get(size-1-j).getHandchargemoney();//手续费金额
+							if(totalCautionMoney.compareTo(new BigDecimal("0"))<=0){//如果剩余保证金<=0,则跳出。
+								break;
+							}
+							//先抵扣租金，租金不为0才进行抵扣，抵扣完之后j不变，再次循环，抵扣手续费。
+							if(new BigDecimal(rentmoney).compareTo(BigDecimal.ZERO)>0&&handmoney!=null){
+								if(new BigDecimal(rentmoney).compareTo(BigDecimal.ZERO)<=0){
+									//当期没有租金则跳过
+									//j++;先抵扣租金，再抵扣手续费
+									continue;
+								}
+								//遍历ffcpList，获取datelist倒数第（j+1）的日期的资金投放计划
+								BigDecimal totalmoney=new BigDecimal(rentmoney);//除保证金外，其他所有的客户应收取和支出的费用总和
+								if(totalCautionMoney.compareTo(totalmoney)<=0){
+									temp=totalCautionMoney.toString();
+								}else{//保证金有剩余情况
+									temp=totalmoney.toString();	
+								}
+								totalCautionMoney=totalCautionMoney.subtract(totalmoney);//获取剩余保证金
+								cashdetailtemp.get(size-1-j).setPlanmoney(new BigDecimal(rentmoney).subtract(new BigDecimal(temp)).toString());
+								//设置
+								FundPlanBean ffcp = new FundPlanBean();
+								ffcp.setPosition(config.getPosition());
+								ffcp.setContractId(businessId);
+								ffcp.setDocId(docId);
+								ffcp.setPlanDate(plandate);//根据cashdetailtemp（临时现金流）
+								ffcp.setFieldName(config.getFeeTypeFied());
+								ffcp.setPlanMoney(temp);
+								ffcp.setFeeTypeName(config.getFeeTypeName());
+								ffcp.setFeeType(config.getFeeType());//款项名称
+								ffcp.setPayTypeName(config.getPayTypeName());
+								ffcp.setPayType(config.getPayTypeCode());
+								ffcp.setPaymentId(String.valueOf(j+1));
+								ffcp.setSettleMethod(config.getSettleMethod());
+					            ffcp.setSettleMethodName(config.getSettleMethodName());
+					            
+					            //资金收付款对象
+								if (config.getPayTypeCode().equalsIgnoreCase("pay_type_in")) {
+									ffcp.setPayObj(custName);//客户名称
+									ffcp.setPayCust(cust == null ? "" : cust.getId());
+									ffcp.setPayCustName(custName);
+								}  
+								if (config.getPayTypeCode().equalsIgnoreCase("pay_type_out")) {
+									ffcp.setPayObj("");//公司名称 由于无法确定流出的对象，值为空
+								}
+								ffcp.setIsPrePay("否");//
+								ffcpList.add(ffcp);
+								//j++;
+								}else{//手续费为0，j++，继续循环。
+								if(new BigDecimal(handmoney).compareTo(BigDecimal.ZERO)<=0){
+									j++;
+									continue;
+								}
+									
+								BigDecimal totalmoney=new BigDecimal(handmoney);//手续费金额
+								if(totalCautionMoney.compareTo(totalmoney)<=0){
+									temp=totalCautionMoney.toString();
+								}else{//保证金有剩余情况
+									temp=totalmoney.toString();	
+								}
+								cashdetailtemp.get(size-1-j).setHandchargemoney(new BigDecimal(handmoney).subtract(new BigDecimal(temp)).toString());
+								totalCautionMoney=totalCautionMoney.subtract(totalmoney);//获取剩余保证金
+								FundPlanBean ffcp = new FundPlanBean();
+								ffcp.setPosition(config.getPosition());
+								ffcp.setContractId(businessId);
+								ffcp.setDocId(docId);
+								ffcp.setPlanDate(plandate);//根据cashdetailtemp（临时现金流）
+								ffcp.setFieldName(config.getFeeTypeFied());
+								ffcp.setPlanMoney(temp);
+								ffcp.setFeeTypeName(config.getFeeTypeName());
+								ffcp.setFeeType(config.getFeeType());//款项名称
+								ffcp.setPayTypeName(config.getPayTypeName());
+								ffcp.setPayType(config.getPayTypeCode());
+								ffcp.setPaymentId(String.valueOf(j+1));
+								ffcp.setSettleMethod(config.getSettleMethod());
+					            ffcp.setSettleMethodName(config.getSettleMethodName());
+					            
+					            //资金收付款对象
+								if (config.getPayTypeCode().equalsIgnoreCase("pay_type_in")) {
+									ffcp.setPayObj(custName);//客户名称
+									ffcp.setPayCust(cust == null ? "" : cust.getId());
+									ffcp.setPayCustName(custName);
+								}  
+								if (config.getPayTypeCode().equalsIgnoreCase("pay_type_out")) {
+									ffcp.setPayObj("");//公司名称 由于无法确定流出的对象，值为空
+								}
+								ffcp.setIsPrePay("否");//
+								ffcpList.add(ffcp);
+								j++;
+								continue;
+							}
+						}while(true);
+						break;					
+					}
+				}
+			}
+		}
+	}
+	
+	private List<CashDetailTemp> generateTempCashDetail(FundRentPlanBean frpb,
+			List<FundPlanBean> ffcpList) {
+		 List<CashDetailTemp>list=new ArrayList<CashDetailTemp>();
+		 List<CashDetailTemp>newlist=new ArrayList<CashDetailTemp>();
+		 //将租金计划添加到list中
+		 List<String>datelist=frpb.getPlanDateList();
+		 List<String>moneylist=frpb.getRentList();
+		 for(int i=0;i<datelist.size();i++){
+			 CashDetailTemp cashDetailTemp=new CashDetailTemp();
+			 cashDetailTemp.setPlanDate(datelist.get(i));
+			 cashDetailTemp.setPlanmoney(moneylist.get(i));
+			 cashDetailTemp.setHandchargemoney("0");//包含的手续费金额
+			 cashDetailTemp.setPaytye("pay_type_in");
+			 list.add(cashDetailTemp);
+		 }
+		 //收付计划添加到list中
+		 for(int i=0;i<ffcpList.size();i++){
+			 //只添加手续费
+			 if(!"feetype1".equals(ffcpList.get(i).getFeeType())){
+				 continue;
+			 }
+			 CashDetailTemp cashDetailTemp=new CashDetailTemp();
+			 cashDetailTemp.setPlanDate(ffcpList.get(i).getPlanDate());
+			 cashDetailTemp.setFeetype(ffcpList.get(i).getFeeType());
+			 cashDetailTemp.setFeetypename(ffcpList.get(i).getFeeTypeName());
+			 if("pay_type_out".equals(ffcpList.get(i).getPayType())){
+				 cashDetailTemp.setPlanmoney("0");
+				 cashDetailTemp.setHandchargemoney("-"+ffcpList.get(i).getPlanMoney());//包含的手续费金额
+				 cashDetailTemp.setPaytye("pay_type_in");
+			 }else{
+				 cashDetailTemp.setPlanmoney("0");
+				 cashDetailTemp.setHandchargemoney(ffcpList.get(i).getPlanMoney());//包含的手续费金额
+				 cashDetailTemp.setPaytye(ffcpList.get(i).getPayType());
+			 }
+			
+			 list.add(cashDetailTemp);
+		 }
+		 Collections.sort(list,  new Comparator<CashDetailTemp>(){
+				@Override
+				public int compare(CashDetailTemp b1, CashDetailTemp b2) 
+				{
+					return b1.getPlanDate().compareTo(b2.getPlanDate());
+				};
+			});
+		//把list中相同日期的数据合并
+		//
+		
+		newlist.add(list.get(0));
+		list.remove(0);
+		while(list.size()>0){
+			CashDetailTemp date1=list.get(0);
+			CashDetailTemp date2=newlist.get(newlist.size()-1);
+			String money1=newlist.get(newlist.size()-1).getPlanmoney();
+			String money2=list.get(0).getPlanmoney();
+			String handmoney1=newlist.get(newlist.size()-1).getHandchargemoney();//生成新的手续费应收金额
+			String handmoney2=list.get(0).getHandchargemoney();
+			String newmoney=new BigDecimal(money1).add(new BigDecimal(money2)).toString();
+			String newhandmoney=new BigDecimal(handmoney1).add(new BigDecimal(handmoney2)).toString();
+			if(date1.equals(date2)){
+				//日期相同，合并到newlist最后一条数据中
+				newlist.get(newlist.size()-1).setPlanmoney(newmoney);
+				newlist.get(newlist.size()-1).setHandchargemoney(newhandmoney);
+			}else{
+				newlist.add(list.get(0));
+			}
+			list.remove(0);//删除第一条数据
+		}
+		return newlist;
+	}
+	public Map<String, Object> createFundPlan(ConditionBean conditon, FundRentPlanBean frpb) throws Exception {
+		Map<String, Object> result  = createFundChargePlan(conditon);
+		List<FundPlanBean> ffcpList = (List<FundPlanBean>)result.get("fundchargeplan");
+		//天信手续费处理逻辑
+		RentCalculateHelper.calHandMoneyNew(conditon, frpb, ffcpList);
+		//天信保证金处理逻辑
+		createFundChargePlanNew(conditon,frpb,ffcpList);
+		//天信租前息处理 excel导入不需要计算宽限期
+		if(!"excel_import".equals(conditon.getSettleMethod())){
+			RentCalculateHelper.graceOperate(conditon, ffcpList);
+		}
+		HashMap<String, Object> returnMap = new HashMap<String, Object>();
+		returnMap.put("fundchargeplan", ffcpList);
+		returnMap.put("cust", result.get("cust"));
+		//如果第一次的计算资金计划，插入到临时表当中
+		
+		return returnMap;
+	}
+	public Map<String, Object> createFundPlanFatoring(ConditionBean conditon, String ownName) throws Exception {
+		Map<String, Object> result  = createFundChargePlan(conditon);
+		List<FundPlanBean> ffcpList = (List<FundPlanBean>)result.get("fundchargeplan");
+		/*ownName = (ownName == null ? "TENWA5.1版本(com.reckon.service.impl.FundFundChargePlanServiceImpl方法createFundPlan修改该默认名称)" : ownName);
+		for(FundPlanBean ffp : ffcpList){
+			if("pay_type_out".equalsIgnoreCase(ffp.getPayType())){
+				ffp.setPayObj(ownName);
+			}
+		}*/
+		HashMap<String, Object> returnMap = new HashMap<String, Object>();
+		returnMap.put("fundchargeplan", ffcpList);
+		returnMap.put("cust", result.get("cust"));
+		//如果第一次的计算资金计划，插入到临时表当中
+		
+		return returnMap;
+	}
+	
+	private Object getCondtionInfo(ConditionBean condition , String fieldName) throws Exception {
+		BeanInfo beanInfo = Introspector.getBeanInfo(condition.getClass());
+		PropertyDescriptor[] properties = beanInfo.getPropertyDescriptors();
+		Object returnInfo = null; 
+		for(PropertyDescriptor property : properties){
+			String tempFildName = property.getName();
+			System.out.println(tempFildName+"-----"+fieldName+"----"+tempFildName.equalsIgnoreCase(fieldName));
+			if(tempFildName.equalsIgnoreCase(fieldName)){
+				Method method = property.getReadMethod();
+				returnInfo = method.invoke(condition); 
+			}
+		}
+		return returnInfo;
+	}
+	
+	
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chart bgColor='DFE8F6' unescapeLinks='0' showAboutMenuItem='0' showPrintMenuItem='0' showBorder='0' showExportDataMenuItem='1' exportDataMenuItemLabel="复制图表数据" exportDialogMessage='请等待...'  exportEnabled='1' exportAtClient='1' exportAction='download' exportFormats='JPG=保存图片'  exportFileName="${chart.chartTitle}" exportHandler='fcExporter_${chart.chartId}' ${chart.chart}>
+<#assign categories = "">
+<#list list as bean>
+	<#if bean[1] != categories>
+		<#if !categories?contains("${bean[1]}")>
+			<#assign categories = categories + bean[1] + ",">
+		</#if>
+	</#if>
+</#list>
+<#assign categories = substring(categories,0, categories?length - 1)>
+<categories>
+<#list categories?split(",") as category>
+	<category label="${category}"/>
+</#list>
+</categories>
+<#assign seriesNames = "">
+<#list list as bean>
+	<#if (bean[0] != seriesNames)>
+		<#if (!seriesNames?contains("${bean[0]}"))>
+			<#assign seriesNames = seriesNames + "${bean[0]}" + ",">
+		</#if>
+	</#if>
+</#list>
+<#assign seriesNames = substring(seriesNames,0, seriesNames?length - 1)>
+<#list seriesNames?split(",")?sort as seriesName>
+	<dataset seriesName="${seriesName}" COLOR="f1683c">
+	<#list list as bean>
+		<#if (bean[0] == seriesName)>
+			<set value="${bean[2]}" /> 
+		</#if>
+	</#list>
+	</dataset>
+</#list>
+${chart.other}
+</chart>

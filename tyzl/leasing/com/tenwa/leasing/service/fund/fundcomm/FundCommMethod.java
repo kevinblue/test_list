@@ -1,0 +1,135 @@
+package com.tenwa.leasing.service.fund.fundcomm;
+
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONObject;
+
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.leasing.entity.base.FundEbankData;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+
+public abstract interface FundCommMethod {
+	/**
+	 * 将资金收付款明细放到前台的MAP中
+	 * @param fieldIput  前台对应的多行的INPUT名
+	 * @param variablesMap 前台的MAP
+	 * @param queryMainObjectMap，查询的条件
+	 * @throws Exception
+	 */
+	public void initFundFundCharge(String fieldIput,Map<String, String> variablesMap,Map<String,String>  queryMainObjectMap) throws Exception; 
+	/**
+	 * 将资金收付计划明细放到前台的MAP中
+	 * @param fieldIput  前台对应的多行的INPUT名
+	 * @param variablesMap 前台的MAP
+	 * @param queryMainObjectMap，查询的条件
+	 * @throws Exception
+	 */
+	public void initFundFundPlan(String fieldIput,Map<String, String> variablesMap,Map<String,String>  queryMainObjectMap) throws Exception; 
+	/**
+	 * 将网银信息放到前台的MAP中
+	 * @param variablesMap
+	 * @return
+	 * @throws Exception
+	 */
+	public FundEbankData initFundEbankInfo(Map<String, String> variablesMap) throws Exception; 
+	/**
+	 * 保存资金收付款明细到后台
+	 * @param fieldIput   前台多行域名
+	 * @param vriablesMap
+	 * @throws Exception
+	 */
+	public void saveFundFundCharge(String fieldIput,Map<String, String> vriablesMap) throws Exception; 
+	
+	/**
+	 * 反写资金红冲的信息将原来的实收、实付设为红冲
+	 * @param <T>
+	 * @param fieldIput
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public<T> void saveFundRebackFlag(String fieldIput,Map<String, String> variablesMap) throws Exception; 
+	
+	/**
+	 * 反写租金红冲的信息将原来的租金实收设为红冲
+	 * @param <T>
+	 * @param fieldIput
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public<T> void saveRentRebackFlag(String fieldIput,Map<String, String> variablesMap) throws Exception; 
+	
+	/**
+	 * 生成核销网银过程数据
+	 * @param <T>
+	 * @param contractid 合同号
+	 * @param fundBank   网银
+	 * @param variablesMap  前面的MAP
+	 * @param jbpmWorkflowHistoryInfo  流程信息
+	 * @throws Exception
+	 */
+	public<T> void saveEbankProcessFlow(String contractid,FundEbankData fundBank,Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception; 
+	
+	/**
+	 * 将核销的所需要的金额写到网银过程表中
+	 * @param <T>
+	 * @param tablename
+	 * @param sumField
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public<T> void updateEbankProcessFlow(String tablename,List<String> sumFields,Map<String, String> variablesMap) throws Exception; 
+	
+	/**
+	 * 删除网银过程表
+	 * @param <T>
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public<T> void deleteEbankProcessFlow(Map<String, String> variablesMap) throws Exception; 
+	
+	/**
+	 * 根据前台传过来的计划ID，获得资金计划到前台进行校验
+	 * @param variablesMap
+	 * @return
+	 * @throws Exception
+	 */
+	public String getFundPlanInfoToCheck(Map<String, String> variablesMap) throws Exception; 
+	/**
+	 * 根据前台传过来的网银ID，获得网银可用余额到前台进行校验
+	 * @param variablesMap
+	 * @return
+	 * @throws Exception
+	 */
+	public String getEbankInfoToCheck(Map<String, String> variablesMap) throws Exception; 
+	
+	/**
+	 * 将租金计划放到前台的MAP中
+	 * @param fieldIput
+	 * @param vriablesMap
+	 * @throws Exception
+	 */
+	public void initFundRentPlan(String fieldIput,Map<String, String> vriablesMap,Map<String,String>  queryMainObjectMap) throws Exception;
+	
+	/**
+	 * 将租金实收明细放到前台的MAP中
+	 * @param fieldIput
+	 * @param vriablesMap
+	 * @throws Exception
+	 */
+	public void initFundRentIncome(String fieldIput,Map<String, String> vriablesMap,Map<String,String>  queryMainObjectMap) throws Exception;
+	/**
+	 * 将租金实收信息保存到租金实收中
+	 * @param fieldIput
+	 * @param vriablesMap
+	 * @throws Exception
+	 */
+	public void saveFundRentIncome(String fieldIput,Map<String, String> vriablesMap) throws Exception;
+	/**
+	 * 根据前台传过来的计划ID，获得租金计划到前台进行校验
+	 * @param variablesMap
+	 * @return
+	 * @throws Exception
+	 */
+	public String getRentPlanInfoToCheck(Map<String, String> variablesMap) throws Exception; 
+}

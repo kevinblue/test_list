@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		        SELECT 
+		            BASE_DOCUMENT_COLUMN_CONFIG.ID_          	AS ID,
+		            BASE_DOCUMENT_CONFIG.ID_                	AS BELONGDOCUMENT, 
+		            BASE_DOCUMENT_CONFIG.DOC_NAME_              AS DOCNAME,
+		            BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_CODE_    AS COLUMNCODE, 
+		            BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_NAME_    AS COLUMNNAME, 
+		            BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_VALUE_   AS COLUMNVALUE, 
+		            BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_TYPE_    AS COLUMNTYPE, 
+		            T_DICTS_DATAS.NAME_       					AS COLUMNTYPENAME, 
+		            BASE_DOCUMENT_COLUMN_CONFIG.DESCRIPTION_	AS DESCRIPTION, 
+		            BASE_DOCUMENT_COLUMN_CONFIG.POSITION_		AS POSITION
+		         FROM BASE_DOCUMENT_COLUMN_CONFIG LEFT JOIN BASE_DOCUMENT_CONFIG ON BASE_DOCUMENT_COLUMN_CONFIG.PID_ = BASE_DOCUMENT_CONFIG.ID_
+		         LEFT JOIN T_DICTS_DATAS ON BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_TYPE_=T_DICTS_DATAS.ID_
+		         WHERE 1=1
+	              /~pid: AND BASE_DOCUMENT_COLUMN_CONFIG.PID_ = '{pid}'~/
+	              /~queryText: AND (
+					    Upper(BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_CODE_) LIKE '%{queryText}%'
+					OR  Upper(BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_NAME_) LIKE '%{queryText}%'
+					OR  Upper(BASE_DOCUMENT_COLUMN_CONFIG.COLUMN_VALUE_) LIKE '%{queryText}%'
+					OR  Upper(BASE_DOCUMENT_COLUMN_CONFIG.DESCRIPTION_) LIKE '%{queryText}%'
+				 )~/
+				 <EXTRACTEND> POSITION<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

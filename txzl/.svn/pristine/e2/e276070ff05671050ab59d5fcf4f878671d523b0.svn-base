@@ -1,0 +1,207 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+/* 字段备注  ：   计划金额   = 本次收款金额 + 调整金额            */
+jQuery(function(){
+	//获取父页面中保存在hidden域的值
+	var showTools = true;
+	if('${param.isView}' == 'true' || isViewHistoryTask ==true){showTools = false};
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+		id: "not_cancled",
+		renderTo: "id_table_not_cancled",
+		width : globalClientWidth-30,
+		height : 400,
+		editFormPopupWindowWidth : 400,
+		lazyLoad:false,
+		isClickLoad:false,
+		title: "",
+		remoteOper : false,
+		showPager: false,
+		multiSelect : true,
+		showToolbar: showTools,
+		tools: toolsArray,
+		data:JsonUtil.decode('${empty json_not_cancled_str ? "[]" : json_not_cancled_str}'),
+		columns: [
+			{type : 'indexcolumn',header : '序号'},
+			{type : 'checkcolumn'},
+            {field : 'id',header : '编号',headerAlign : 'center',width : 100,allowSort : true,visible : false,
+				  formEditorConfig : {
+					  readOnly : true,
+					  fieldVisible : false
+				 }
+			},		
+			{field : 'registypeid',header : '登记类型',visible : false	},						
+			{field : 'registypeidname',header : '登记类型',visible : true	},
+			{field : 'contractid',header : '抵质押登记合同编号',visible : true,width : 150},
+			{field : 'regisnum',header : '登记证明编号',headerAlign : 'center',visible : true,width : 150,
+					formEditorConfig : {
+								newLine : true,
+								fieldVisible : true
+					}
+			},
+			{field : 'regisunit',header : '登记单位',headerAlign : 'center',visible : true,width : 150},
+			{field : 'assuror',header : '担保单位',visible : false},
+			{field : 'assurorname',header : '担保单位',visible : true},
+			{field : 'pledgeownner',header : '抵质押物所在企业/自然人',headerAlign : 'center',width : 200,visible : true},
+			{
+				field : 'pledgevalue',
+				header : '抵质押物数额/原值',
+				width : 150,
+				headerAlign : 'center',
+				visible : true,
+				width : 150
+			},
+			{
+					field : 'pledgevaluenow',
+					header : '抵质押物现值',
+					width : 150,
+					headerAlign : 'center',
+					visible : true,
+					width : 150
+				},
+				{
+					field : 'assurortotalval',
+					header : '被担保债权总额/主合同金额',
+					headerAlign : 'center',
+					visible : true,
+					width : 200
+				},
+				 {
+					field : 'descriptionone',
+					header : '抵质押物描述',
+					headerAlign : 'center',
+					visible : true,
+					width : 150
+				}, 
+				{
+					field : 'debtstart',
+					header : '债务履行期起始日',
+					headerAlign : 'center',
+						visible : true,
+					width : 150,
+					dateFormat : "yyyy-MM-dd"
+				}, {
+					field : 'debtend',
+					header : '债务履行期终止日',
+					headerAlign : 'center',
+					visible : true,
+					width : 150,
+					dateFormat : "yyyy-MM-dd"
+				}, 
+				{
+					field : 'pledgestart',
+					header : '抵质押登记起始日',
+					headerAlign : 'center',
+					visible : true,
+					width : 150,
+					dateFormat : "yyyy-MM-dd"
+				}, {
+					field : 'pledgeend',
+					header : '抵质押登记到期日',
+					headerAlign : 'center',
+					visible : true,
+					width : 150,
+					dateFormat : "yyyy-MM-dd"
+				}, 
+				{
+					field : 'registime',
+					header : '登记时间',
+					headerAlign : 'center',
+					visible : true,
+					width : 100,
+					dateFormat : "yyyy-MM-dd"
+				}, {
+					field : 'preparer',
+					header : '填表人',
+					headerAlign : 'center',
+					visible : true,
+					width : 100
+				}
+												
+		]
+	});
+	});
+});
+var toolsArray=
+	[
+	{
+		html : '注销',
+		plain : true,
+		iconCls : 'icon-ok',
+		handler : function(miniTable, buttonText) 
+		{
+			   // var row = miniTable.getSelected();
+			    var rows = miniTable.getSelecteds();
+					if (rows.length == 0){
+							mini.alert("请勾选数据再操作!");
+							return false;
+						}
+				 var curGrid = mini.get("present_cancled");//获取本次注销对象
+				
+				 var curGrids=curGrid.getData();
+				 
+				 
+			
+				 
+					
+			//	 curGrid.addRows(rows,0 );//添加要拷贝的对象
+		   // curGrid.saveDataToInput();//保存操作！ 
+					var gobalFlag=false;
+					for(var i = 0 ; i< rows.length;i++){
+						var row = rows[i];
+						var flag=false;
+						for(var j = 0 ; j < curGrids.length;j++){										
+							if(row.id == curGrids[j].id){			
+								gobalFlag=true;											 
+							}
+						}
+					} 
+					if(gobalFlag){
+						mini.alert("您选中行的数据已在本次注销明细中了,请不要重复注销！");
+						miniTable.deselectAll();return false;
+					}else{
+						getPledge(miniTable)
+						mini.alert("操作成功,请到本次付款明细查看!");	
+					}
+					
+
+				
+		}
+	}];
+	
+	
+	function  getPledge(miniTable)
+	{
+		var newRow = {};
+		var planGrid = miniTable.getSelecteds();//获取注销选中grid
+		var currentGrid = mini.get("present_cancled");//获取本次注销grid
+		var rowDatas = [];
+		for (var i = 0 ;i <planGrid.length; i++ )
+		{   
+			newRow.id=planGrid[i].id;
+			newRow.registypeidname=planGrid[i].registypeidname;
+			newRow.contractid=planGrid[i].contractid;			
+			newRow.pledgevaluenow=planGrid[i].pledgevaluenow;			
+			newRow.regisnum=planGrid[i].regisnum;
+			newRow.regisunit=planGrid[i].regisunit;
+			newRow.assurorname=planGrid[i].assurorname;
+			newRow.pledgeownner=planGrid[i].pledgeownner;
+			newRow.pledgevalue=planGrid[i].pledgevalue;
+			newRow.assurortotalval=planGrid[i].assurortotalval;
+			newRow.descriptionone= planGrid[i].descriptionone;
+			newRow.debtstart= planGrid[i].debtstart;
+			newRow.debtend=planGrid[i].debtend;
+			newRow.pledgestart=planGrid[i].pledgestart;
+			newRow.pledgeend=planGrid[i].pledgeend;
+			newRow.registime=planGrid[i].registime;
+			newRow.preparer=planGrid[i].preparer;
+			rowDatas.push(mini.clone(newRow));		
+		}
+		currentGrid.addRows(rowDatas, 0);
+		currentGrid.saveDataToInput();
+		
+		miniTable.deselectAll(false);
+	}
+</script>
+
+<div id="id_table_not_cancled" style="width:100%;height:100%;"></div>

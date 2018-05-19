@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+            SELECT P.ID,
+                   P.CONTRACT_ID       AS CONTRACTID,
+                   P.EQUIP_NAME    AS EQUIPNAME,
+                   P.GUARANTOR,
+                   C.CUST_NAME   AS GUARANTORNAME,
+                   P.EQUIP_INVOICE AS EQUIPINVOICE,
+                   P.GUARANTYVALUE,
+                   P.PRESENT_VALUE AS PRESENTVALUE,
+                   P.EQUIP_GUARANTEE_TYPE AS EQUIPGUARANTEETYPE,
+                   DICT1.NAME_   AS EQUIPGUARANTEETYPENAME,
+                   P.TOTAL_PRICE   AS TOTALPRICE,
+                   DICT2.NAME_     AS NOTARYFLAGNAME,
+                   P.NOTARY_FLAG   AS NOTARYFLAG,
+                   P.RECORD_MECH   AS RECORDMECH,
+                   P.PURCHASE_LIFE AS PURCHASELIFE,
+                   P.CGENOTE       AS CGENOTE
+              FROM CONTRACT_GUARANTEE_EQUIP P
+              LEFT JOIN CUST_INFO C ON P.GUARANTOR = C.ID
+              LEFT JOIN T_DICTS_DATAS DICT1 ON P.EQUIP_GUARANTEE_TYPE = DICT1.ID_
+              LEFT JOIN T_DICTS_DATAS DICT2 ON P.NOTARY_FLAG = DICT2.ID_
+             WHERE 1=1
+             and  P.CONTRACT_ID in (  select SUP_CONTRACT_ID from  contract_info where id='<<contract_id>>') 
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

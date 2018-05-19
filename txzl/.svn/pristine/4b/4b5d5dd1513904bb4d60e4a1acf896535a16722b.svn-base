@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+    select
+		rent.*,
+	    fund.charge30,
+		fund.guarantee30,
+		fund.charge90,
+		fund.guarantee90,
+		fund.charge180,
+		fund.guarantee180,
+		fund.charge360,
+		fund.guarantee360,
+		fund.thancharge360,
+		fund.thanguarantee360,
+		fund.allcharge,
+		fund.allguarantee
+ 	from 
+	 ( select 
+	     	max(c.cust_number) as custnumber,
+	        max(c.cust_name) as custname,
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+30,'yyyy-mm-dd')   then cp.rent else 0 end )  rent30,
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+30,'yyyy-mm-dd')   then cp.corpus else 0 end )  corpus30,
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+30,'yyyy-mm-dd')   then cp.interest else 0 end )  interest30,
+	      
+	      sum(case when cp.plan_date>to_char(sysdate+30,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+90,'yyyy-mm-dd')   then cp.rent else 0 end )  rent90,
+	      sum(case when cp.plan_date>to_char(sysdate+30,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+90,'yyyy-mm-dd')   then cp.corpus else 0 end )  corpus90,
+	      sum(case when cp.plan_date>to_char(sysdate+30,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+90,'yyyy-mm-dd')   then cp.interest else 0 end )  interest90,
+	      
+	      sum(case when cp.plan_date>to_char(sysdate+90,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+180,'yyyy-mm-dd')   then cp.rent else 0 end )  rent180,
+	      sum(case when cp.plan_date>to_char(sysdate+90,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+180,'yyyy-mm-dd')   then cp.corpus else 0 end )  corpus180,
+	      sum(case when cp.plan_date>to_char(sysdate+90,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+180,'yyyy-mm-dd')   then cp.interest else 0 end )  interest180,
+	       
+	      sum(case when cp.plan_date>to_char(sysdate+180,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+360,'yyyy-mm-dd')   then cp.rent else 0 end )  rent360,
+	      sum(case when cp.plan_date>to_char(sysdate+180,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+360,'yyyy-mm-dd')   then cp.corpus else 0 end )  corpus360,
+	      sum(case when cp.plan_date>to_char(sysdate+180,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+360,'yyyy-mm-dd')   then cp.interest else 0 end )  interest360,
+	      
+	      sum(case when cp.plan_date>to_char(sysdate+360,'yyyy-mm-dd')  then cp.rent else 0 end )  thanrent360,
+	      sum(case when cp.plan_date>to_char(sysdate+360,'yyyy-mm-dd')  then cp.corpus else 0 end )  thancorpus360,
+	      sum(case when cp.plan_date>to_char(sysdate+360,'yyyy-mm-dd')  then cp.interest else 0 end )  thaninterest360,
+	      
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd')  then cp.rent else 0 end )  allrent,
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd')  then cp.corpus else 0 end )  allcorpus,
+	      sum(case when cp.plan_date>to_char(sysdate,'yyyy-mm-dd')  then cp.interest else 0 end )  allinterest
+	           
+	      From contract_fund_rent_plan cp
+	      left join contract_info ci on cp.contract_id=ci.id
+	       left join cust_info c on ci.cust_id=c.id
+	      --where 1=1
+	      --/~contractid: and ci.contract_id like '%{contractid}%' ~/
+	      -- /~contractnumber: and ci.contract_number like '%{contractnumber}%' ~/
+	      group by c.cust_number)rent
+    left join 
+		(
+		select 
+		
+		max(c.cust_number) as custnumber,
+		 max(c.cust_name) as custname,
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+30,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  charge30,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+30,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  guarantee30,
+		
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate+30,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+90,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  charge90,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate+30,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+90,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  guarantee90,
+		
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate+90,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+180,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  charge180,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate+90,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+180,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  guarantee180,
+		
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate+180,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+360,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  charge360,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate+180,'yyyy-mm-dd') and cp.plan_date<=to_char(sysdate+360,'yyyy-mm-dd')   then (cp.plan_money - cf.fact_money) else 0 end )  guarantee360,
+		
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate+360,'yyyy-mm-dd')  then (cp.plan_money - cf.fact_money) else 0 end )  thancharge360,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate+360,'yyyy-mm-dd')  then (cp.plan_money - cf.fact_money) else 0 end )  thanguarantee360,
+		
+		
+		sum(case when cp.fee_type='feetype1' and cp.plan_date>to_char(sysdate,'yyyy-mm-dd')  then (cp.plan_money - cf.fact_money) else 0 end )  allcharge,
+		sum(case when cp.fee_type='feetype2' and cp.plan_date>to_char(sysdate,'yyyy-mm-dd')  then (cp.plan_money - cf.fact_money) else 0 end )  allguarantee
+		From contract_fund_fund_plan cp
+		left join contract_fund_fund_charge  cf  on  cf.payment_id=cp.id
+		left join contract_info ci on cp.contract_id=ci.id
+		left join cust_info c on ci.cust_id=c.id 
+		
+		group by c.cust_number) fund  on rent.custnumber=fund.custnumber
+      where 1=1
+      /~custnumber: and rent.custnumber like '%{custnumber}%' ~/
+      /~custname: and rent.custname like '%{custname}%' ~/
+     
+	        
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	     <table_sql> 
+	        <![CDATA[
+			select 
+		    max(ci.cust_number) as custnumber,
+    		max(ci.cust_name) as custname,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120) and cp.plan_date<=CONVERT(varchar(10),getdate()+30,120)   then cp.rent else 0 end )  rent30,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120) and cp.plan_date<=CONVERT(varchar(10),getdate()+30,120)   then cp.corpus else 0 end )  corpus30,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120) and cp.plan_date<=CONVERT(varchar(10),getdate()+30,120)   then cp.interest else 0 end )  interest30,
+			
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+30,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+90,120)   then cp.rent else 0 end )  rent90,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+30,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+90,120)   then cp.corpus else 0 end )  corpus90,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+30,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+90,120)   then cp.interest else 0 end )  interest90,
+			
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+90,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+180,120)   then cp.rent else 0 end )  rent180,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+90,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+180,120)   then cp.corpus else 0 end )  corpus180,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+90,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+180,120)   then cp.interest else 0 end )  interest180,
+			 
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+180,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+360,120)   then cp.rent else 0 end )  rent360,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+180,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+360,120)   then cp.corpus else 0 end )  corpus360,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+180,120) and cp.plan_date<=CONVERT(varchar(10),getdate()+360,120)   then cp.interest else 0 end )  interest360,
+			
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+360,120)  then cp.rent else 0 end )  thanrent360,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+360,120)  then cp.corpus else 0 end )  thancorpus360,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate()+360,120)  then cp.interest else 0 end )  thaninterest360,
+			
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120)  then cp.rent else 0 end )  allrent,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120)  then cp.corpus else 0 end )  allcorpus,
+			sum(case when cp.plan_date>CONVERT(varchar(10),getdate(),120)  then cp.interest else 0 end )  allinterest
+			     
+			From cust_fund_rent_plan cp
+			left join cust_info ci on cp.cust_id=ci.id
+			where 1=1
+			/~custnumber: and ci.custnumber like '%{custnumber}%' ~/
+			/~custname: and ci.custname like '%{custname}%' ~/
+			group by cp.cust_id
+	        
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

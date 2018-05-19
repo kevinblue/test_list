@@ -1,0 +1,1517 @@
+define(function(require,exports,module){	
+	var _combobox = require('js/report/reportconfig_combobox');	
+	var tenwa = require('js/report/ajax.js');
+	var shouldPopForm = false;
+	var pageHeight = document.documentElement.clientHeight;
+	var pageWidth = document.documentElement.clientWidth;
+	var _rootMenuId;
+	var _comboboxDatas;
+	var _allContents = {
+		"TABLE":{"load":"loadTable.action","save":"saveTable.action"},
+		"PAGE": {"load":"loadPage.action","save":"savePage.action"},
+		"CHART":{"load":"loadChart.action","save":"saveChart.action"}
+	};
+
+	
+
+	exports.initPage = function(comboboxDatas,rootMenuId){		
+		_rootMenuId = rootMenuId;
+		_comboboxDatas = comboboxDatas;
+		mini.parse();
+		setPanelSize();
+		loadReportTree();
+		initContentTree();	
+		initCombobox(_combobox.TableCombobox);
+		initCombobox(_combobox.ChartCombobox);
+		initFormEvent('TABLE');
+		initFormEvent('CHART');
+		loadOrgTree();
+	}
+
+	
+
+	function setPanelSize(){		
+		var colWidth = 180;
+		var containerWidth = pageWidth - 2*colWidth - 20;
+		mini.get('report_tree_container').set({
+			width:colWidth			
+		});
+		mini.get('content_tree_container').set({
+			width:colWidth			
+		});
+		mini.get('table_container').set({
+			width:containerWidth,
+			height: pageHeight - 7
+		});
+		mini.get('chart_container').set({
+			width:containerWidth,
+			height: pageHeight - 7
+		});
+		mini.get('page_container').set({
+			width:containerWidth,
+			height: pageHeight - 7
+		});
+	}
+
+	function trim(s){
+		return s.replace(/^\s+|\s+$/gm,'');
+	}
+/***********************General Section *****************************/
+	function resetForm(formId){
+		new mini.Form(formId).reset();
+	}
+
+	function closeWindow(windowId){	        
+	        mini.get(windowId).hide();
+	}
+
+/************************ Report Section **************************/	
+
+	function loadReportTree(){
+		var tree = new mini.Tree();
+		bindReportContextEvent();				
+		tree.set({
+			id:'report_tree',
+			url: globalWebRoot + "/report/config/queryReportTree.action?parent=0",
+			allowDrag:true,
+			allowDrop:true,
+			allowLeafDropIn:true,
+			height: pageHeight-45,			
+			expandOnLoad: true,
+			contextMenu:'#report_contextmenu',			
+			onnodeclick:function(e){
+				var node = e.node;
+				if(node.attributes['reportType'] == 'REPORT'){
+					loadContentTree(node);
+				}
+			},
+			ongivefeedback:function(e){
+				//禁止向非目录结点添加子结点
+				
+				var dropNode = e.targetNode;
+				var effect = e.effect;
+				if(!dropNode){
+					return;
+				}
+				
+				if(dropNode.attributes['reportType'] != 'FOLDER' && effect == 'add'){
+					e.effect = "no";
+				}
+				//禁止将结点移动到与根结点同级
+				if(dropNode.id == "0" && effect != 'add'){
+					e.effect = "no";
+				}
+				
+			},
+			onDrop:function(e){
+				changeNodePosition(e,'Report','parentReport');
+			}
+		});
+		tree.render($('#report_tree')[0]);
+		
+
+	}
+
+	function changeNodePosition(e,entityClass,parentField,idField){
+		
+		var newPos = 0;
+		var newPid = 0;
+
+		switch(e.dragAction){
+		case 'add':
+			var childNodes = e.sender.getChildNodes(e.dropNode);
+			if(childNodes.length > 0){
+				newPos = childNodes[childNodes.length -1].attributes['position'] + 1;
+			}
+			newPid = e.dropNode.id;
+			break;
+		case 'before':
+			var parentNode = e.sender.getParentNode(e.dropNode);
+			newPid = parentNode.id;
+			newPos = e.dropNode.attributes['position'];
+			break;
+		case 'after':
+			var parentNode = e.sender.getParentNode(e.dropNode);
+			newPid = parentNode.id;
+			newPos = e.dropNode.attributes['position'] + 1;
+			break;
+		default:
+			return;
+		}		
+		mini.mask();
+		var id = e.dragNode.id;
+		if(idField && e.dragNode.attributes[idField]){
+			id = e.dragNode.attributes[idField];
+		}
+		tenwa.ajax({
+			url:'/report/config/updatePosition.action',
+			data:{'id':id,'position':newPos,'pid':newPid,'entityClass':entityClass,'parentField':parentField,'rootMenuId':_rootMenuId},
+			dataType:'text',
+			success:function(data){
+				mini.unmask();
+				if(data != 'TRUE'){
+					mini.alert(data);	
+				}
+				mini.get('report_tree').reload();
+			}			
+		});
+		
+	}
+
+	function bindReportContextEvent(){
+		//Report tree Context
+		mini.get('report_contextmenu').set({
+			onbeforeopen:function(e){
+
+				var tree = mini.get('report_tree');
+				var node = tree.getSelectedNode();
+				
+				if(!node){
+					e.cancel=true;
+					return;
+				}
+
+				var ctx = mini.get('report_contextmenu');
+				for(var i = 0 ; i < ctx.items.length; i++){
+					ctx.items[i].show();
+				}
+				if(node.attributes['reportType'] != 'FOLDER'){
+					mini.get('report_contextmenu_add_report').hide();
+					mini.get('report_contextmenu_add_folder').hide();					
+				}					
+
+				if(!tree.isLeaf(node)){
+					mini.get('report_contextmenu_delete').hide();
+				}				
+			},
+			onitemclick:function(event){
+				var item = event.item;
+				switch(item.id){
+				case 'report_contextmenu_add_folder':
+					showReport('FOLDER',true);
+					break;
+				case 'report_contextmenu_add_report':
+					showReport('REPORT',true);
+					break;
+				case 'report_contextmenu_modify':
+					showReport('',false);
+					break;
+				case 'report_contextmenu_export':
+					exportReport();
+					break;
+				case 'report_contextmenu_import':
+					showUploadWindow();
+					break;
+				case 'report_contextmenu_delete':
+					removeReport();
+					break;
+				default:
+				}
+			}
+		});	
+
+		mini.get('report_saveButton').set({
+			onclick:function(){
+				saveReport();	
+			}
+		});
+		mini.get('report_closeButton').set({
+			onclick:function(){
+				mini.get('id_form_report').hide();
+			}
+		});
+
+		mini.get('import_ok').set({
+			onclick:function(){
+				importReport();
+			}
+		});
+
+		mini.get('import_cancel').set({
+			onclick:function(){
+				mini.get('div_upload').hide();
+			}
+		});
+
+		
+		mini.get("table_validateSQL").set({
+			onclick:function(e){
+				validateSQL("TABLE");
+			}
+		});
+
+		mini.get("chart_validateSQL").set({
+			onclick:function(e){
+				validateSQL("CHART");
+			}
+		});
+
+		//Context Tree Context
+		mini.get('content_contextmenu').set({			
+			onitemclick:function(event){
+				var item = event.item;
+				switch(item.id){
+				case 'content_contexmenu_add_table':
+					loadContentForm('','TABLE');					
+					break;
+				case 'content_contextmenu_add_chart':
+					loadContentForm('','CHART');
+					break;
+				case 'content_contextmenu_add_page':
+					loadContentForm('','PAGE');
+					break;
+				case 'content_contextmenu_delete':
+					removeContent();
+					break;				
+				default:
+				}
+			}
+		});	
+
+		//Filter Tree Context
+		mini.get('table_filter_contextmenu').set({
+			onbeforeopen:function(e){
+				var tree = mini.get('table_filter_tree');
+				var node = tree.getSelectedNode();
+				if(!node){
+					e.cancel = true;
+					return;
+				}
+				var ctx = mini.get('table_filter_contextmenu');
+				for(var i = 0; i < ctx.items.length; i++){
+					ctx.items[i].hide();
+				}
+				if(node.id.indexOf("_0") > -1){
+					mini.get('table_filter_contextmenu_add').show();
+				}else{
+					mini.get('table_filter_contextmenu_delete').show();
+				}
+
+			},
+			onitemclick:function(event){
+				var item = event.item;
+				switch(item.id){
+				case 'table_filter_contextmenu_add':
+					addFilter('TABLE');
+					break;
+				case 'table_filter_contextmenu_delete':
+					removeFilter('TABLE');
+					break;
+				case 'table_filter_contextmenu_express':
+					break;
+				}
+			}
+		});
+
+		mini.get('chart_filter_contextmenu').set({
+			onbeforeopen:function(e){
+				var tree = mini.get('chart_filter_tree');
+				var node = tree.getSelectedNode();
+				if(!node){
+					e.cancel = true;
+					return;
+				}
+				var ctx = mini.get('chart_filter_contextmenu');
+				for(var i = 0; i < ctx.items.length; i++){
+					ctx.items[i].hide();
+				}
+				if(node.id.indexOf("_0") > -1){
+					mini.get('chart_filter_contextmenu_add').show();
+				}else{
+					mini.get('chart_filter_contextmenu_delete').show();
+				}
+
+			},
+			onitemclick:function(event){
+				var item = event.item;
+				switch(item.id){
+				case 'chart_filter_contextmenu_add':
+					addFilter('CHART');
+					break;
+				case 'chart_filter_contextmenu_delete':
+					removeFilter('CHART');
+					break;
+				case 'chart_filter_contextmenu_express':
+					break;
+				}
+			}
+		});
+		
+		//Control Tree Context
+		
+		mini.get('table_control_contextmenu').set({
+			onbeforeopen:function(e){
+				var tree = mini.get('table_control_tree');
+				var node = tree.getSelectedNode();
+				if(!node){
+					e.cancel = true;
+					return;
+				}
+				var ctx = mini.get('table_control_contextmenu');
+				for(var i = 0; i < ctx.items.length; i++){
+					ctx.items[i].hide();
+				}
+				if(node.id.indexOf("_0") > -1){
+					mini.get('table_control_contextmenu_add').show();
+				}else{
+					mini.get('table_control_contextmenu_delete').show();
+				}
+
+			},
+			onitemclick:function(event){
+				var item = event.item;
+				switch(item.id){
+				case 'table_control_contextmenu_add':
+					addControl('TABLE');
+					break;
+				case 'table_control_contextmenu_delete':
+					removeControl('TABLE');
+					break;
+				}
+			}
+		});
+		
+	}
+	
+	function  addControl(contentType){
+		var tree = mini.get(contentType.toLowerCase() + '_control_tree');
+		var parentNode = tree.getSelectedNode();
+		if(!parentNode){
+			return;
+		}
+		var prefix = contentType.toLowerCase();
+		var timeStamp = mini.formatDate(new Date(),'HHmmss');
+		var attrObject = new Object();
+		attrObject[prefix + "_controlId"] = "";
+		attrObject[prefix + "_controlName"] = 'NewControl_' + timeStamp;
+		attrObject[prefix + "_controlLabel"] = 'NewControl_' + timeStamp;
+		attrObject[prefix + "_controlGroup"] = '' ;
+		attrObject[prefix + "_controlMatch"] = '' ;
+		
+		tree.addNodes([{
+			id: 'NewControl_' + timeStamp,
+			text: 'NewControl_' + timeStamp+"["+'NewControl_' + timeStamp+"]",
+			attributes:attrObject
+		}],parentNode);
+		var node = tree.getNode('NewControl_' + timeStamp);
+
+		tree.selectNode(node);
+		loadControlForm(node,contentType);
+	}
+	
+	function  removeControl(contentType){
+		var lc = contentType.toLowerCase();
+		var tree = mini.get(lc + '_control_tree');
+		var node = tree.getSelectedNode();
+
+		if(node.attributes[lc + '_controlId'] == ""){
+			tree.removeNode(node);
+			var form = new mini.Form('#' + lc + '_control_form');
+			form.clear();
+		}else{
+			tenwa.ajax({
+				url: '/report/config/removeControl.action',
+				data:{controlId: node.attributes[lc + '_controlId']},
+				dataType: 'TEXT',
+				success:function(data){
+					if(data == "TRUE"){
+						tree.removeNode(node);
+						var form = new mini.Form('#' + lc + '_control_form');
+						form.clear();
+						mini.alert('删除成功');						
+					}else{
+						mini.alert(data);
+					}
+				}
+			});
+		}
+	}
+	
+	function loadControlForm(node,contentType){
+		var prefix = contentType.toLowerCase();
+		var form = new mini.Form('#' + prefix + '_control_form');
+		form.clear();
+		form.set({
+			data:node.attributes
+		});
+		mini.get(prefix + "_controlNodeId").setValue(node.id);
+	}
+	
+	function saveReport(){
+		var form = new mini.Form("form_report");
+		var data = form.getData();
+		
+		form.validate();
+		if(form.isValid()){
+	        tenwa.ajax({
+				url:"/report/config/saveReport.action",
+				params: data,
+				method:'POST',
+				dataType: 'text',
+				success:function(data){
+					if(data != null){
+						mini.alert("保存成功");
+						closeWindow("id_form_report");
+						mini.get('report_tree').reload();
+					}else{
+						mini.alert("保存失败");
+					}
+				}
+			});
+		}else{
+			mini.alert("请录入完整必填项！");
+		}
+	}
+
+	function showReport(reportType,isNew){
+		resetForm("form_report");
+		var tree = mini.get("report_tree");
+
+		var node = tree.getSelectedNode();
+		var parentId = "";
+		var position = 0;
+		if(isNew){
+			parentId = node.id;
+			var childNodes = tree.getChildNodes(node);
+			if(childNodes.length > 0){
+				position = childNodes[childNodes.length -1].attributes['position'] + 1;
+			}
+			
+	    }else{
+	    	var parentNode = tree.getParentNode(node).id;
+	    	parentId = tree.getParentNode(node).id;	    	
+	    }
+
+	    var form = new mini.Form("form_report");
+	    if(isNew){
+			mini.get("reportType").setValue(reportType);		
+			mini.get("parentReport").setValue(parentId);
+			mini.get('position').setValue(position);
+		}else{
+			form.setData(node.attributes);
+		}
+	    try{
+			initReportType(reportType,isNew);
+		}catch(e){}
+		mini.get("id_form_report").show();
+	}
+
+	function removeReport(){
+		var tree = mini.get("report_tree");
+	    var node = tree.getSelectedNode();
+		if(!node)return false;
+		
+		tenwa.ajax({
+			url: '/report/config/removeReport.action',
+			data: {'reportId': node.id},
+			method:'POST',
+			dataType: 'text',
+			success: function (text) {
+				mini.alert("删除成功");
+				mini.get('report_tree').reload();
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+			    mini.alert(jqXHR.responseText);
+			}
+		});
+	}
+
+	function exportReport(){
+		//TODO: fixme
+	}
+
+	function importReport(){
+		//TOD: fixme
+	}
+
+/************************ Content Tree Section *************************/	
+
+	function loadContentTree(){
+		var tree = mini.get('content_tree');
+		var node = mini.get('report_tree').getSelectedNode();
+		if(!node){
+			return;
+		}
+		var url = globalWebRoot + '/report/config/queryTableAndChart.action?reportId=' + node.id ;
+		if(!tree){
+			tree = initContentTree();
+		}
+		tree.load(url);
+		
+	}
+
+	function initContentTree(){
+		var tree = new mini.Tree();
+		tree.set({
+			id:'content_tree',			
+			allowDrag: true,
+			allowDrop: true,
+			allowLeafDropIn: false,
+			height: pageHeight - 45,			
+			expandOnLoad: true,
+			showCheckBox: true,
+			showFolderCheckBox: false,
+			contextMenu:'#content_contextmenu',
+			onnodecheck:function(e){
+				changeLayout(e);
+			},
+			onbeforenodecheck:function(e){
+				var node = mini.get('report_tree').getSelectedNode();
+				if(!node){
+					e.cancel = true;
+				}
+				if(node.attributes['reportType'] == 'FOLDER'){
+					mini.alert('请选择报表');
+					e.cancel = true;
+				}
+				if(!mini.get('report_tree').getSelectedNode()){
+					e.cancel = true;
+				}
+			},
+			ongivefeedback:function(e){
+			
+				if(e.node.attributes.layoutid && e.targetNode.attributes.layoutid){
+					return;
+				}				
+				e.effect = "no";
+			},
+			ondrop:function(e){
+				changeNodePosition(e,'ReportLayout','report','layoutid');
+			},
+			onnodeclick:function(e){
+				switch(e.node.attributes['contentType']){
+				case 'TABLE':
+					loadContentForm(e.node.id,'TABLE');
+					break;
+				case 'PAGE':
+
+					loadContentForm(e.node.id,'PAGE');
+					break;
+				case 'CHART':
+					loadContentForm(e.node.id,'CHART');					
+					break;
+				default:
+					break;
+				}
+			}
+		});
+		tree.render($('#table_chart_tree')[0]);
+		return tree;
+
+	}
+
+	function changeLayout(e){
+		e.cancel = true;
+		var node = e.node;
+		var action = "";
+		if(e.checked){
+			action="remove";
+		}else{
+			action="add";
+		}
+		var reportNode = mini.get('report_tree').getSelectedNode();
+		if(!reportNode){			
+			return;
+		}
+		var reportId = reportNode.id;
+		var layoutId = "";
+		if(node.attributes['layoutid']){
+			layoutId = node.attributes['layoutid'];
+		}
+		var contentType = node.attributes['contentType'];
+		var contentId = node.id;
+		tenwa.ajax({
+			url:'/report/config/changeLayout.action',
+			data:{'reportId':reportId,'contentId':contentId,'layoutId':layoutId,'contentType':contentType,'action':action},
+			dataType:'text',
+			success:function(data){
+				if(data == 'TRUE'){
+					loadContentTree();
+				}else{
+					mini.alert('添加失败:' + data);
+				}
+			}
+		});
+	}
+
+
+/********************TABLE And Chart Common Section*********************/
+	function initCombobox(comboboxs){
+		if(comboboxs){
+			for(var i = 0; i < comboboxs.length; i++){
+				var combobox = mini.get(comboboxs[i]['id']);
+				if(combobox){
+					combobox.set({
+						valueField:'value',
+						textField:'text',
+						data: _comboboxDatas[comboboxs[i]['datas']],
+						onvaluechanged:function(e){
+							var id = e.sender.id;
+							
+							for(var i in _combobox){
+								for(var j = 0; j < _combobox[i].length; j++){
+									if(_combobox[i][j]['onvaluechanged'] && _combobox[i][j]['id'] == id){
+										var value = mini.get(_combobox[i][j]['id']).getValue();
+										_combobox[i][j].onvaluechanged(value);
+										break;
+									}
+								}
+							}
+						}
+					});
+					var index = comboboxs[i]['defaultIndex'] || -1;
+					index = index-1;
+					if( index > -1){
+						var d = _comboboxDatas[comboboxs[i]['datas']];
+						if(d.length >= index){
+							combobox.setValue(d[index]['value']);
+						}
+					}
+				}
+			}
+		}
+	}
+	function validateSQL(contentType){
+		var validated = false;
+		var result = getSQLParams(true,contentType);
+		if(!result || !result.validated){
+			return false;
+		}
+		
+		tenwa.ajax({
+			url:'/report/config/validateSQL.action',
+			data:{sql:result.sql, datasource:result.datasource, queryType:result.queryType, paramValue:mini.encode(result.sqlParamValue)},
+			async: false,
+			dataType: 'TEXT',
+			success:function(data){
+				if(data=="TRUE"){
+					validated = true;
+					mini.alert("SQL可正确运行");
+					loadColumnTree(contentType);
+					loadFilterTree(contentType);
+					loadControlTree(contentType);
+				}
+				else{
+					mini.alert("SQL验证失败，原因：" + data);
+					validated = false;
+				}
+			}			
+		});
+		return validated;
+	}
+	function getSQLParams(isValidate,contentType){
+		var formIds = ["datasource","sqlType","sql","sqlParamValue"];
+		var formObject = {};
+		for(var i = 0; i < formIds.length; i++){
+			formObject[formIds[i]] = contentType.toLowerCase() + "_" + formIds[i];
+		}
+		var result = {};
+		result.validated = false;
+
+		//检查SQL语句是否为空
+		var c = mini.get(formObject.sql).getValue();
+		c = c.replace(new RegExp("(\n|\r|(\r\n)|(\u0085)|(\u2028)|(\u2029))","gm")," ");
+		while(c.indexOf("  ") >= 0){
+			c = c.replace("  "," ");
+		}
+
+		if(c.replace(" ","") == ""){
+			if(isValidate){
+				mini.alert("请输入SQL语句");				
+			}
+			return result;
+		}
+
+		result.sql = c;
+		var sql = c;
+
+		//检查是否选择数据源
+		var datasource = mini.get(formObject.datasource).getFormValue();
+		if(!datasource){
+		 	if(isValidate){
+         		mini.alert('请选择数据源');
+         	}
+         	return result;
+		}
+		result.datasource = datasource;
+
+		 //检查是否选择SQL类型
+		 var queryType = mini.get(formObject.sqlType).getFormValue();
+		 if(!queryType){
+		 	if(isValidate){
+		 		mini.alert("请选择SQL类型")
+		 	}
+		 	return result;
+		 }
+		 result.queryType = queryType;
+
+		 //检查是否有参数
+		var paramPattern = new RegExp('\\{.*?\\}','g');
+		var srcParamArray = new Array();
+		var paramResult;
+		var transParam = new Array();
+		while((paramResult = paramPattern.exec(sql))){
+			srcParamArray.push(trim(paramResult[0].substring(1,paramResult[0].length-1)));
+		}
+		if(srcParamArray.length > 0){
+			var sql_param_value = mini.get(formObject.sqlParamValue).getValue();
+			if(trim(sql_param_value) == ""){
+				if(isValidate){
+					mini.alert("请输入相应的参数值，以便验证SQL是否正确");
+				}
+				return result;
+			}
+			var paramValue = sql_param_value.split("|");
+			if(srcParamArray.length != paramValue.length){
+				if(isValidate){
+					mini.alert('SQL中的参数与相应的参数值个数不匹配，请重新检查');
+				}
+				return result;
+			}
+			
+			for(var i = 0; i < srcParamArray.length;i++){
+				var paramObject = new Object();
+				paramObject.name = srcParamArray[i];
+				paramObject.value=paramValue[i];
+				transParam.push(paramObject);
+			}
+			
+		}
+		result.sqlParamValue = transParam;
+		result.validated = true;
+		return result;
+	}
+
+	function loadContentForm(id,contentType){
+		var lc = contentType.toLowerCase();
+		var actionName;
+		if(_allContents[contentType]){
+			actionName = _allContents[contentType]["load"];
+		}
+		
+		for(var c in _allContents){
+			var cName = c.toLowerCase();
+			mini.get(cName + '_container').hide();
+			new mini.Form('#' + cName + "_form").clear();			
+		}
+		mini.get(lc + '_tabs').set({height:pageHeight - 47});
+		mini.get(lc + "_container").show();
+		var contentName = "新建["+contentType+"]";
+		var contentBtnId = "_NEW";
+		if(id){
+			var contentNode = mini.get('content_tree').getNode(id);
+			mini.get('content_tree').selectNode(contentNode);
+			contentName = contentNode.text;
+			contentBtnId = contentNode.id;
+		}
+
+		var btnHtml = $('#' + lc + '_toolbar :first-child');
+		btnHtml.attr('id','save_'+ lc +'_' + contentBtnId);
+		
+		var container = mini.get(lc + '_container').set({
+			title:contentName + $('#' + lc + '_toolbar').html()
+			
+		});
+		btnHtml.attr('id','btn_save_' + lc);
+		$('#save_'+lc+'_' + contentBtnId).on('click',function(){
+			saveContent(contentType);
+		});
+		
+		var form = new mini.Form("#" + lc + "_form");
+		if(contentType == 'TABLE' || contentType == 'CHART'){
+			mini.get(lc + '_column_tree').loadData([]);
+			mini.get(lc + '_filter_tree').loadData([]);
+			mini.get(lc + '_control_tree').loadData([]);
+		}
+		if(contentType == 'TABLE'){
+			mini.get(lc + '_pageSize').setValue('20');
+		}
+		//初始化新表单数据
+		mini.get(lc + '_layout_height').setValue('600');
+		mini.get(lc + '_layout_width').setValue('600');
+
+		if(id){
+			tenwa.ajax({
+				url:'/report/config/'+ actionName,
+				data:{'id':id},
+				type:'POST',
+				dataType:'JSON',
+				success:function(data){
+					form.setData(data);
+					if(contentType == 'TABLE'){
+						mini.get(lc + '_isExcel').doValueChanged();			
+					}
+					if(contentType == 'CHART'){
+						mini.get('chart_chartType').doValueChanged();						
+					}
+					if(contentType != 'PAGE'){
+						loadColumnTree(contentType);
+						loadFilterTree(contentType);
+						loadControlTree(contentType);
+						
+					}
+				}
+			});
+		}
+	
+	}
+
+/**Column Function*/
+	function loadColumnTree(contentType){
+		var tree = mini.get(contentType.toLowerCase() + "_column_tree");
+		tree.set({
+			expandOnLoad: true,
+			showTreeIcon: true,
+			showTreeLines: false,
+			showCheckBox: true,
+			//showFolderCheckBox: false,
+			allowLeafDropIn: false,
+			allowDrag: true,
+			allowDrop: true,
+			height: pageHeight - 88,				
+			onnodeclick:function(e){
+				if(e.record._level==0) return;
+				saveChanges("",contentType,'column');
+				loadColumnForm(e,contentType);
+			},
+			ongivefeedback:function(e){
+				if(!e.node.checked){
+					e.effect="no";
+				}				
+			},
+			ondrop:function(e){
+				var tree = mini.get(contentType.toLowerCase() + "_column_tree");
+				var nodes = tree.getCheckedNodes(false);
+				var pos = 0;
+				for(var i = 0; i < nodes.length; i++){
+					nodes[i]['attributes']['position'] = pos++;
+					tree.updateNode(nodes[i],nodes[i]);
+				}
+			}
+		});
+		var contentId = mini.get(contentType.toLowerCase() + "_id").getValue();
+		var result = getSQLParams(false,contentType);
+		if(!result){
+			return;
+		}
+
+		
+		tenwa.ajax({
+			url: '/report/config/queryColumns.action',
+			data:{contentType:contentType, id:contentId, sql:result.sql, datasource:result.datasource, queryType:result.queryType, params:mini.encode(result.sqlParamValue)},
+			dataType: 'JSON',
+			success:function(data){
+				//tree.loadData(data);
+				var arraysInput = new Array();
+				var text = isEnglish() ? 'all column' : '所有列';
+				var obj={id:"columnParentNode",text:text,checked: "true",iconCls:'icon-user',
+						children:mini.decode(data)};
+				arraysInput[0] = obj;
+				tree.loadData(arraysInput);
+			}
+		});
+
+	}
+
+	function loadColumnForm(e,contentType){
+		var prefix = contentType.toLowerCase();
+		var form = new mini.Form('#' + prefix + '_column_form');
+		form.clear();
+		form.set({
+			data:e.node.attributes
+		});
+		mini.get(prefix + "_columnNodeId").setValue(e.node.id);
+		mini.get(prefix + '_columnType').doValueChanged();
+		mini.get(prefix + '_columnActionType').doValueChanged();
+		
+	}
+
+	function initFormEvent(contentType){
+		var prefix = contentType.toLowerCase();		
+		var form = new mini.Form('#' + prefix + '_column_form');
+		var fields = form.getFields();
+		for(var i = 0; i < fields.length; i++){			
+			fields[i].on('valuechanged',function(e){saveChanges(e,prefix,'column')});
+		}
+		var form = new mini.Form('#' + prefix + '_filter_form');
+		var fields = form.getFields();
+		for(var i = 0; i < fields.length; i++){				
+			fields[i].on('valuechanged',function(e){saveChanges(e,prefix,'filter')});
+		}
+		
+		var form = new mini.Form('#' + prefix + '_control_form');
+		var fields = form.getFields();
+		for(var i = 0; i < fields.length; i++){
+			fields[i].on('valuechanged',function(e){saveChanges(e,prefix,'control')});
+		}
+	}
+
+	
+	function saveChanges(e,prefix,tabType){
+		
+		prefix = prefix.toLowerCase();
+		var treeId =  prefix + "_"+tabType+"_tree" ;
+		var formId =  "#" + prefix + "_"+tabType+"_form" ;
+		var nameField =  prefix + "_"+tabType+"Name" ;
+		var idField = prefix + "_"+tabType+"Id";
+		var labelField = prefix + "_"+tabType+"Label" ;
+		var nodeIdField = prefix + "_"+tabType+"NodeId" ;		
+
+		var tree = mini.get(treeId);
+		var nodeId = mini.get(nodeIdField).getValue();
+		var node = tree.getNode(nodeId);
+		if(e && node){
+			//不允许更改ID
+			if(e.sender.id == idField){
+				return false;
+			}
+			if(e.sender.id == nameField && tabType == 'column'){
+				return false;
+			}
+			value = e.sender.getValue();
+
+			if(value != 'undefined'){				
+				node.text = mini.get(nameField).getValue() + "[" + mini.get(labelField).getValue() + "]";
+				node.attributes[e.sender.id] = value;
+				mini.get(treeId).updateNode(node,node);
+			}
+			
+			//mini.get(treeId).updateNode(treeNode,treeNode);
+		}else if(node){
+			var form = new mini.Form(formId);
+			if(!form){
+				return;
+			}
+			if(mini.get(idField).getValue){
+				var fields = form.getFields();
+				for(var i = 0; i < fields.length; i++){
+					if(fields[i].id == idField || (fields[i].id == nameField && tabType == 'column')){
+						continue;
+					}			
+					
+					if(fields[i].getValue()){
+						node.attributes[fields[i].id] = fields[i].getValue();
+					}
+				}
+				node.text = mini.get(nameField).getValue()+ "[" + mini.get(labelField).getValue() + "]";
+				mini.get(treeId).updateNode(node,node);
+			}
+		}		
+	}
+
+	/* Control Function*/	
+	function loadControlTree(contentType){
+		var lc = contentType.toLowerCase();
+		var tree = mini.get(lc + "_control_tree");
+		var contextMenu = "#" + lc + "_control_contextmenu";
+		tree.set({
+			expandOnLoad: true,
+			showTreeIcon: true,
+			showTreeLines: false,			
+			allowLeafDropIn: false,
+			allowDrag: true,
+			allowDrop: true,			
+			height: pageHeight - 88,
+			contextMenu: contextMenu,
+			onnodeclick:function(e){
+				if(e.node.id.indexOf("_0") < 0){
+					saveChanges("",contentType,'control');
+					loadControlForm(e.node,contentType);
+				}
+			},
+			ongivefeedback:function(e){				
+				var tree = mini.get(lc + "_control_tree");
+				if(e.effect == 'add'){
+					e.effect= "no";
+					return;
+				}
+				if(e.dragNode.id.indexOf('_0') > 0){
+					e.effect = "no";
+					return;
+				}
+				if(e.dragNode['attributes'][lc + "_filterFilterType"] != e.dropNode['attributes'][lc + "_filterFilterType"]){
+					e.effect = "no";
+					return;
+				}
+			},
+			ondrop:function(e){
+				var tree = mini.get(lc + "_control_tree");
+				var parentNode = tree.getParentNode(e.dropNode);
+				var nodes = tree.getChildNodes(parentNode);
+				for(var i = 0; i < nodes.length; i++){
+					nodes[i]['attributes']['position'] = i;
+					tree.updateNode(nodes[i],nodes[i]);
+				}
+			}
+		});
+
+		var contentId = mini.get(contentType.toLowerCase() + "_id").getValue();
+		tenwa.ajax({
+			url:'/report/config/queryControls.action',
+			data:{id:contentId},
+			success:function(data){
+				tree.loadData(data);
+			}
+		});
+
+	}
+
+	
+/* Filter Function*/
+
+	function loadFilterTree(contentType){
+		var lc = contentType.toLowerCase();
+		var tree = mini.get(lc + "_filter_tree");
+		var contextMenu = "#" + lc + "_filter_contextmenu";
+		tree.set({
+			expandOnLoad: true,
+			showTreeIcon: true,
+			showTreeLines: false,			
+			allowLeafDropIn: false,
+			allowDrag: true,
+			allowDrop: true,			
+			height: pageHeight - 88,
+			contextMenu: contextMenu,
+			onnodeclick:function(e){
+				if(e.node.id.indexOf("_0") < 0){
+					saveChanges("",contentType,'filter');
+					loadFilterForm(e.node,contentType);
+
+				}
+			},
+			ongivefeedback:function(e){
+				var tree = mini.get(lc + "_filter_tree");
+				if(e.effect == 'add'){
+					e.effect= "no";
+					return;
+				}
+				if(e.dragNode.id.indexOf('_0') > 0){
+					e.effect = "no";
+					return;
+				}
+				if(e.dragNode['attributes'][lc + "_filterFilterType"] != e.dropNode['attributes'][lc + "_filterFilterType"]){
+					e.effect = "no";
+					return;
+				}
+			},
+			ondrop:function(e){
+				var tree = mini.get(lc + "_filter_tree");
+				var parentNode = tree.getParentNode(e.dropNode);
+				var nodes = tree.getChildNodes(parentNode);
+				for(var i = 0; i < nodes.length; i++){
+					nodes[i]['attributes']['position'] = i;
+					tree.updateNode(nodes[i],nodes[i]);
+				}
+			}
+		});
+
+		var contentId = mini.get(contentType.toLowerCase() + "_id").getValue();
+		tenwa.ajax({
+			url:'/report/config/queryFilters.action',
+			data:{id:contentId, contentType: contentType},
+			success:function(data){
+				tree.loadData(data);
+			}
+		});
+
+	}
+
+	function addFilter(contentType){
+		var tree = mini.get(contentType.toLowerCase() + '_filter_tree');
+		var parentNode = tree.getSelectedNode();
+		if(!parentNode){
+			return;
+		}
+		var prefix = contentType.toLowerCase();
+		var timeStamp = mini.formatDate(new Date(),'HHmmss');
+		var attrObject = new Object();
+		attrObject[prefix + "_filterId"] = "";
+		attrObject[prefix + "_filterLabel"] = 'NewFilter_' + timeStamp;
+		attrObject[prefix + "_filterName"] = 'NewFilter_' + timeStamp;
+		attrObject[prefix + "_filterFilterType"] = parentNode.attributes[prefix + "_filterFilterType"];
+		attrObject[prefix + "_filterDbType"] = "";
+		attrObject[prefix + "_filterHtmlType"] = "";
+		attrObject[prefix + "_filterExpress"] = "";
+		attrObject[prefix + "_filterDefaultValue"] = "";
+		attrObject[prefix + "_filterDataRequestType"] = "";
+		attrObject[prefix + "_filterComboboxDataSource"] = "";
+		attrObject[prefix + "_filterComboboxNameField"] = "";
+		attrObject[prefix + "_filterComboboxValueField"] = "";
+		tree.addNodes([{
+			id: 'NewFilter_' + timeStamp,
+			text: 'NewFilter_' + timeStamp,
+			attributes:attrObject
+		}],parentNode);
+		var node = tree.getNode('NewFilter_' + timeStamp);
+		tree.selectNode(node);
+		
+		loadFilterForm(node,contentType);
+	}
+
+	function removeFilter(contentType){
+		var lc = contentType.toLowerCase();
+		var tree = mini.get(lc + '_filter_tree');
+		var node = tree.getSelectedNode();
+
+		if(node.attributes[lc + '_filterId'] == ""){
+			tree.removeNode(node);
+		}else{
+			tenwa.ajax({
+				url: '/report/config/removeFilter.action',
+				data:{filterId: node.attributes[lc + '_filterId']},
+				dataType: 'TEXT',
+				success:function(data){
+					if(data == "TRUE"){
+						tree.removeNode(node);
+						mini.alert('删除成功');						
+					}else{
+						mini.alert(data);
+					}
+				}
+			});
+		}
+	}
+
+	function loadFilterForm(node,contentType){
+		var prefix = contentType.toLowerCase();
+		var form = new mini.Form('#' + prefix + '_filter_form');
+		form.clear();
+		form.set({
+			data:node.attributes
+		});
+		mini.get(prefix + "_filterNodeId").setValue(node.id);
+		mini.get(prefix + '_filterHtmlType').doValueChanged();	
+	}
+
+	function saveContent(contentType){
+		var lc = contentType.toLowerCase();
+		var action = "/report/config/";		
+		if(_allContents[contentType]){
+			action += _allContents[contentType]['save'];
+		}else{
+			return;
+		}
+
+		var form = new mini.Form('#' + lc + "_form");
+		form.validate();
+		if(!form.isValid()){
+			var errorText = form.getErrorTexts();
+			var errControl = form.getErrors();
+			
+			mini.alert(errorText[0]);
+			errControl.focus();
+			return;
+		}
+		if(contentType == 'TABLE' || contentType == 'CHART'){
+			//Serial Columns
+			new mini.Form('#' + lc + '_column_form').clear();
+			new mini.Form('#' + lc + '_filter_form').clear();
+
+			var columnTree = mini.get(lc + '_column_tree');
+			var checkedNodes = columnTree.getCheckedNodes(false);
+			var columnJson = "";
+			var temp = new Array();
+			for(var i = 0; i < checkedNodes.length; i++){
+				temp.push(checkedNodes[i].attributes);
+			}
+			columnJson = mini.encode(temp);
+			mini.get(lc + '_selectedColumns').setValue(columnJson);
+
+			var filterTree = mini.get(lc + "_filter_tree");
+			var rootNode = filterTree.getRootNode();
+			var L1Nodes = filterTree.getChildNodes(rootNode);
+			
+			temp = new Array();
+			for(var i = 0; i < L1Nodes.length; i++){
+				var nodes = filterTree.getChildNodes(L1Nodes[i]);
+				for(var j = 0; j < nodes.length; j++){
+					temp.push(nodes[j].attributes);
+				}
+			}
+			mini.get(lc + "_selectedFilters").setValue(mini.encode(temp));
+			
+			//controlInfo
+			var controlTree = mini.get(lc+ '_control_tree');
+			var rootNode = controlTree.getRootNode();
+			var L1Nodes = controlTree.getChildNodes(rootNode);
+			
+			temp = new Array();
+			for(var i = 0; i < L1Nodes.length; i++){
+				var nodes = filterTree.getChildNodes(L1Nodes[i]);
+				for(var j = 0; j < nodes.length; j++){
+					temp.push(nodes[j].attributes);
+				}
+			}
+			mini.get(lc + "_selectedControls").setValue(mini.encode(temp));
+		}
+		
+		tenwa.ajax({
+			url: action,
+			data: form.getData(),
+			method:'POST',
+			success:function(data){
+				if(data.message == "TRUE"){
+					mini.alert('保存成功');
+					loadContentTree();
+					var newNodes = mini.get('content_tree').getNode(data.result);
+					if(newNodes){
+						mini.get('content_tree').selectNode(newNodes[0]);
+						loadContentForm(data.result,contentType);
+					}
+
+				}
+			},
+			error:function(xhr,data,status){
+				alert(data + status);
+			}
+		});
+	}
+
+	function removeContent(){
+		var tree = mini.get("content_tree");
+		if(tree){
+			var node = tree.getSelectedNode();
+			if(node){
+				$.ajax({
+					url: tenwa.getWebRoot() + "/report/config/removeTableAndChart.action",
+					type: 'POST',
+					dataType: 'TEXT',
+					data:{contentType: node.attributes.contentType,'contentId':node.id},
+					success:function(data){
+						if(data == "TRUE"){
+							mini.alert('删除成功');
+							loadContentTree();
+						}else{
+							mini.alert(data);
+						}
+					}
+				});
+			}
+		}
+
+	}
+
+	function exportReport(){
+		var url = tenwa.getWebRoot() + "/report/config/export.action?browser=" + tenwa.browser.getBrowser();
+		var node = mini.get('report_tree').getSelectedNode();
+		if(node){
+			url += ("&id=" + node.id);
+		}
+		$.fileDownload(url);
+	}	
+
+	function importReport(){
+		mini.get('import_ok').disable();
+		var timestamp = (new Date()).valueOf(); 		
+		var intervalId = -1;
+		var url = tenwa.getWebRoot() + '/report/config/uploadimportfile.action?rootMenuId='+_rootMenuId+'&timestamp=' + timestamp; 
+		var tree = mini.get('report_tree');
+		if(tree){
+			var node = tree.getSelectedNode();
+			if(node){
+				url += ("&parentId=" + node.id);
+			}
+		}
+		$('#import_progress').val("");
+		$('#import_fileupload').css('display','none');
+		$.ajaxFileUpload({
+			url: url,
+			secureuri: false,
+			fileElementId:'input_file_upload',
+			dataType:'JSON',
+			success:function(data){					
+				if(intervalId != -1){
+					clearInterval(intervalId);
+				}
+				getImportProgress(timestamp);
+			}
+		});
+		intervalId = setInterval(function(){
+			getImportProgress(timestamp);
+		},500);
+	}
+
+	function getImportProgress(timestamp){		
+		
+		$.ajax({
+			url:tenwa.getWebRoot() + '/report/config/importPrgress.action',
+			data:{'timestamp':timestamp},
+			type:'get',
+			dataType: 'json',
+			async: false,
+			success:function(data){				
+				for(var i = 0; i < data.length; i++){
+					if(data[i].msg != "TRUE"){						
+						$('#import_progress').append("<p>").append(data[i].msg).append("</p>");
+					}
+				}
+			}
+		});
+	}
+
+	function showUploadWindow(){
+		$('#import_fileupload').css('display','');
+		$('#import_progress').val("");
+		mini.get('import_ok').enable();
+		mini.get('div_upload').show();		
+	}
+	
+	function loadOrgTree(){
+		var nodes = [];
+		tenwa.ajax({
+			url:'/report/config/getUserTree.action',
+			dataType:'text',
+			async: false,
+			success:function(data){
+				nodes = mini.decode(data);
+			}			
+		});
+		
+		var tree = new mini.Tree();
+		tree.set({
+			id:'orgTree',
+			allowDrag:false,
+			allowDrop:false,
+			allowLeafDropIn:true,
+			height: 580,			
+			expandOnLoad: 0,
+			showCheckBox: true,
+			showFolderCheckBox : false
+		});
+		var treeSelected = new mini.Tree();
+		treeSelected.set({
+			id:'orgTreeSelect',
+			datas:[],
+			allowDrag:false,
+			allowDrop:false,
+			allowLeafDropIn:true,
+			height: 580,			
+			expandOnLoad: 0,
+			showCheckBox: true,
+			showFolderCheckBox : false
+		});
+		tree.render($('#orgTree')[0]);
+		treeSelected.render($('#orgTreeSelected')[0]);
+		
+		
+		mini.get('controlPersonButton').set({
+			onclick:function(e){
+				var checkedPersonId = mini.get('table_controlPerson').getValue();
+				treeSelected.loadData([]);
+				reloadTrees(checkedPersonId,nodes,true);
+				var containner = mini.get('idPersonWindowContainer');
+				containner.show('center','middle');
+			}
+		});
+		
+		mini.get('personSelect').set({
+			onclick:function(e){
+				var checkedNodes = mini.get('orgTree').getCheckedNodes(false);
+				for(var i = 0 ; i < checkedNodes.length ; i++){
+					if(checkedNodes[i].iconCls == 'icon-home' ){
+						mini.alert('请选择人员！！！');
+						return;
+					}
+				}
+				addSelectedPerson(checkedNodes);
+				var checkedPersonId = getSelectedId();
+				reloadTrees(checkedPersonId,nodes,false);
+			}
+		});
+		
+		mini.get('personUnSelect').set({
+			onclick:function(e){
+				var checkNodes = treeSelected.getCheckedNodes(false);
+				if(checkNodes.length <= 0 ){
+					mini.alert('请你选择需要撤销的人员！');
+					return;
+				}else{
+					for(var i =  0 ; i < checkNodes.length;i++){
+						treeSelected.removeNode(checkNodes[i]);
+					}
+					var checkedPersonId = getSelectedId();
+					reloadTrees(checkedPersonId,nodes,false);
+				}
+			}
+		});
+		
+		mini.get('controlConfirm').set({
+			onclick:function(e){
+				var checkedNodes =  mini.get('orgTreeSelect').getList();
+				var ids = [];
+				var names = [];
+				for(var i = 0 ; i < checkedNodes.length ; i++){
+					ids.push(checkedNodes[i].id);
+					names.push(checkedNodes[i].text);
+				}
+				mini.get('table_controlPerson').setValue(ids.join(',')) ;
+				mini.get('table_controlPersonName').setValue(names.join(','));
+				mini.get('idPersonWindowContainer').hide();
+			}
+		});
+		mini.get('controlCancel').set({
+			onclick:function(e){
+				var containner = mini.get('idPersonWindowContainer');
+				containner.hide();
+			}
+		});
+		mini.get('org_search_button').set({
+			onclick:function(e){
+				searchOrgPerson(tree);
+			}
+		});
+		jQuery("#org_search_input").bind('keyup',function(e){
+			var event = window.event || e;
+			if(event && event.keyCode==13){
+				searchOrgPerson(tree);
+			}
+		});
+	}
+	function addSelectedPerson(nodes){
+		var selectOrg = mini.get('orgTreeSelect');
+		for(var i = 0 ; i<nodes.length;i++){
+			var node = {};
+			node.id = nodes[i].id;
+			node.text = nodes[i].text;
+			node.iconCls = nodes[i].iconCls;
+			selectOrg.addNode(node,0);
+		}
+	}
+	function getSelectedId(){
+		var nodes = mini.get('orgTreeSelect').getList();
+		var ids = [];
+		for(var i = 0 ; i < nodes.length ; i++){
+			ids.push(nodes[i].id);
+		}
+		return ids.join(',');
+	}
+	function reloadTrees(checkedPersonId,nodes,isLoadRight){
+		var tempNodes = mini.clone(nodes);
+		var tree = mini.get('orgTree');
+		tree.loadData(tempNodes);
+		var nodesList = tree.getList();
+		var selectedNodes = [];
+		for(var i  = 1  ; i < nodesList.length ; i++){
+			if(checkedPersonId.indexOf(nodesList[i].id) != -1){
+				selectedNodes.push(nodesList[i]);
+				tree.removeNode(nodesList[i]);
+			}
+		}
+		if(isLoadRight){
+			addSelectedPerson(selectedNodes);
+		}
+	}
+	function searchOrgPerson(tree){
+		var value  = jQuery('#org_search_input').val();
+		if(value.trim() == ''){
+			tree.clearFilter();
+		}else{
+			tree.filter (function(node){
+				if(node.text.indexOf(value.trim()) != -1){
+					return true;
+				}					
+			},false);
+		}
+	}
+});
+

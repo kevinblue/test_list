@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	        
+		select 
+     list.*,
+     tds3.name_  rentinvoicetype,
+     tds4.name_ taxrate,
+     list.incomemoney-list.exportmoney as balanceexportmoney 
+    from 
+        (
+            select
+            ci.id as cid,
+            ci.contract_put_number contractputnumber,--投放编号
+            rii.id           as id,
+            ci.contract_id        as contractid,
+            CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+            cinfo.cust_name       as custname,
+            rii.tax_type          as plantypeid,
+            cfrp.plan_date        as plandate,
+            case when  rii.tax_type='rent'     then cfrp.rent
+                 when  rii.tax_type='corpus'   then cfrp.corpus 
+                 when  rii.tax_type='interest' then cfrp.interest
+                 end as planmoney,
+           case rii.tax_type when  'corpusone' then '本金一次性开票' when  'rent' then '租金' when  'corpus' then '本金' when  'interest' then '利息' end as plantype,
+            
+            cfri.plan_list        as rentlist,
+            cfri.hire_date        as incomedate,
+            rii.money as incomemoney,
+            nvl(exporttab.exportmoney,0) as exportmoney,
+            
+            --tds1.name_             as rentinvoicetype,
+            case rii.tax_type when 'corpusone'then cit.corpus_invoice_type when 'rent' then cit.rent_invoice_type when 'corpus' then cit.corpus_invoice_type
+            when 'interest' then cit.interest_invoice_type end as rentinvoicetype1,
+            case rii.tax_type when 'corpusone' then cit.corpus_rate when 'rent' then cit.rent_rate when 'corpus' then cit.corpus_rate
+            when 'interest' then cit.interest_rate end as taxrate1,
+            cit.tax_reg_code  as taxregcode,
+            cit.tax_bank      as taxbank,
+            cit.tax_acc       as taxacc,
+            cit.invoice_phone as phone,
+            cit.invoice_add   as regaddress,
+            case  when  nvl(rii.invoice_status,0)=0 then '未申请' when  nvl(rii.invoice_status,0)=1 then '已退回' 
+            when  nvl(rii.invoice_status,0)=2 and nvl(exporttab.exportmoney,0)=0  then '已申请' when  nvl(rii.invoice_status,0)=2 and nvl(exporttab.exportmoney,0)!=0  then '已导出' end as status,
+            TDS2.NAME_        AS LEASEFORM
+            from rent_invoice_info rii
+            left join contract_fund_rent_income cfri on rii.cfri_id=cfri.id
+            left join contract_fund_rent_plan cfrp on cfri.plan_id=cfrp.id
+            left join contract_info ci on cfri.contract_id=ci.id
+             --主合同号跟发票类型关联
+            left join contract_info pci on pci.id=ci.sup_contract_id
+            left join contract_invoice_type cit on pci.id=cit.contract_id
+             --租金开票类型
+            left join t_dicts_datas tdr on cit.rent_invoice_type= tdr.id_
+            left join t_dicts_datas tdc on cit.corpus_invoice_type = tdc.id_
+            left join t_dicts_datas tdi on cit.corpus_invoice_type = tdi.id_
+            left join contract_condition cc on ci.id=cc.contract_id
+            --left join contract_invoice_type cit on ci.id=cit.contract_id
+            --left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+            left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+            left join cust_info cinfo on ci.cust_id=cinfo.id
+            left join 
+            (
+                 select down.rent_invoice_id, nvl(sum(down.invoice_money),0) as exportmoney from rent_invoice_download_info down
+                 where down.rent_invoice_id is not null 
+                 group by  down.rent_invoice_id
+            )exporttab on rii.id=exporttab.rent_invoice_id
+            
+            where 1=1
+             --在所有合同中除去主合同（求所有的子合同）
+            and ci.sup_contract_id is not null and ci.sup_contract_id!=ci.id
+            --实收开票
+            and rii.cfri_id is not null
+            --开票种类为发票
+            and rii.bill_type='invoice'
+            --状态为已申请
+            --and rii.invoice_status=2
+            --and cit.invoice_type='invoice_mode.04'
+            and rii.tax_type!='corpusone'
+        ) list  
+        left join t_dicts_datas tds3 on tds3.id_ = list.rentinvoicetype1
+        left join t_dicts_datas tds4 on tds4.id_ = list.taxrate1 
+         where 1=1          
+        --剩余导出金额
+        --and list.planmoney-list.exportmoney>0
+        /~status: and list.status in ('<<status>>') ~/
+        
+		--/~contractid: and list.contractid like '%{contractid}%' ~/
+		--/~contractnumber: and list.contractnumber like '%{contractnumber}%' ~/
+		/~contractputnumber: and list.contractputnumber like '%{contractputnumber}%' ~/
+		/~custname: and list.custname like '%{custname}%' ~/
+		/~incomedateStart: and list.incomedate >='{incomedateStart}' ~/
+        /~incomedateEnd: and list.incomedate <='{incomedateEnd}' ~/
+        /~plantype: and list.plantype like '%{plantype}%' ~/
+        /~balanceexportmoneyMin: and (list.incomemoney-list.exportmoney) >'{balanceexportmoneyMin}' ~/
+        /~balanceexportmoneyMax: and (list.incomemoney-list.exportmoney) <'{balanceexportmoneyMax}' ~/
+        /~leaseform: and list.leaseform = '{leaseform}' ~/
+        order by list.contractid,list.rentlist
+	        
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,213 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+<script type="text/javascript">
+	jQuery(function() {
+		var showTools = true;
+		if('${param.isView}' == 'true'){showTools = false};
+		seajs.use(
+						[ "js/apcomponent/aptable/aptable.js" ],
+						function(ApTable) {
+							new ApTable(
+									{
+										id : 'wind_details',
+										width : globalClientWidth - 20,
+										height : 420,
+										exportTitle : '风电投资明细',
+										iconCls : 'icon-node',
+										renderTo : 'wind_details_touzi',
+										hiddenQueryArea : true,
+										importTargetClass :'com.tenwa.leasing.entity.proj.WindPowerInvestmentDetails',
+										importDataIndex : '3',
+										importHeaderIndex : '1',
+										importprojDevelop :projid,
+										importOrExPortCallBack:'SetwindInvestment',
+										editFormPopupWindowWidth : 700,
+										//showToolbar : showTools,
+										remoteOper : true,
+										multiSelect : true,
+										entityClassName : 'com.tenwa.leasing.entity.proj.WindPowerInvestmentDetails',
+										pageSize : 1000,
+										showPager : true,
+										lazyLoad : false,
+										xmlFileName : '/eleasing/workflow/proj/proj_wind/wind_proj_details.xml',
+										params : {
+											projid : projid
+										},
+										showToolbar: showTools,
+										tools : [ 'edit', '-',
+													'remove', '-', 'exportExcel','-','importExcel','-',
+													{
+														html : '同步刷新',
+														plain : true,//背景透明
+														iconCls : 'icon-addfolder',//按钮图标类
+														handler : function (miniTable, buttonText) {
+															var s=mini.get("bili_other");
+															s.reload();
+													}
+													},'-',{
+														html : '模板下载',
+														plain : true,
+														iconCls : 'icon-addfolder',
+														handler : function(miniTable, buttonText) {
+															var fileTeplate = new fileTemplateConfig({
+																templateno : 'F-201708009',
+																tableid : miniTable.config.id,
+																modelname : miniTable.config.title,
+																returntype : 'file',
+																parames : {}
+															});
+															fileTeplate.createFile();
+														}
+													}],
+										columns : [
+												{
+													type : 'indexcolumn'
+												},
+												{
+													type : 'checkcolumn'
+												},
+												{
+													field : 'id',
+													header : '记录编号',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : false
+													}
+												},
+												{
+													field : 'projid',
+													header : '项目ID',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : false,
+														value : projid
+													}
+												},
+												{
+													field : 'code',
+													header : '编码',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'equipname',
+													header : '设备/劳务名称',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'type',
+													header : '规格型号',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														newLine :true,
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'unit',
+													header : '单位',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'amount',
+													header : '数量',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														
+														newLine :true,
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'price',
+													header : '单价/元',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},
+												{
+													field : 'total',
+													header : '合价/元',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														colspan:3,
+														type : 'float',
+														vtype : "float",
+														newLine :true,	
+														readOnly : false,
+														fieldVisible : true,
+													}
+												},	{
+													field : 'remark',
+													header : '备注',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														maxLength:500,
+											               newLine:true,
+											                  type:'textarea',
+											               colspan:3,
+											                height:70,
+											                 width:'100%'
+													}
+												}
+										]
+									});
+						});
+	});
+</script>
+<div id='wind_details_touzi'></div>
+<div id="tabDeatils" class="mini-tabs" activeIndex="0" style="width: 100%;" bodyStyle="padding:0;border:0;">
+<div class="mini-panel" title="各项投资占比" name="bili_other" iconCls="icon-cut"> <jsp:include page="proj_wind_power_detail/bili_other.jsp" ></jsp:include></div> 
+<div class="mini-panel" title="设备购置费" name="equip_cost" iconCls="icon-cut"> <jsp:include page="proj_wind_power_detail/equip_cost.jsp" ></jsp:include></div>
+<div class="mini-panel" title="安装工程费" name="setup_cost" iconCls="icon-cut"> <jsp:include page="proj_wind_power_detail/setup_cost.jsp" ></jsp:include></div>
+<div class="mini-panel" title="建筑工程费" name="build_cost" iconCls="icon-cut"> <jsp:include page="proj_wind_power_detail/build_cost.jsp" ></jsp:include></div>
+<div class="mini-panel" title="其他费用" name="other_cost" iconCls="icon-cut"> <jsp:include page="proj_wind_power_detail/other_cost.jsp" ></jsp:include></div> 
+</div>		  

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE
+  (ID,
+   MSG_TITLE,
+   proj_id,
+   SUBJECT_,     
+   SEND_DATE,
+   CREATE_DATE,
+   MSG_TYPE,
+   FROMUSER,
+   CREATOR_)
+   select sys_guid(),
+         '投保提醒',
+         ci.proj_id,
+         '尊敬的客户！'||ci.project_name||'租赁合同号为:' || ci.contract_number || '的租赁合同将于' ||
+         ci.start_date_ || '进入租赁期，请及时进行相关投保事宜。',
+          ci.start_date_,
+         to_char(sysdate, 'yyyy-mm-dd HH24:MI:SS'),
+         'msgtype.1',
+         'Administrator',
+         'Administrator'
+    from contract_info ci 
+   where 1 = 1 
+     and ci.contract_status=31 
+     and not exists
+   (select 1
+            from BASE_MESSAGE bm
+           where instr(to_char(bm.subject_),
+                         '尊敬的客户！'||ci.project_name||'租赁合同号为:' || ci.contract_number || '的租赁合同将于' ||
+         ci.start_date_ || '进入租赁期，请及时进行相关投保事宜。') > 0)
+
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

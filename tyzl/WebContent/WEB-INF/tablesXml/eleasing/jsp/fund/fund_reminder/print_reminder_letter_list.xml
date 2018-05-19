@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      		<!-- 
+      			注：由于打印催款函比较特殊，后人如果需修改这段SQL，注意千万不要从vi_cust_info_all视力中取数据
+      			因为为报无法从套接字读取更多的数据
+      		 -->
+	        <![CDATA[
+	        	select * from(
+			        	select 
+							vi1.cust_name custname,
+							vi1.id contractid,
+							vi1.contract_id contract_id,
+							vi1.contract_number contractnumber,
+				          dunning.id dunningid,
+				          tusers.realname_ rawValue_partdept,
+				          contractoutlist.out_list overduenum,
+				          --nvl(contractoutlist.inc_rent,0) overduerent,
+				          plan_.overduerent,
+				          contract_penalty.penalty,
+				          --custall.phone,
+				          --custall.address,
+				          CCP.PHONE_
+		                  ||CIP.PHONE AS phone,
+		                  CCP.mail_add
+		                  ||CIP.MAILA_DDRESS AS address,
+				          contractcondition.start_date startdate,
+				          guaranteecustinfo.cust_name guaranteecustname,
+                  		  notice1.id,
+                  		  notice1.status				  
+								from 
+                (select notice.id,notice.contract_id,status from OVERDUE_DUNNING_Notice notice where (notice.contract_id,notice.sent_date) in(select contract_id,max(sent_date) sendate from OVERDUE_DUNNING_Notice where 1=1  group by contract_id)) notice1
+                  left join 
+                (
+				        select * from (select vi2.contractid contractid from vi_contract_fund_rent_plan vi2 group by vi2.contractid
+								having sum(vi2.CURRENTINCOME)<sum(vi2.rent))   fundrentplan) fundrentplan1
+				        on fundrentplan1.contractid= notice1.contract_id
+				        left join 
+				        vi_contract_info vi1 on fundrentplan1.contractid =vi1.id
+				        left join OVERDUE_DUNNING_INFO dunning 
+				        on vi1.id = dunning.contract_id 
+				            left join T_USERS tusers
+				            on dunning.part_dept = tusers.id_
+								left join 
+								base_contract_status status
+								on vi1.contract_status = status.status_code
+				        left join
+				        vi_contract_out_list contractoutlist
+				        on vi1.id = contractoutlist.contract_id
+				        --left join
+				        --vi_cust_info_all custall
+				        --on vi1.custid = custall.custid
+				        LEFT OUTER JOIN CUST_INFO_COMPANY CIP
+		                ON CIP.CUST_ID=vi1.custid
+		                LEFT OUTER JOIN CUST_INFO_PERSON CCP
+		                ON CCP.CUST_ID=vi1.custid
+				        left join
+				        CONTRACT_CONDITION contractcondition
+				        on vi1.id = contractcondition.contract_id
+				        left join(select contract_id,
+		                    to_char(wmsys.wm_concat(custinfo.cust_name)) cust_name
+		                  FROM contract_guarantee_method guaranteemethod
+		                  LEFT JOIN cust_info custinfo
+		                  on guaranteemethod.assuror = custinfo.id
+		                  group by contract_id) guaranteecustinfo
+		                on  guaranteecustinfo.contract_id = vi1.id
+				        left join (select sum(CURRENTOVERAGE) overduerent,contractid from vi_contract_fund_rent_plan where plandate <to_char(sysdate,'yyyy-mm-dd') group by contractid )plan_
+                on plan_.contractid = vi1.id 
+                left join (select sum(penalty) penalty,contract_id from vi_contract_penalty contract_penalty group by contract_id ) contract_penalty
+				         on contract_penalty.contract_id = vi1.id 
+		        ) menutemp
+		        where 1=1
+		        and overduerent > 0
+		        /~status: AND status = '{status}' ~/
+		        /~custname: AND menutemp.custname like '%{custname}%' ~/
+		        /~contract_id: AND menutemp.contract_id like '%{contract_id}%' ~/
+		        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+		        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+		        /~guaranteecustname: AND menutemp.guaranteecustname like '%{guaranteecustname}%' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        select * from(
+			        	select 
+							vi1.cust_name custname,
+							vi1.id contractid,
+							vi1.contract_id contract_id,
+							vi1.contract_number contractnumber,
+				          dunning.id dunningid,
+				          tusers.realname_ rawValue_partdept,
+				          contractoutlist.out_list overduenum,
+				          --nvl(contractoutlist.inc_rent,0) overduerent,
+				          plan_.overduerent,
+				          contract_penalty.penalty,
+				          --custall.phone,
+				          --custall.address,
+				          CCP.PHONE_
+		                  +CIP.PHONE AS phone,
+		                  CCP.mail_add
+		                  +CIP.MAILA_DDRESS AS address,
+				          contractcondition.start_date startdate,
+				          guaranteecustinfo.cust_name guaranteecustname,
+                  		  notice1.id,
+                  		  notice1.status				  
+								from 
+                (select notice.id,notice.contract_id,status from overdue_dunning_notice notice where 
+exists 
+(select contract_id,max(sent_date) sendate from OVERDUE_DUNNING_Notice group by contract_id
+having notice.contract_id=contract_id and notice.sent_date = max(sent_date)
+)) notice1
+                  left join 
+                (
+				        select * from (select vi2.contractid contractid from vi_contract_fund_rent_plan vi2 group by vi2.contractid
+								having sum(vi2.CURRENTINCOME)<sum(vi2.rent))   fundrentplan) fundrentplan1
+				        on fundrentplan1.contractid= notice1.contract_id
+				        left join 
+				        vi_contract_info vi1 on fundrentplan1.contractid =vi1.id
+				        left join OVERDUE_DUNNING_INFO dunning 
+				        on vi1.id = dunning.contract_id 
+				            left join T_USERS tusers
+				            on dunning.part_dept = tusers.id_
+								left join 
+								base_contract_status status
+								on vi1.contract_status = status.status_code
+				        left join
+				        vi_contract_out_list contractoutlist
+				        on vi1.id = contractoutlist.contract_id
+				        --left join
+				        --vi_cust_info_all custall
+				        --on vi1.custid = custall.custid
+				        LEFT OUTER JOIN CUST_INFO_COMPANY CIP
+		                ON CIP.CUST_ID=vi1.custid
+		                LEFT OUTER JOIN CUST_INFO_PERSON CCP
+		                ON CCP.CUST_ID=vi1.custid
+				        left join
+				        CONTRACT_CONDITION contractcondition
+				        on vi1.id = contractcondition.contract_id
+				        left join(select contract_id,
+                            [cust_name]=stuff((select ','+cust_name from cust_info t where t.id=guaranteemethod.assuror for xml path('')), 1, 1, '')
+		                  FROM contract_guarantee_method guaranteemethod
+		                  group by contract_id,assuror) guaranteecustinfo
+		                on  guaranteecustinfo.contract_id = vi1.id
+				        left join (select sum(CURRENTOVERAGE) overduerent,contractid from vi_contract_fund_rent_plan where plandate <convert(varchar(100),getdate(),23) group by contractid )plan_
+                on plan_.contractid = vi1.id 
+                left join (select sum(penalty) penalty,contract_id from vi_contract_penalty contract_penalty group by contract_id ) contract_penalty
+				         on contract_penalty.contract_id = vi1.id 
+		        ) menutemp
+		        where 1=1
+		        and overduerent > 0
+		        /~status: AND status = '{status}' ~/
+		        /~custname: AND menutemp.custname like '%{custname}%' ~/
+		        /~contract_id: AND menutemp.contract_id like '%{contract_id}%' ~/
+		        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+		        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+		        /~guaranteecustname: AND menutemp.guaranteecustname like '%{guaranteecustname}%' ~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,87 @@
+package com.tenwa.leasing.action.contract.transfer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Component;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.kernal.utils.SecurityUtil;
+import com.tenwa.leasing.entity.contract.ContractBorrowHis;
+import com.tenwa.leasing.service.contract.contractChange.ContractChangeService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+@WorkflowAction(name = "fileTransferEndAction", description = "流程结束动作", workflowName = "档案交接流程")
+@Component(value = "fileTransferEndAction")
+public class FileTransferEndAction implements JbpmBaseAction {
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "contractChangeService")
+	private ContractChangeService contractChangeService;
+	
+	@Override
+	public void back(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		String doc_id = jbpmWorkflowHistoryInfo.getHistoryProcessInstanceImpl().getDbid()+"";
+		variablesMap.put("docId", doc_id);
+		String json_handover_str=variablesMap.get("json_this_handover_str");
+		JSONArray jsonArray =new JSONArray(json_handover_str);
+		List<ContractBorrowHis> list=new ArrayList<ContractBorrowHis>();
+		User user  =  SecurityUtil.getPrincipal();//当前人
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+		String nowdate = df.format(new Date());
+		for (int i = 0; i < jsonArray.length(); i++) {
+			 ContractBorrowHis contractborrowhis=new ContractBorrowHis();
+			JSONObject  jsonobject = (JSONObject) jsonArray.get(i);
+             contractborrowhis.setDocSubName(jsonobject.get("docsubname").toString());
+             contractborrowhis.setDocNumber(jsonobject.get("docnumber").toString());
+             contractborrowhis.setDocName(jsonobject.get("docname").toString());
+             contractborrowhis.setHandoverDate(jsonobject.get("handoverdate").toString());
+             contractborrowhis.setHandoverMan(jsonobject.get("handoverman").toString());
+             contractborrowhis.setDocMemo(jsonobject.get("docmemo").toString());
+             contractborrowhis.setId(jsonobject.get("_id").toString());
+             contractborrowhis.setDocSubName(jsonobject.get("_uid").toString());
+             contractborrowhis.setFileStatus("3");
+             contractborrowhis.setCreateDate(nowdate);
+             contractborrowhis.setCreator(user);
+             list.add(contractborrowhis);
+		};
+		this.tableService.saveAllEntities(list);
+		WorkflowUtil.deleteWorkFlowConflict(this.baseService, variablesMap);
+		}
+	
+	
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+}

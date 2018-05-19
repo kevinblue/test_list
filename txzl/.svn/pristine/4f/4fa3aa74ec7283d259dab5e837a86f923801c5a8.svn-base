@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        
+	      select 
+   ce.equip_name equipname,
+    round(nvl(ce.ORIGINALTOTAL,0)/10000,2) total,
+   round(nvl(ce.Nowtotal,0)/10000,2) nowtotal,
+ 	 case when
+         ins.startdata<='{thissend1}' and ins.enddata>='{thissend1}' then 
+         ins.startdata || '至' || ins.enddata
+         else null 
+           end as date_start_end,
+       case when
+         ins.startdata<='{thissend1}' and ins.enddata>='{thissend1}' then '是'
+         else 
+           '否/不在保险期内' end as whetherinsurance,
+       case when
+         ins.startdata<='{thissend1}' and ins.enddata>='{thissend1}' then ins.insuranceid
+         else 
+           null  end as insuranceid,
+       case when
+         ins.startdata<='{thissend1}' and ins.enddata>='{thissend1}' then ins.firstbeneficiary
+         else 
+           null  end as firstbeneficiary
+ from contract_equip ce 
+left join (select --rownum,ii.
+ contract_id conid,
+ ii.Insurance_Id insuranceid,
+ ii.insurer_start_date startdata,
+ ii.insurer_end_date enddata,
+ ii.First_Beneficiary firstbeneficiary
+ from insurance_info ii
+where 1=1
+and ii.insurer_start_date<='{thissend1}'
+and ii.insurer_end_date>='{thissend1}'
+      --and  rownum = 1
+      ) ins on ins.conid = ce.contract_id
+ where ce.contract_id = '{contractidselect}'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

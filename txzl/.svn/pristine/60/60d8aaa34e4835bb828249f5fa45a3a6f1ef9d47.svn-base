@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+不良资产
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	         select 
+				cfrp.contract_id ,--合同编号
+				cfrp.corpus lease_money,--融资金额
+				cfrp.corpus-nvl(cfri.corpus,0) left_corpus,--融资余额
+				nvl(cfri.rent,0) total_rent,--已收款总额
+				cfrp.rent-nvl(cfri.rent,0)  income_rent-- 应收款总额
+				from (select sum(a.rent) rent,sum(a.corpus) corpus,a.contract_id 
+				from contract_fund_rent_plan a 
+				group by a.contract_id) cfrp
+				left join (select sum(b.rent) rent,sum(b.corpus) corpus,b.contract_id contract_id 
+				from contract_fund_rent_income b 
+				group by b.contract_id) cfri 
+				on cfri.contract_id=cfrp.contract_id 
+				where cfrp.CONTRACT_ID = '{contract_id}'
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

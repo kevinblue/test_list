@@ -1,0 +1,448 @@
+package com.tenwa.leasing.entity.pledge;
+
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+/**
+ * 
+ * @author zyh
+ * @date 2016-10-31下午09:33:10
+ * @info 抵质押登记
+ * @Copyright 
+ * Tenwa
+ */
+@Entity
+@FieldName(name = "抵质押登记")
+@Table(name="PLEDGE")
+public class Pledge {
+	
+	@Id
+    @GeneratedValue(generator = "paymentableGenerator")     
+    @GenericGenerator(name = "paymentableGenerator", strategy = "uuid") 
+    @Column(length=32)
+	private String id;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "REGIS_TYPE_ID")
+	@FieldName(name="登记类型")
+	private DictionaryData regisTypeId;
+	
+	@ManyToOne
+	@FieldName(name="抵质押登记合同编号")
+	@JoinColumn(name="CONTRACT_ID")
+	private ContractInfo contractid;
+	
+	@FieldName(name="登记证明编号")
+	@Column(name="REGIS_NUM",length=50)
+	private String regisNum;
+	
+	@FieldName(name="登记单位")
+	@Column(name="REGIS_UNIT",length=50)
+	private String regisUnit;
+	
+	@FieldName(name="抵质押物名称")
+	@Column(name="PLEDGE_NAME",length=200)
+	private String pledgename;
+		
+	@ManyToOne
+	@FieldName(name="担保单位")
+	@JoinColumn(name="ASSUROR")
+	private CustInfo assuror;
+	
+	@FieldName(name="联合担保人")
+	@Column(name="ASSUROR_UNION",length=50)
+	private String assurorUnion;
+	
+	@FieldName(name="抵质押物所在企业/自然人")
+	@Column(name="PLEDGE_OWNNER", length=50)
+	private String pledgeOwnner;
+	
+	@FieldName(name="抵质押物数额/原值")
+	@Column(name="PLEDGE_VALUE_NOW",length=50)
+	private String pledgeValueNow;
+	
+	@FieldName(name="抵质押物现值")
+	@Column(name="PLEDGE_VALUE",length=50)
+	private String pledgeValue;
+	
+	@FieldName(name="被担保债权总额/主合同金额")
+	@Column(name="ASSUROR_TOTALVAL",length=50)
+	private String assurorTotalval;
+			
+	@FieldName(name="抵质押物描述")
+	@Column(name="DESCRIPTION_ONE",length=200)
+	private String descriptionOne;
+		
+	@FieldName(name="债务履行期限起始日")
+	@Column(name="DEBT_START",length=50)
+	private String debtStart;
+	
+	@FieldName(name="债务履行期限终止日")
+	@Column(name="DEBT_END",length=50)
+	private String debtEnd;
+	
+	@FieldName(name="抵质押登记起始日")
+	@Column(name="PLEDGE_START",length=50)
+	private String pledgeStart;
+	
+	@FieldName(name="抵质押登记到期日")
+	@Column(name="PLEDGE_END",length=50)
+	private String pledgeEnd;	
+		
+	@FieldName(name="登记时间")
+	@Column(name="REGIS_TIME",length=50)
+	private String regisTime;
+	
+	@FieldName(name="预期销售收入")
+	@Column(name="SALES_REVENUE",length=100)
+	private String salesRevenue;
+	
+	
+	@FieldName(name="抵质押时间")
+	@Column(name="PLEDGE_TIME",length=50)
+	private String pledgetime;
+	
+	@FieldName(name="担保合同编号")
+	@Column(name="GUARANTEE_ID",length=50)
+	private String guaranteeid;
+	
+	@FieldName(name="抵质押原因")
+	@Column(name="PLEDGE_REASON",length=50)
+	private String pledgereason;
+	
+	@FieldName(name="采购时间")
+	@Column(name="PURCHASING_TIME",length=100)
+	private String purchasingtime;
+	
+	@FieldName(name="折旧年限")
+	@Column(name="DEPRECIA_LIFE",length=100)
+	private String deprecialife;
+	
+	@FieldName(name="残值率")
+	@Column(name="SALVAGE_RATE",length=100)
+	private String salvagerate;
+	
+	@FieldName(name="当前年度")
+	@Column(name="CURRENT_YEAR",length=100)
+	private String currentyear;
+	
+	@FieldName(name="质押股权比例")
+	@Column(name="PLEDGEDE_QUITY",length=100)
+	private String pledgedequity;
+	
+	
+	@FieldName(name="填表人")
+	@Column(name="PREPARER",length=50)
+	private String preparer;
+	
+	@ManyToOne
+	@FieldName(name="创建人")
+	@JoinColumn(name="CREATOR_")
+	private User creator;
+	
+	@FieldName(name="创建时间")
+	@Column(name="CREATE_DATE", length=20)	
+	private String createDate;
+	
+	@ManyToOne
+	@FieldName(name="修改人")
+	@JoinColumn(name="MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name="修改时间")
+	@Column(name="MODIFY_DATE", length=20)	
+	private String modifyDate;
+
+	@Column(name = "PLEDGE_STATUS", precision = 10, scale = 0)
+	@FieldName(name="抵质押状态")
+	private Integer pledgestatus;
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public DictionaryData getRegisTypeId() {
+		return regisTypeId;
+	}
+
+	public Integer getPledgestatus() {
+		return pledgestatus;
+	}
+
+	public void setPledgestatus(Integer pledgestatus) {
+		this.pledgestatus = pledgestatus;
+	}
+
+	public void setRegisTypeId(DictionaryData regisTypeId) {
+		this.regisTypeId = regisTypeId;
+	}
+
+	
+	public String getGuaranteeid() {
+		return guaranteeid;
+	}
+
+	public void setGuaranteeid(String guaranteeid) {
+		this.guaranteeid = guaranteeid;
+	}
+
+
+	public ContractInfo getContractid() {
+		return contractid;
+	}
+
+	public void setContractid(ContractInfo contractid) {
+		this.contractid = contractid;
+	}
+
+	public String getRegisNum() {
+		return regisNum;
+	}
+
+	public void setRegisNum(String regisNum) {
+		this.regisNum = regisNum;
+	}
+
+	public String getRegisUnit() {
+		return regisUnit;
+	}
+
+	public void setRegisUnit(String regisUnit) {
+		this.regisUnit = regisUnit;
+	}
+
+	public CustInfo getAssuror() {
+		return assuror;
+	}
+
+	public void setAssuror(CustInfo assuror) {
+		this.assuror = assuror;
+	}
+	
+
+	public String getAssurorUnion() {
+		return assurorUnion;
+	}
+
+	public void setAssurorUnion(String assurorUnion) {
+		this.assurorUnion = assurorUnion;
+	}
+
+	public String getPledgeOwnner() {
+		return pledgeOwnner;
+	}
+
+	public void setPledgeOwnner(String pledgeOwnner) {
+		this.pledgeOwnner = pledgeOwnner;
+	}
+
+	public String getPledgeValue() {
+		return pledgeValue;
+	}
+
+	public void setPledgeValue(String pledgeValue) {
+		this.pledgeValue = pledgeValue;
+	}
+
+	public String getAssurorTotalval() {
+		return assurorTotalval;
+	}
+
+	public void setAssurorTotalval(String assurorTotalval) {
+		this.assurorTotalval = assurorTotalval;
+	}
+
+	
+
+	public String getDescriptionOne() {
+		return descriptionOne;
+	}
+
+	public void setDescriptionOne(String descriptionOne) {
+		this.descriptionOne = descriptionOne;
+	}
+
+	public String getDebtStart() {
+		return debtStart;
+	}
+
+	public void setDebtStart(String debtStart) {
+		this.debtStart = debtStart;
+	}
+
+	public String getDebtEnd() {
+		return debtEnd;
+	}
+
+	public void setDebtEnd(String debtEnd) {
+		this.debtEnd = debtEnd;
+	}
+
+	public String getPledgeStart() {
+		return pledgeStart;
+	}
+
+	public void setPledgeStart(String pledgeStart) {
+		this.pledgeStart = pledgeStart;
+	}
+
+	public String getPledgeEnd() {
+		return pledgeEnd;
+	}
+
+	public void setPledgeEnd(String pledgeEnd) {
+		this.pledgeEnd = pledgeEnd;
+	}
+
+	public String getRegisTime() {
+		return regisTime;
+	}
+
+	public void setRegisTime(String regisTime) {
+		this.regisTime = regisTime;
+	}
+
+	public String getPledgetime() {
+		return pledgetime;
+	}
+
+	public void setPledgetime(String pledgetime) {
+		this.pledgetime = pledgetime;
+	}
+
+	public String getPledgereason() {
+		return pledgereason;
+	}
+
+	public void setPledgereason(String pledgereason) {
+		this.pledgereason = pledgereason;
+	}
+
+	public String getPreparer() {
+		return preparer;
+	}
+
+	public void setPreparer(String preparer) {
+		this.preparer = preparer;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public String getPledgeValueNow() {
+		return pledgeValueNow;
+	}
+
+	public void setPledgeValueNow(String pledgeValueNow) {
+		this.pledgeValueNow = pledgeValueNow;
+	}
+
+	public String getPurchasingtime() {
+		return purchasingtime;
+	}
+
+	public void setPurchasingtime(String purchasingtime) {
+		this.purchasingtime = purchasingtime;
+	}
+
+	public String getDeprecialife() {
+		return deprecialife;
+	}
+
+	public void setDeprecialife(String deprecialife) {
+		this.deprecialife = deprecialife;
+	}
+
+	public String getSalvagerate() {
+		return salvagerate;
+	}
+
+	public void setSalvagerate(String salvagerate) {
+		this.salvagerate = salvagerate;
+	}
+
+	public String getCurrentyear() {
+		return currentyear;
+	}
+
+	public void setCurrentyear(String currentyear) {
+		this.currentyear = currentyear;
+	}
+
+	public String getPledgedequity() {
+		return pledgedequity;
+	}
+
+	public void setPledgedequity(String pledgedequity) {
+		this.pledgedequity = pledgedequity;
+	}
+
+	public String getPledgename() {
+		return pledgename;
+	}
+
+	public void setPledgename(String pledgename) {
+		this.pledgename = pledgename;
+	}
+
+	public String getSalesRevenue() {
+		return salesRevenue;
+	}
+
+	public void setSalesRevenue(String salesRevenue) {
+		this.salesRevenue = salesRevenue;
+	}
+  
+	
+			
+}

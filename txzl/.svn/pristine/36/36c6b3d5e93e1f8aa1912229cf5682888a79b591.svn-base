@@ -1,0 +1,535 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/init.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+
+<script type="text/javascript">
+seajs.use(["${pageContext.request.contextPath}/js/tenwa/init.js"]);
+var modelnameParmas=null;
+jQuery(function(){
+	var showTools = true;
+
+	if('${param.isView}' == 'true'||isViewHistoryTask==true){showTools = false;}
+	//获取父页面中保存在hidden域的值
+	
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "quotation_scheme",
+			renderTo: "id_table_quotation_scheme",
+			width: globalClientWidth - 20,
+			height: 360,
+			lazyLoad: false,
+			isClickLoad:false,
+			remoteOper : false,
+			showPager: false,
+			multiSelect: true,
+			showToolbar: showTools,
+			tools: ['remove','-',
+			        {
+						html : '生成项目建议书',
+						plain : true,
+						iconCls : 'icon-save',
+						handler : function(miniTable, buttonText) {						
+							//获得01界面上租赁形式，来判断生成模板类型：直接租赁和售后回租
+							var lease_form=mini.getbyName("proj_info.leasform").getText();
+						     var cdates=miniTable.getData();
+					       for(var i=0;i<cdates.length;i++){ 
+				                   		mini.alert("您已生成一份，无需重复生成");            	 
+							    }
+							if(lease_form=="直接租赁"){
+								
+								modelnameParmas="项目建议书-直租";
+								
+							}else if(lease_form=="售后回租"){
+								
+								modelnameParmas="项目建议书-回租";
+							}else{
+								mini.alert("请确认租赁形式是否填写！");
+								return;
+							}
+							var params1=getParams1();
+							var params2=getParams2();
+							var fileTeplate1=new fileTemplateConfig({
+								isAttachment : true,
+								attachmentParams: {
+									module:'WorkflowAttchmentFiles',
+									jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+									attachmentFileDictId : 'root.FileType.Proposal01',//项目建议书
+									identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+									identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+									identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+									identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+									identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+									identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+									identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+									identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+									identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+									identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val()
+								},
+								templateno : 'F-201612012',
+								tableid : 'quotation_scheme',
+								modelname : modelnameParmas,
+								returntype : 'listtocurpage',
+								parames : params1
+							});
+							var fileTeplate2=new fileTemplateConfig({
+								isAttachment : true,
+								attachmentParams: {
+									module:'WorkflowAttchmentFiles',
+									jbpmWorkflowHistoryInfoId : window.currentJbpmWorkflowHistoryInfoId ? window.currentJbpmWorkflowHistoryInfoId : '',
+									attachmentFileDictId : 'root.FileType.Proposal01',//项目建议书
+									identifierOne:window.assignAttachmentKeyOne||"${currentProcessInstanceDBID}",
+									identifierTwo:window.assignAttachmentKeyTwo||jQuery("#id_currentHistoryTaskInfo_keyOne").val(),
+									identifierThree:window.assignAttachmentKeyThree||jQuery("#id_currentHistoryTaskInfo_keyTwo").val(),
+									identifierFour:window.assignAttachmentKeyFour||jQuery("#id_currentHistoryTaskInfo_keyThree").val(),
+									identifierFive:window.assignAttachmentKeyFive||jQuery("#id_currentHistoryTaskInfo_keyFour").val(),
+									identifierSix:window.assignAttachmentKeySix||jQuery("#id_currentHistoryTaskInfo_keyFive").val(),
+									identifierSeven:window.assignAttachmentKeySeven||jQuery("#id_currentHistoryTaskInfo_keySix").val(),
+									identifierEight:window.assignAttachmentKeyEight||jQuery("#id_currentHistoryTaskInfo_keySeven").val(),
+									identifierNine:window.assignAttachmentKeyNine||jQuery("#id_currentHistoryTaskInfo_keyEight").val(),
+									identifierTen:window.assignAttachmentKeyTen||jQuery("#id_currentHistoryTaskInfo_keyNine").val()
+								},
+								templateno : 'F-201612005',
+								tableid : 'quotation_scheme',
+								modelname : modelnameParmas,
+								returntype : 'listtocurpage',
+								parames : params2
+							});
+							
+							if(cdates.length==0){
+								if(lease_form=="直接租赁"){
+									modelnameParmas="项目建议书-直租";
+									fileTeplate1.createFile();
+									mini.alert("您已成功生成直接租赁项目建议书");
+								}else if(lease_form=="售后回租"){
+									modelnameParmas="项目建议书-回租";
+									fileTeplate2.createFile();
+									mini.alert("您已成功生成售后回租项目建议书");
+								}else{									
+									mini.alert("请确认租赁形式是否填写！");
+									return;
+								}
+								
+							if (mini.get("id_customworkflowattachment")) {
+								mini.get("id_customworkflowattachment").reload();
+								mini.get("id_workflowhisAttachment").reload();
+							  }
+							}
+							saveCallBack();
+						}
+			        },
+			        ],
+			//data: JsonUtil.decode('${empty json_quotation_scheme_str ? "[]" : json_quotation_scheme_str }'),
+			xmlFileName : '/eleasing/workflow/proj/proj_credit/credit_report_list.xml',
+			params : {
+				flowUnid:flowUnid,
+				modelname : modelnameParmas,
+				filekey:flowUnid+mini.get("project_id").getValue()
+			},
+			updateOperCallBack: function(miniTable,formData){
+			},
+			removeOperCallBack: function(miniTable,rowDatas){
+				dropCreateFile(rowDatas);
+				return true;
+			},
+			columns: [
+				{type: 'indexcolumn'},
+				{type: 'checkcolumn'},
+				{field: 'id', header: 'id', visible: false},
+				{field: 'filename', header: '文件名称'},
+				{field: 'createdate', header: '文件生成时间',dateFormat:'yyyy-MM-dd hh:mm:ss'},
+				{field: 'create', header: '操作',renderer:function(e){ var cfalg=showTools;
+				var temp=e;
+				return showOperator(temp,cfalg);}}
+			]	
+		});
+	});
+});
+function getParams1(){
+	var params={};
+	params["flowunid"]=flowUnid;
+	params["filekey"]=flowUnid+mini.get("project_id").getValue();
+
+	//项目名称label11
+	params['label.projname'] = mini.get("project_name").getValue();
+	//建议书生成日期
+ 	//params['label.projdate'] = mini.get("cust_name").getValue();
+	params['label.projdate'] =new Date().format("yyyy年MM月dd日");	
+	//项目所在地
+	var proj_id=mini.get("project_id").getValue();
+	//mini.alert(proj_id);
+    params['projaddress'] =proj_id;
+    
+	//项目规模projscale
+	params['label.projscale'] = mini.get("projscale").getText();	
+	//融资租赁金额
+	params['label.cleanleasemoney']=getNumberNew(mini.get("cleanleasemoney").getValue())/10000;
+	//客户融资净额
+	params['label.cleancreditmoney']=getNumberNew(mini.get("cleancreditmoney").getValue())/10000;
+	//静态投资额和融资金额一样    cleanleasemoney
+	//动态投资额和客户融资净额一样
+	
+	//期限    leaseterm
+	//params['label.leaseterm']= Math.ceil((mini.get("leaseterm").getValue())/12);
+	var leasetermmonth=mini.get("leaseterm").getValue();
+	var leasetermyear=Math.ceil(leasetermmonth/12);
+	var leasetermother=mini.get("grace").getValue();
+	var leaseterm=parseFloat(leasetermyear)+parseFloat(leasetermother);
+	params['year.leaseterm']=leaseterm;
+	params['year.leasetermother']=leasetermother;	
+	//利率  	
+	var ratebase=mini.get("baserate").getValue();
+	var ratebefore=parseFloat(ratebase)+1.1;
+	var rateafter=parseFloat(ratebase)+0.6;
+	params['rate.ratebase']=ratebase;
+	params['rate.ratebefore']=ratebefore;
+	params['rate.rateafter']=rateafter;	
+	//保证金
+	var money=getNumberNew(mini.get("cleanleasemoney").getValue())/10000
+ 	var margin=(money*5/100).toFixed(2);
+ 	params['rate.margin']=margin; 
+	//手续费
+	var yearpoundage=money*2/100;
+	params['rate.poundage']=yearpoundage.toFixed(2)+"万元";	
+	//租赁期
+	params['rate.leaseterm']=leaseterm;	
+	//还款方式
+	//获取租金
+	var jsonrent=mini.get('fund_rent_plan_frame').getData(); 
+	//var jsonrent=JsonUtil.encode(mini.get('fund_rent_plan_frame').getData());
+	if(jsonrent.length!=0){
+		var  returnmoney=jsonrent[0]["rent"];
+		params['rate.returnmoney']=(returnmoney/10000).toFixed(2);
+	}else{
+		params['rate.returnmoney']=0;
+	}	
+	//承租人背景
+	//客户名称
+	var custname=mini.get("cust_name").getValue();
+	//mini.alert(custname);
+	params['lessee_frame_list']=custname;	
+	//客户编号
+	var custnumber = mini.getbyName("proj_info.custnumber").getValue();
+	params['custbase.custname']=custname;
+	params['custbase.custnumber']=custnumber;	
+	//租赁方案
+	//期限
+	params['lease_scheme.leaseterm']=leaseterm;
+	//宽限期
+	params['lease_scheme.leasetermother']=leasetermother;
+	//还款租金
+	params['lease_scheme.returnmoney']=(returnmoney/10000).toFixed(2);
+	//融资金额
+	params['lease_scheme.cleanleasemoney']=getNumberNew(mini.get("cleanleasemoney").getValue())/10000;
+	//租赁款发放计划表
+	var lease_schemearr = new Array();
+	for(var i=0;i<jsonrent.length;i++){
+		var equipment={};
+		    equipment["number"] = i+1;
+		    equipment["plandate"] = jsonrent[i]["plandate"];
+		    equipment["rent"] = (jsonrent[i]["rent"]/10000).toFixed(2);
+			lease_schemearr.push(equipment);		
+	} 
+	//params['lease_plan_list']=JsonUtil.encode(mini.get('fund_rent_plan_frame').getData());
+	params['lease_plan_list']=JsonUtil.encode(lease_schemearr);
+	
+	//保证金收取计划表
+	var jsonpromise = mini.get('fund_fund_plan').getData();
+ 	var marginarr = new Array();
+	for(var i=0;i<jsonpromise.length;i++){
+		var count=0;
+		var margin={};
+		var moneyname=jsonpromise[i]["feetypename"];
+		if(moneyname=='保证金'){
+			count+=1;
+			margin["number"] = count;
+			margin["plandate"] =jsonpromise[i]["plandate"]; 
+			margin["planmoney"] =(jsonpromise[i]["planmoney"]/10000).toFixed(2);
+			marginarr.push(margin);
+		}
+	}
+	params['lease_margin_list']=JsonUtil.encode(marginarr);
+	//console.info(params['lease_margin_list']);
+	//console.info(jsonpromise);
+	//手续费
+	var jsonpoundage= mini.get('fund_fund_plan').getData();
+ 	var poundagearr = new Array();
+	for(var i=0;i<jsonpoundage.length;i++){
+		var count=0;
+		var poundage={};
+		var moneyname=jsonpoundage[i]["feetypename"];
+		if(moneyname=='手续费'){
+			count+=1;
+			poundage["number"] = count;
+			poundage["plandate"] =jsonpoundage[i]["plandate"]; 
+			poundage["planmoney"] =(jsonpoundage[i]["planmoney"]/10000).toFixed(2);
+			poundagearr.push(poundage);
+		}
+	}
+	params['lease_poundage_list']=JsonUtil.encode(poundagearr);
+	//租金偿还表
+	params['rent_repay.cleanleasemoney']=(getNumberNew(mini.get("cleanleasemoney").getValue())/10000).toFixed(2);//租赁金额
+	params['rent_repay.leaseterm']=leaseterm;//期限
+	params['rent_repay.firstpayment']=(getNumberNew(mini.get("firstpayment").getValue())/10000).toFixed(2);//预付金
+	params['rent_repay.incomenumber']=mini.get("incomenumber").getValue();//年还款数
+	params['rent_repay.count']=yearpoundage.toFixed(2);//手续费
+	//mini.alert(yearpoundage);
+	var startdate=mini.get("startdate").getValue();
+	params['rent_repay.repay_date']=mini.formatDate(startdate, "yyyy 年  MM 月 dd 日 ");//放款日期
+	//租金计划安排
+	params['rent_repay_list']=JsonUtil.encode(lease_schemearr);
+	//console.info(params['rent_repay_list']);  
+	return params;
+}
+
+function getParams2(){
+	var params={};
+	params["flowunid"]=flowUnid;
+	params["filekey"]=flowUnid+mini.get("project_id").getValue();
+
+	//客户名称
+	params['label.custname']=mini.get("custname").getValue();
+	//项目名称label11
+	params['label.projname'] = mini.get("project_name").getValue();
+	//建议书生成日期
+ 	//params['label.projdate'] = mini.get("cust_name").getValue();
+	params['label.projdate'] =new Date().format("yyyy年MM月dd日");	
+	//客户名称+项目名称
+	params['label.custprojname']=mini.get("custname").getValue()+mini.get("project_name").getValue();
+    
+	//固定资产净值
+	params['label.equipamt']=(getNumberNew(mini.get("equipamt").getValue())/10000).toFixed(2);
+	//融资租赁金额
+	params['label.cleanleasemoney']=getNumberNew(mini.get("cleanleasemoney").getValue())/10000;
+	//客户融资净额
+	params['label.cleancreditmoney']=getNumberNew(mini.get("cleancreditmoney").getValue())/10000;
+	
+	//融资租赁方案
+	//融资金额
+	params['lease_plan.cleanleasemoney']=params['label.cleanleasemoney'];
+	
+	//期限
+	var leasetermmonth=mini.get("leaseterm").getValue();	
+	var leasetermyear=Math.ceil(leasetermmonth/12);
+	var leasetermother=mini.get("grace").getValue();
+	var leaseterm=parseFloat(leasetermyear)+parseFloat(leasetermother);
+	//alert("总期限"+leaseterm+"宽限期"+leasetermother);
+	params['lease_plan.leaseterm']=leaseterm;
+	//利率  	
+	var ratebase=mini.get("baserate").getValue();
+	params['lease_plan.baserate']=ratebase;
+	//保证金
+	var money=getNumberNew(mini.get("cleanleasemoney").getValue())/10000
+ 	var margin=(money*10/100).toFixed(2);
+ 	params['lease_plan.margin']=margin; 
+ 	//首笔放款日
+ 	var jsonlend=mini.get("fund_put_config").getData();
+ 	if(jsonlend.length!=0){
+ 		params['lease_plan.plandate']=jsonlend[0]["plandate"];//放款日期
+ 	}else{
+ 		params['lease_plan.plandate']="";//放款日期
+ 	}
+	//手续费
+	var yearpoundage=(money*(1.8/100));
+	params['lease_plan.poundage']=yearpoundage.toFixed(2)+"万元";	
+	
+	//获取租金
+	var jsonrent=mini.get('fund_rent_plan_frame').getData(); 
+	if(jsonrent.length!=0){
+		var  returnmoney=jsonrent[0]["rent"];
+		params['lease_plan.returnmoney']=(returnmoney/10000).toFixed(2);
+	}else{
+		params['lease_plan.returnmoney']=0;
+	}	
+/* 	//租赁期
+	params['lease_plan.leaseterm']=leaseterm; */
+	
+	//承租人背景
+	//客户名称
+	var custname=mini.get("cust_name").getValue();
+	//客户编号
+	var custnumber = mini.getbyName("proj_info.custnumber").getValue();
+	params['lessee_base.custname']=custname;
+	params['lessee_base.custnumber']=custnumber;	
+	//实缴出资
+	params['lessee_base_money']=custname;
+	//客户股本结构历史
+	params['lessee_history_list']=custname;
+	//合计
+	params['lessee_base_sum']=custname;
+	
+	//租赁方案
+	//期限
+	params['lease_scheme.leaseterm']=leaseterm;
+	//租赁金额
+	params['lease_scheme.cleanleasemoney']=params['label.cleanleasemoney'];
+	//起租日
+	params['lease_scheme.startdate']=mini.formatDate(mini.get("startdate").getValue(),"yyyy 年  MM 月 dd 日 ");
+	//基准利率
+	params['lease_scheme.ratebase']=ratebase;
+	//保证金
+	params['lease_scheme.margin']=margin;
+	//手续费
+	params['lease_scheme.poundage']=yearpoundage.toFixed(2);
+	//手续费收取计划表
+	var jsondate= mini.get('fund_fund_plan').getData();
+ 	var poundagearr = new Array();
+	for(var i=0;i<jsondate.length;i++){
+		var count=0;
+		var poundage={};
+		var moneyname=jsondate[i]["feetypename"];
+		if(moneyname=='手续费'){
+			count+=1;
+			poundage["number"] = count;
+			poundage["plandate"] =jsondate[i]["plandate"];
+			poundage["planmoney"] =(jsondate[i]["planmoney"]/10000).toFixed(2);
+			poundagearr.push(poundage);
+		}
+	}
+	params['lease_poundage_list']=JsonUtil.encode(poundagearr);	
+	
+	//租金偿还表
+	//租赁金额
+	params['rent_pay.cleanleasemoney']=params['label.cleanleasemoney']*10000;
+	//期限
+	params['rent_pay.leaseterm']=leaseterm;
+	//预付租金
+	params['rent_pay.firstpayment']=getNumberNew(mini.get("firstpayment").getValue());
+	//还款次数
+	params['rent_pay.incomenumber']=mini.get("incomenumber").getValue();//年还款数
+	//手续费
+	params['rent_pay.poundage']=params['lease_scheme.poundage']*10000;
+	//租赁金额放款日
+	var startdate=mini.get("startdate").getValue();
+	params['rent_pay.startdate']=mini.formatDate(startdate, "yyyy 年  MM 月 dd 日 ");//放款日期
+	//租赁款发放计划表
+	var lease_schemearr = new Array();
+	for(var i=0;i<jsonrent.length;i++){
+		var equipment={};
+		    equipment["number"] = jsonrent[i]["rentlist"];
+		    equipment["plandate"] = jsonrent[i]["plandate"];
+		    equipment["rent"] = jsonrent[i]["rent"];
+		    equipment["corpus"] = jsonrent[i]["corpus"];
+		    equipment["interest"] = jsonrent[i]["interest"];	    		    
+			lease_schemearr.push(equipment);		
+	} 
+	//params['lease_plan_list']=JsonUtil.encode(mini.get('fund_rent_plan_frame').getData());
+	params['rent_pay_list']=JsonUtil.encode(lease_schemearr);
+	
+	//console.info(jsonrent);
+	
+	
+	/* 
+	//保证金收取计划表
+	var jsonpromise = mini.get('fund_fund_plan').getData();
+ 	var marginarr = new Array();
+	for(var i=0;i<jsonpromise.length;i++){
+		var count=0;
+		var margin={};
+		var moneyname=jsonpromise[i]["feetypename"];
+		if(moneyname=='保证金'){
+			count+=1;
+			margin["number"] = count;
+			margin["plandate"] =jsonpromise[i]["plandate"]; 
+			margin["planmoney"] =(jsonpromise[i]["planmoney"]/10000).toFixed(2);
+			marginarr.push(margin);
+		}
+	}
+	params['lease_margin_list']=JsonUtil.encode(marginarr);
+
+	//租金偿还表
+	params['rent_repay.cleanleasemoney']=(getNumberNew(mini.get("cleanleasemoney").getValue())/10000).toFixed(2);//租赁金额
+	params['rent_repay.leaseterm']=leaseterm;//期限
+	params['rent_repay.firstpayment']=(getNumberNew(mini.get("firstpayment").getValue())/10000).toFixed(2);//预付金
+	params['rent_repay.incomenumber']=mini.get("incomenumber").getValue();//年还款数
+	params['rent_repay.count']=yearpoundage.toFixed(2);//手续费
+	//mini.alert(yearpoundage);
+	
+	//租金计划安排
+	params['rent_repay_list']=JsonUtil.encode(lease_schemearr);
+	console.info(params['rent_repay_list']); */
+	return params;
+}
+function getNumberNew(money){
+	var num = money.split(",");
+	var b = "";
+	for(var a=0;a<num.length;a++ ){
+		b=b+num[a];
+	}
+	return b;
+}
+
+function dateSformat(date){
+	return date.replace('-','年').replace('-','月')+'日';
+} 
+function showOperator(temp,cfalg){
+	var id = temp.record.id;
+	var base = "<a href='javascript:void(0);' onclick='showRecorder(\"" + id + "\")'>记录</a>";
+	var base2 = "<a href='javascript:void(0);' onclick='downloadFile(\"" + id + "\")'>下载</a>";
+	var base3 = "<a href='javascript:void(0);' onclick='editoverdue(\"" + id + "\")'>编辑</a>";
+	var base4 = "<a href='javascript:void(0);' onclick='readCreateWord(\"" + id + "\")'>查看</a>";
+	var base5 = "<a href='javascript:void(0);' onclick='printCreateWord(\"" + id + "\")'>打印</a>";
+	var tempright="2"
+	var filename=temp.record.filename;
+	if(filename=="项目建议书-直租.docx"&&cfalg){
+	    return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4;
+	}else if(filename=="项目建议书-回租.docx"&&cfalg){
+		return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4;
+	}else{
+		return base2+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base4+"&nbsp;&nbsp;|&nbsp;&nbsp;"+base3;
+	}
+}
+function editoverdue(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+	var currentPageClientHeight =  document.documentElement.clientHeight;
+	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"2"});
+}
+function downloadFile(Id){
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+Id});
+} 
+function  readCreateWord(id){
+	var currentPageClientWidth  =  document.documentElement.clientWidth;
+ 	var currentPageClientHeight =  document.documentElement.clientHeight;
+ 	openFullScreenWindow(getRootPath()+'/leasing/common/templateManager/editWordTemplate.bi',{id:id,otype:"1"});
+}
+//删除生成的文件。把文件注为无效
+function dropCreateFile(rowDatas){
+	var plandata = rowDatas;
+	var ids=[];
+	for(var i=0;i<plandata.length;i++){
+		ids.push(plandata[i].id);
+	}
+    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除合同 请稍等...'});
+	var url="/leasing/template/dropCreateFile.action";
+	var param=[];
+	param["ids"]=ids+"";
+	param["isAttachment"]=true;//连带级联操作删除自定义方法
+	ajaxRequest({
+		url:getRootPath()+url,
+		method:'POST',
+		success:function(rs){
+		var message= rs.responseText;
+			message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+			mini.unmask(document.body);
+			if (mini.get("id_customworkflowattachment")) {
+				mini.get("id_customworkflowattachment").reload();
+				mini.get("id_workflowhisAttachment").reload();
+			}
+			mini.alert(message);
+		},
+		async:false,
+		failure:function(res){
+			mini.unmask(document.body);
+		},
+		params:param
+	});
+}
+
+
+</script>
+<div id="id_table_quotation_scheme"></div>
+
+
+
+
+
+

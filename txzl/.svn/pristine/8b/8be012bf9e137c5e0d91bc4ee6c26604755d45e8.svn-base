@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	   
+        SELECT
+           translate(cic.reg_capital, --注册资本
+                 '#' || translate(cic.reg_capital, '0123456789.', '#'),
+                 '/')   regcap,   
+               stock.id as id,
+               stock.register_capital     registercapital,  --出资方式
+               stock.currency     currency, --币种
+               dict2.name_  currencyname,--币种名称
+               stock.contributor     contributor,  --出资人
+               stock.cust_id as custid,--客户id
+               cust.cust_name AS custname,--客户名称
+               stock.date_time as datetime, --日期
+               stock.stockholder_name as stockholdername,--主要股东名称
+               stock.capital_type as capitaltype,  ---出资方式
+               stock.capital_money  as capitalmoney,--出资金额
+               dict.code_ as stockholdertype, 
+               dict.name_  AS stockholdertypename,
+               dict.name_  AS cust_info_typename,
+               stock.csh_memo cshmemo,--备注
+               stock.org_code as orgcode, --身份证/组织机构代码
+               stock.reg_capital as regcapital,--注册资本
+               stock.shareholding as shareholding,
+               stock.legal_representative as legalrepresentative,
+              stock.addr_ as addr,
+              stock.biz_scope_primary as bizscopeprimary,
+              stock.creator_ as creator,
+              base1.Realname_ AS creatorname, 
+              substr(stock.create_date,0,10) as createdate, 
+              stock.modificator_ as modificator, 
+              base2.Realname_  AS modificatorname,
+              substr(stock. modify_date,0,10) as modifydate
+              FROM    cust_stockholder  stock
+              left join cust_info  cust on stock.cust_id=cust.id
+               left join cust_info_company  cic on cust.id=cic.cust_id
+              left join t_users  base1 on stock.creator_=base1.id_
+              left join t_users  base2 on stock.modificator_=base2.id_
+              left join t_dicts_datas dict2 on stock.currency=dict2.id_
+              left join t_dicts_datas dict on (dict.id_=stock.stockholder_type)       
+           where 1=1
+                      /~custid: and stock.cust_id like '%{custid}%'~/  
+             	
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+				SELECT    
+			         stock.id as id,
+			         stock.cust_id as custid,
+			         cust.cust_name AS custname, 
+			         stock.stockholder_name as stockholdername,
+			         stock.capital_type as capitaltype,
+			         stock.capital_money  as capitalmoney,
+			         dict.code_ as stockholdertype, 
+			         dict.name_  AS cust_info_typename,
+			         stock.csh_memo cshmemo,
+			         stock.org_code as orgcode,
+			         stock.reg_capital as regcapital,
+			         stock.shareholding as shareholding,
+			         stock.legal_representative as legalrepresentative,
+			         stock.addr_ as addr,
+			         stock.biz_scope_primary as bizscopeprimary,
+			         stock.creator_ as creator,
+			         base1.Realname_ AS creatorname, 
+			         CONVERT(varchar(100),stock.create_date,23) as createdate, 
+			         stock.modificator_ as modificator, 
+			         base2.Realname_  AS modificatorname,
+			         CONVERT(varchar(100),stock. modify_date,23) as modifydate
+			         FROM    cust_stockholder  stock
+			         left join cust_info  cust on stock.cust_id=cust.id
+			         left join t_users  base1 on stock.creator_=base1.id_
+			         left join t_users  base2 on stock.modificator_=base2.id_
+			         left join t_dicts_datas dict on (dict.id_=stock.stockholder_type)       
+					 where 1=1
+			        /~custid: and stock.cust_id like '%{custid}%'~/			
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+       <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

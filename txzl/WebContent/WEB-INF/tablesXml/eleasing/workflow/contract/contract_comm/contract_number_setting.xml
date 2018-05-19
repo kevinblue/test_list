@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+			select c.id,
+			       b1.fileid,
+			       b1.filename filename,
+			       b1.createdate,
+			       b1.realname,
+			       c.contract_number contractnumber,
+			       c.contract_name contractname,
+			       c.contract_type contracttype,
+			       t.name_ contracttypename,
+			       c.contract_subject contractsubject,
+			       c.mark,
+			       c.signing_time signingtime,
+			       c.contracting_place contractingplace,
+			       c.contract_person contractperson,
+			       t1.realname_  contractpersonname,
+			       c.contract_money contractmoney
+			  from CONTRACT_NUMBER_SETTING c
+	          left join (select b.file_key filekey,
+                         wm_concat(b.file_name) filename,
+                         wm_concat(b.create_date) createdate,
+                         wm_concat(t6.realname_) realname,
+                         wm_concat(b.id) fileid
+               from base_file b
+               left join t_users t6
+                 on t6.id_ = b.creator_
+                 where b.invalid_='是'
+                 and b.file_key is not null
+              group by b.file_key) b1
+			  on b1.filekey=c.id
+			  left join t_dicts_datas t on t.id_=c.contract_type
+			  left join t_users  t1 on t1.id_=c.contract_person
+		     where c.contract_id = '{contract_id}'
+		     order by c.create_date desc
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- V8凭证查询  -->
+      <table_sql> 
+	        <![CDATA[
+				select IEI.id as id, 
+						IEI.happen_date as happen_date,
+						IEI.Recording_Voucher as recording_voucher,
+						IEI.Evidence_Number as evidence_number,
+						IEI.Evidence_Summary as evidence_summary,
+						IEI.Subject_Number as subject_number,
+						VOUCHERASS_STACTS_CONFIG.Subjects_Code  as subjects_code,
+						VOUCHERASS_STACTS_CONFIG.Subjects_Name  as subjects_name,
+						VOUCHERASS_STACTS_CONFIG.Subjects_Id    as subjects_id,
+						VOUCHERASS_STACTS_CONFIG.Subjects_Owner as subjects_owner,
+						IEI.Debit as debit,
+						IEI.Credit as credit,
+						IEI.Ebank_Fact_Date as ebank_fact_date,
+						IEI.Inter_Contract_Id as inter_contract_id,
+						contract_info.contract_number as contract_number,
+						IEI.vndr_id as vndr_id,
+						IEI.client_id as client_id,
+						CUST_INFO.Cust_Number  as cust_number,
+						IEI.acc_set_number as acc_set_number,
+						IEI.accouting_unit as accouting_unit,						
+						IEI.Acc_Month as acc_month,
+						IEI.line_number as line_number,
+						IEI.Module_Name as modlename,
+						IEI.Voucher_Status as voucher_status,
+						decode(IEI.exp_flag,0,'未导出','已导出' )as exp_flag,
+						IEI.Exp_Date as exp_date,
+						IEI.GENERATE_DATE as gennerate_date,
+						case when IEI.ROLL_BACK=0 then '正常凭证' 
+						when IEI.ROLL_BACK=2 then '冲抵凭证' 
+						when IEI.ROLL_BACK=1 then '被红冲'
+						else '红冲凭证' end
+						as rollback
+						from INTER_EVIDENCE_INFO IEI
+						left join contract_info on contract_info.id = IEI.inter_contract_id
+						left join VOUCHERASS_STACTS_CONFIG on VOUCHERASS_STACTS_CONFIG.Id = IEI.subject_number
+						left join CUST_INFO on CUST_INFO.Id = IEI.vndr_id								
+		  WHERE 1=1
+			   /~evidence_number:and IEI.Evidence_Number = '{evidence_number}'~/
+			   /~rollback:and IEI.ROLL_BACK = '{rollback}'~/
+		 
+			]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

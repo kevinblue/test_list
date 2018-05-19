@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+         SELECT 
+           v.fileaddressv,
+             v.FILENAMEv,
+             v.CREATEDATEv,
+          v.fileidv,
+            v.REALNAMEv,
+          cc.start_date startdate,
+          pi.proj_id as projid,
+         cc.equip_amt as cleanleasemoney  ,
+          pi.leas_form leasform,
+          ci.* 
+           FROM VI_CONTRACT_INFO CI 
+           left join  proj_condition pc on  pc.proj_id=ci.proj_id
+           left join proj_info pi on pc.proj_id=pi.id
+           left join contract_condition cc on cc.contract_id=ci.id
+           left join (select
+           A.file_key as filekeyv,
+           wm_concat( A.file_address) as fileaddressv,
+           wm_concat( A.FILE_NAME )   AS FILENAMEv,
+           wm_concat( A.CREATE_DATE)  AS CREATEDATEv,
+           wm_concat(A.id)            as fileidv,
+           wm_concat(U.REALNAME_  )   AS REALNAMEv
+         from base_file A
+         LEFT JOIN T_USERS U ON A.CREATOR_ = U.ID_
+         where A.file_key is not null
+         and A.invalid_ ='是'
+        and a.model_name = '所有权转移附件'
+         group by A.file_key
+          ) v  on v.filekeyv = ci.id
+           WHERE CI.CONTRACT_STATUS = 21 
+              and  pi.leas_form<>'leas_form7'
+           /~projid: AND pi.proj_id like '%{projid}%' ~/
+		/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+		/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+		/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+		/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+		/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+		/~checkisinsurance: AND EXISTS (SELECT ID FROM CONTRACT_INFO  INFO WHERE INFO.ID = CI.ID AND INFO.IS_INSURANCE IS NULL ) ~/
+        <EXTRACTEND>order by contract_id desc<EXTRACTEND>   
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

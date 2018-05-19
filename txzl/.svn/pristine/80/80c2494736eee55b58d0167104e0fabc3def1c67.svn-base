@@ -1,0 +1,376 @@
+
+ /**
+ * 项目名称：    系统名称
+ * 包名：              com.tenwa.business.serviceImpl
+ * 文件名：         QuartzPublishServiceImpl.java
+ * 版本信息：    1.0.0
+ * 创建日期：     2012-12-4-下午01:43:39
+ * Copyright：2012XX公司-版权所有
+ **/
+
+package com.tenwa.quartz.serviceImpl;
+
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
+import junit.framework.Assert;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.quartz.CronExpression;
+import org.quartz.CronTrigger;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.TriggerUtils;
+import org.springframework.stereotype.Service;
+
+import com.tenwa.business.job.QuartzJobMsg;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.kernal.annotation.QuartzJob;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.FileUtil;
+import com.tenwa.kernal.utils.UUIDUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.quartz.service.QuartzPublishService;
+
+
+
+ /**
+ * 类名称：     QuartzPublishServiceImpl
+ * 类描述：     
+ * 创建人：     tracywindy
+ * 修改人：     tracywindy
+ * 修改时间：2012-12-4 下午01:43:39
+ * 修改备注：
+ * @version 1.0.0
+ **/
+@Service(value="quartzPublishService")
+public class QuartzPublishServiceImpl implements QuartzPublishService
+{
+	@Resource(name="baseService")
+	private BaseService baseService;
+	protected final Log log = LogFactory.getLog(getClass());
+	private final String DEAULT_GROUP_NAME = Scheduler.DEFAULT_GROUP;
+	@Override
+	public  String  getQuartzJobs() throws Exception
+	{
+		    String quartzJobs = "[]";
+			JSONArray jsonArray   = new JSONArray();
+			Set<Class<?>> classes = FileUtil.getClasses("com.tenwa.business.job");
+			for(Class<?>  clazz :classes)
+			{
+				QuartzJob quartzJob = clazz.getAnnotation(QuartzJob.class);
+				if(null != quartzJob){
+					    String jobClassName = clazz.getName();
+						JSONObject  json = new JSONObject();
+						Assert.assertNotNull(jobClassName);
+						json.put("value", jobClassName);
+						String quartzJobDescription = quartzJob.description();
+						Assert.assertNotNull(quartzJobDescription);
+						json.put("name", clazz.getSimpleName()+"("+quartzJobDescription+")");
+						jsonArray.put(json);
+				}
+			}
+			quartzJobs = jsonArray.toString();
+		return quartzJobs;
+	}
+	public Scheduler getScheduler() throws Exception
+	{
+		return WebUtil.getSchedulerFactory().getScheduler();
+	}
+	public void saveOrUpdateJob(String jobName,String description,String jobClassName) throws Exception
+	{
+		JobDetail jobDetail = null;
+		if(!StringUtils.isBlank(jobName))
+		{
+			jobDetail = this.getScheduler().getJobDetail(jobName, DEAULT_GROUP_NAME);
+			getScheduler().deleteJob(jobName,DEAULT_GROUP_NAME);
+		}
+		jobDetail = new JobDetail();
+		jobName = UUIDUtil.getUUID();
+		jobDetail.setJobClass(Class.forName(jobClassName));
+		jobDetail.setName(jobName);
+		jobDetail.setGroup(DEAULT_GROUP_NAME);
+		jobDetail.setDescription(description);
+		//jobDetail.setJobDataMap(new JobDataMap(dataMap));
+		 //当该任务完成后，是否还在JobStore中继续保留该任务
+		jobDetail.setDurability(true);
+		//重启应用之后是否删除任务的相关信息，默认false
+		jobDetail.setVolatility(false);
+		//当系统重新启动后，是否再次执行过期任务
+		jobDetail.setRequestsRecovery(true);
+        //添加quartz任务监听日志
+		jobDetail.addJobListener("QuartzJobListener");
+		getScheduler().addJob(jobDetail, true);
+	}
+	
+	public void removeJob(String jobName) throws Exception
+	{
+		//JobDetail jobDetail = getScheduler().getJobDetail(jobName, getScheduler().DEFAULT_GROUP);
+		getScheduler().deleteJob(jobName,DEAULT_GROUP_NAME);
+	}
+	
+	public void saveOrUpdateJobAndTrigger(Map<String,String> dataMap) throws Exception 
+	{
+		String jobName = dataMap.get("jobname");
+		JobDetail jobDetail = null;
+		if(!StringUtils.isBlank(jobName))
+		{
+			jobDetail = this.getScheduler().getJobDetail(jobName, QuartzJobMsg.MSG_GROUP_NAME);
+			getScheduler().deleteJob(jobName,QuartzJobMsg.MSG_GROUP_NAME);
+		}
+		jobDetail = new JobDetail();
+		jobName = UUIDUtil.getUUID();
+		jobDetail.setJobClass(Class.forName("com.tenwa.business.job.QuartzJobMsg"));
+		jobDetail.setName(jobName);
+		jobDetail.setGroup(QuartzJobMsg.MSG_GROUP_NAME);
+		jobDetail.setDescription(dataMap.get("login_userid"));
+		//jobDetail.setJobDataMap(new JobDataMap(dataMap));
+		 //当该任务完成后，是否还在JobStore中继续保留该任务
+		jobDetail.setDurability(true);
+		//重启应用之后是否删除任务的相关信息，默认false
+		jobDetail.setVolatility(false);
+		//当系统重新启动后，是否再次执行过期任务
+		jobDetail.setRequestsRecovery("yes".equals(dataMap.get("isoverdateexecute"))?true:false);
+        //添加quartz任务监听日志
+		jobDetail.addJobListener("QuartzJobListener");
+		getScheduler().addJob(jobDetail, true);
+		
+		CronTrigger cronTrigger = null;
+		getScheduler().unscheduleJob(dataMap.get("triggername"), QuartzJobMsg.MSG_GROUP_NAME);
+		cronTrigger = new CronTrigger();
+		String triggerName = UUIDUtil.getUUID();
+		cronTrigger.setName(triggerName);
+		cronTrigger.setGroup(QuartzJobMsg.MSG_GROUP_NAME);
+		cronTrigger.setDescription(dataMap.get("description"));
+		
+		String cronexpression = dataMap.get("cronexpression");
+		if(dataMap.get("msgtype").startsWith("holiday") || dataMap.get("msgtype").startsWith("birthday")){//节假日和生日祝福的定时代理，读取系统的节假日自动生成
+			cronexpression = "0 0 0 * * ? *";
+		}
+		CronExpression ce = new CronExpression(cronexpression);
+		cronTrigger.setCronExpression(ce);
+		Date startTime = DateUtil.getTimeByFormat(dataMap.get("startdate"), "yyyy-MM-dd HH:mm:ss");
+		int days = Integer.parseInt(dataMap.get("durabledays"));
+		Date endTime   = DateUtil.getEndDateByDays(startTime, days);
+//		List<Map<String,Object>> msgTemplate = baseService.queryListBySql("select * from t_sms_template where template_no=?", dataMap.get("msgtype"));
+//		if(msgTemplate.size()>0){
+//			baseService.updateBySql("update t_sms_template set id_=?,template_type=?,template_content=?,modificator_=?,modify_date_=? where template_no=?",dataMap.get("msgtype"),dataMap.get("msgtypename"),dataMap.get("msgcontent"),baseService.findEntityByID(User.class, dataMap.get("login_userid")),DateUtil.getDateTime(new Date()),dataMap.get("msgtype"));
+//		}else{
+//			baseService.updateBySql("insert into t_sms_template (id_,template_no,template_type,template_content,creator_,create_date_) values(?,?,?,?,?,?)",dataMap.get("msgtype"),dataMap.get("msgtype"),dataMap.get("msgtypename"),dataMap.get("msgcontent"),baseService.findEntityByID(User.class, dataMap.get("login_userid")),DateUtil.getDateTime(new Date()));
+//		}
+		baseService.updateBySql("update msg_config set cron_expression=?,msg_sql=?,start_date=?,end_date=?,jobname=?,triggername=? where msg_type=?",cronexpression,dataMap.get("msgsql").replace("&#39;", "'").replace("&#92;", " ").replace("\n", " "),DateUtil.getDateTime(startTime),DateUtil.getDateTime(endTime),jobName,triggerName,dataMap.get("msgtype"));
+		cronTrigger.setJobName(jobName);
+		cronTrigger.setJobGroup(QuartzJobMsg.MSG_GROUP_NAME);
+		Date currentDate  = new Date();
+		if(startTime.compareTo(currentDate)<=0)
+		{
+			startTime = new Date(currentDate.getTime()+1000);
+		}
+		cronTrigger.setStartTime(startTime);
+		cronTrigger.setEndTime(endTime);
+		cronTrigger.setVolatility(false);
+		//cronTrigger.setPreviousFireTime(null);
+		cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+        //添加quartz任务监听日志
+		cronTrigger.addTriggerListener("QuartzTriggerListener");
+		
+		if(null!=dataMap)
+		{
+			cronTrigger.setJobDataMap(new JobDataMap(dataMap));
+		}
+		try
+		{
+			getScheduler().scheduleJob(cronTrigger);
+		}catch(Exception e)
+		{
+			getScheduler().rescheduleJob(cronTrigger.getName(), cronTrigger.getGroup(), cronTrigger);
+		}
+		if("PAUSED".equals(dataMap.get("msgstatus")) || "WAITING".equals(dataMap.get("msgstatus"))){
+			getScheduler().pauseTrigger(cronTrigger.getName(), cronTrigger.getGroup());
+		}
+	}
+	
+	/**
+	* 根据job的名称获取job,进而添加到trigger
+	* @param name
+	* @param jobName
+	* @param cronExpression
+	* @throws SchedulerException 
+	*/
+	public void saveOrUpdateTrigger(String triggerName, String jobName,String jobRecovery,String description, String cronExpression,String startDate,String durableDays,Map<String,Object> dataMap) throws Exception 
+	{
+		//JobDetail jobDetail = scheduler.getJobDetail(jobName, DEAULT_GROUP_NAME);
+		//getScheduler().addJob(jobDetail, true);
+		CronTrigger cronTrigger = null;
+		/*if(!StringUtils.isBlank(triggerName))
+		{
+			cronTrigger = (CronTrigger)this.getScheduler().getTrigger(triggerName, DEAULT_GROUP_NAME);
+		}
+		else
+		{
+			cronTrigger = new CronTrigger();
+			triggerName = UUIDUtil.getUUID();
+		}*/
+		getScheduler().unscheduleJob(triggerName, DEAULT_GROUP_NAME);
+		cronTrigger = new CronTrigger();
+		triggerName = UUIDUtil.getUUID();
+		cronTrigger.setName(triggerName);
+		cronTrigger.setGroup(DEAULT_GROUP_NAME);
+		cronTrigger.setDescription(description);
+		CronExpression ce = new CronExpression(cronExpression);
+		cronTrigger.setCronExpression(ce);
+		cronTrigger.setMisfireInstruction(Integer.parseInt(jobRecovery));
+		Date startTime = DateUtil.getTimeByFormat(startDate, "yyyy-MM-dd HH:mm:ss");
+		int days = Integer.parseInt(durableDays);
+		Date endTime   = DateUtil.getEndDateByDays(startTime, days);
+		cronTrigger.setJobName(jobName);
+		cronTrigger.setJobGroup(DEAULT_GROUP_NAME);
+		Date currentDate  = new Date();
+		if(startTime.compareTo(currentDate)<=0)
+		{
+			startTime = new Date(currentDate.getTime()+1000);
+		}
+		cronTrigger.setStartTime(startTime);
+		cronTrigger.setEndTime(endTime);
+		cronTrigger.setVolatility(false);
+		//cronTrigger.setPreviousFireTime(null);
+		cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+        //添加quartz任务监听日志
+		cronTrigger.addTriggerListener("QuartzTriggerListener");
+		
+		if(null!=dataMap)
+		{
+			cronTrigger.setJobDataMap(new JobDataMap(dataMap));
+		}
+		try
+		{
+			getScheduler().scheduleJob(cronTrigger);
+		}catch(Exception e)
+		{
+			getScheduler().rescheduleJob(cronTrigger.getName(), cronTrigger.getGroup(), cronTrigger);
+		}
+		getScheduler().pauseTrigger(cronTrigger.getName(), cronTrigger.getGroup());
+	}
+	public void pauseTrigger(String triggerName) throws Exception
+	{ 
+		try 
+		{
+		   getScheduler().pauseTrigger(triggerName, DEAULT_GROUP_NAME);//停止触发器
+		} 
+		catch (SchedulerException e) 
+		{
+			log.error(e.getMessage());
+			throw new SchedulerException();
+		}
+	}
+	public void resumeTrigger(String triggerName) throws Exception
+	{ 
+		try 
+		{
+		   getScheduler().resumeTrigger(triggerName, DEAULT_GROUP_NAME);//重启触发器
+		} 
+		catch (SchedulerException e) 
+		{
+		   log.error(e.getMessage());
+		   throw new SchedulerException();
+		}
+	}
+	public boolean removeTrigger(String triggerName) throws Exception
+	{ 
+		try 
+		{
+		  getScheduler().pauseTrigger(triggerName, DEAULT_GROUP_NAME);//停止触发器
+		  return getScheduler().unscheduleJob(triggerName, DEAULT_GROUP_NAME);//移除触发器
+		} catch (SchedulerException e) {
+		log.error(e.getMessage());
+		throw new SchedulerException();
+		}
+	}
+	public static final Map<String,String> status = new HashMap<String,String>();
+	static
+	{
+		status.put("ACQUIRED", "运行");
+		status.put("PAUSED", "暂停");
+		status.put("WAITING", "等待");
+	}
+	
+	 /**
+	 * (non-Javadoc)
+	 * @see com.tenwa.quartz.service.QuartzPublishService#runTrigger(java.lang.String)
+	 **/
+	
+	@Override
+	public void runTrigger(String triggerName) throws Exception {
+		CronTrigger trigger = (CronTrigger)this.getScheduler().getTrigger(triggerName, DEAULT_GROUP_NAME);
+		//trigger.setPreviousFireTime(new Date());
+		String jobName  = trigger.getJobName();
+		String jobGroup = trigger.getJobGroup();
+		this.getScheduler().triggerJob(jobName, jobGroup);
+		String sql = "UPDATE QRTZ_TRIGGERS SET PREV_FIRE_TIME = ? WHERE TRIGGER_NAME = ? AND TRIGGER_GROUP = ? AND JOB_NAME = ? AND JOB_GROUP = ?";
+		this.baseService.getBussinessDao().getJdbcTemplate().update(sql,new Date().getTime(),triggerName,DEAULT_GROUP_NAME,jobName,jobGroup );
+	}
+	@Override
+	public void runMsgTrigger(String triggerName) throws Exception {
+		CronTrigger trigger = (CronTrigger)this.getScheduler().getTrigger(triggerName, QuartzJobMsg.MSG_GROUP_NAME);
+		Scheduler sch = WebUtil.getSchedulerFactory().getScheduler();
+		System.out.println(Arrays.toString(sch.getTriggerNames(QuartzJobMsg.MSG_GROUP_NAME)));
+		//trigger.setPreviousFireTime(new Date());
+		String jobName  = trigger.getJobName();
+		String jobGroup = trigger.getJobGroup();
+		this.getScheduler().triggerJob(jobName, jobGroup);
+		String sql = "UPDATE QRTZ_TRIGGERS SET PREV_FIRE_TIME = ? WHERE TRIGGER_NAME = ? AND TRIGGER_GROUP = ? AND JOB_NAME = ? AND JOB_GROUP = ?";
+		this.baseService.getBussinessDao().getJdbcTemplate().update(sql,new Date().getTime(),triggerName,QuartzJobMsg.MSG_GROUP_NAME,jobName,jobGroup );
+	}
+	@Override
+	public void updateTrigger(String cronexpression, String triggername)
+			throws Exception {
+		CronTrigger trigger = (CronTrigger)this.getScheduler().getTrigger(triggername, DEAULT_GROUP_NAME);
+		trigger.setCronExpression(cronexpression);
+		getScheduler().unscheduleJob(triggername, DEAULT_GROUP_NAME);
+		try
+		{
+			getScheduler().scheduleJob(trigger);
+		}catch(Exception e)
+		{
+			getScheduler().rescheduleJob(trigger.getName(), trigger.getGroup(), trigger);
+		}
+		getScheduler().pauseTrigger(trigger.getName(), trigger.getGroup());
+	}
+	@Override
+	public void updateTriggerToNext() throws Exception {
+		String quartzDetailsSql = "select tri.trigger_name,cron.cron_expression,tri.job_group from qrtz_triggers  tri "
+				+ " left join qrtz_job_details job on job.job_name = tri.job_name "
+				+ " left join qrtz_cron_triggers cron on cron.trigger_name = tri.trigger_name "
+				+ " where job.requests_recovery  = 0  "
+				+ " and tri.next_fire_time < (sysdate - to_date('1970-01-01','YYYY-MM-DD'))*24*60*60*1000 ";
+		List<Map<String,Object>>  triggers =  this.baseService.queryListBySql(quartzDetailsSql);
+		for(Map<String, Object> trigger : triggers){
+			String triggerName = (String)trigger.get("trigger_name");
+			String cronExpression = (String)trigger.get("cron_expression");
+			String jobGroup = (String) trigger.get("job_group");
+			Calendar calendar  = Calendar.getInstance();
+			Date now = calendar.getTime();
+			calendar.add(Calendar.YEAR, 2);
+			Date deadLine = calendar.getTime();
+			CronTrigger cronTri = new CronTrigger(triggerName, jobGroup, cronExpression);
+			List<Date> fultureDates =  TriggerUtils.computeFireTimesBetween(cronTri, null, now, deadLine);
+			Date nextFireTime =  fultureDates.get(0);
+			String triggerUpdateSql =  "update qrtz_triggers set next_fire_time = ? where trigger_name = ?";
+			this.baseService.getBussinessDao().getJdbcTemplate().update(triggerUpdateSql,nextFireTime.getTime(),triggerName );
+		}
+		this.baseService.updateFlush();
+	}
+}

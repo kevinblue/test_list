@@ -1,0 +1,68 @@
+package com.tenwa.leasing.serviceImpl.loanInterestPayment;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.business.service.TableService;
+import com.tenwa.leasing.entity.finacial.LoanAccount;
+import com.tenwa.leasing.entity.finacial.LoanRentIncomeToInterest;
+import com.tenwa.leasing.entity.finacial.LoanRentPlanToInterest;
+import com.tenwa.leasing.service.loaninterestpayment.LoanInterestPaymentService;
+
+@Service(value = "loanInterestPaymentService")
+public class LoanInterestPaymentServiceImpl implements LoanInterestPaymentService {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Override
+	public String addInteretPaymentToIncome(HttpServletRequest request, Map<String, String> model) throws Exception {
+		
+		
+		System.out.println("==================开始=======================");
+		 
+		SimpleDateFormat sdf =   new SimpleDateFormat( " yyyy-MM-dd HH:mm:ss " );
+		//创建时间
+		String createdate = sdf.format(new Date());
+		//创建人
+		String userid = model.get("login_userid");
+	    User user=this.tableService.findEntityByID(User.class, userid);
+		String sumPlanList=model.get("sumPlanList");
+	    String paymentdate=model.get("payment_date");
+	    String meno=model.get("meno");
+	    String interestplan=model.get("interestplan");
+	    String loanid=model.get("loanid");
+	    LoanAccount loanAccount =   this.tableService.findEntityByID(LoanAccount.class, loanid);
+		JSONArray interestplans=new JSONArray(interestplan);
+		for(int i=0;i<interestplans.length();i++){
+			JSONObject obj=interestplans.getJSONObject(i);
+			
+			String planid=(String) obj.get("id");
+			LoanRentPlanToInterest loanRentPlanToInterest=	this.tableService.findEntityByID(LoanRentPlanToInterest.class, planid);
+			LoanRentIncomeToInterest loanRentIncomeToInterest=new LoanRentIncomeToInterest();
+			loanRentIncomeToInterest.setHireDate(paymentdate);
+			loanRentIncomeToInterest.setInterest(loanRentPlanToInterest.getInterest());
+		    loanRentIncomeToInterest.setRollBack("0");
+		    loanRentIncomeToInterest.setMeno(meno);
+		    loanRentIncomeToInterest.setCreateDate(createdate);
+		    loanRentIncomeToInterest.setLoanid(loanAccount);
+		    loanRentIncomeToInterest.setSumPlanList(sumPlanList);
+		    loanRentIncomeToInterest.setPlanId(loanRentPlanToInterest);
+		    loanRentIncomeToInterest.setCurrency(loanRentPlanToInterest.getCurrency());
+		  this.tableService.saveOrUpdateEntity(loanRentIncomeToInterest);
+		}
+		System.out.println("==================结束=========================");
+
+		return "SUCCESS";
+		
+	}
+
+}

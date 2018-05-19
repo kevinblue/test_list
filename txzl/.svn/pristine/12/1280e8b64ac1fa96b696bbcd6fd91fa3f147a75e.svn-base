@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+		info.sap_number sapnumber,
+		info.applicantdept applicantdept,
+		info.applicantreason applicantreason,
+		info.ecrnumber ecrnumber,
+		info.isreleasebmc isreleasebmc,
+		info.projnumber projnumber,
+		info.others others,
+		info.edittext edittext,
+		masterdata.dataname designmasterdata,
+		info.needbmc needbmc,
+		info.alreadybmc alreadybmc,
+		t.realname_ creator,
+		info.create_date createdate 
+		 from sap_main_data_info info
+		 left join t_users t on t.id_ = info.creator_
+        left join (
+      SELECT sap_id,
+      wmsys.wm_concat(tdd.name_) dataname
+	    FROM design_master_data_info dmdi
+	    LEFT JOIN t_dicts_datas tdd
+	    ON  dmdi.main_data =tdd.id_
+	    GROUP BY sap_id) masterdata
+	    on masterdata.sap_id = info.id
+	    where 1=1
+	     /~sapnumber: and info.sap_number like '%{sapnumber}%'~/
+		 /~applicantdept: and info.applicantdept like '%{applicantdept}%'~/
+		 /~applicantreason: and info.applicantreason like '%{applicantreason}%'~/
+		 /~createdate: and info.create_date like '%{createdate}%'~/
+		 /~creator: and t.realname_ like '%{creator}%'~/
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

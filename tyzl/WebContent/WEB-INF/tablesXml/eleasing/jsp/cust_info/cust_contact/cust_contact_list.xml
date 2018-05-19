@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+					custcontact.id id , 
+					custcontact.contact_date contactdate, 
+					custcontact.contact_person contactperson, 
+					custcontact.contact_phone contactphone, 
+					custcontact.contact_add contactadd, 
+					custcontact.ccmemo, 
+					substr(custcontact.create_date,0,10) createdate, 
+					substr(custcontact.modify_date,0,10)  modifydate, 
+					custcontact.cust_id custid, 
+					--custcontact.contact_type contacttypename, 
+					D1.ID_ contacttype, 
+					D1.name_ raw_contacttype,
+					custcontact.creator_ creator, 
+					custcontact.modificator_ modificator,
+					custinfo.cust_name custname
+					,users1.realname_ creatorname
+            		,users2.realname_ modificatorname
+				from 
+					cust_contact custcontact
+				left join cust_info custinfo
+					on custcontact.cust_id = custinfo.id
+				LEFT JOIN 
+					T_DICTS_DATAS D1 ON custcontact.contact_type=D1.ID_
+				left join
+	            t_users users1
+	            on custcontact.creator_ = users1.id_ 
+	            left join
+	            t_users users2
+	            on custcontact.modificator_ = users2.id_ 
+				where 1=1
+				/~custid: and custcontact.CUST_ID = '{custid}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+				select 
+					custcontact.id id , 
+					custcontact.contact_date contactdate, 
+					custcontact.contact_person contactperson, 
+					custcontact.contact_phone contactphone, 
+					custcontact.contact_add contactadd, 
+					custcontact.ccmemo, 
+					CONVERT(varchar(100), custcontact.create_date,23) createdate, 
+					CONVERT(varchar(100), custcontact.modify_date,23)  modifydate, 
+					custcontact.cust_id custid, 
+					--custcontact.contact_type contacttypename, 
+					D1.ID_ contacttype, 
+					D1.name_ raw_contacttype,
+					custcontact.creator_ creator, 
+					custcontact.modificator_ modificator,
+					custinfo.cust_name custname
+					,users1.realname_ creatorname
+            		,users2.realname_ modificatorname
+				from 
+					cust_contact custcontact
+				left join cust_info custinfo
+					on custcontact.cust_id = custinfo.id
+				LEFT JOIN 
+					T_DICTS_DATAS D1 ON custcontact.contact_type=D1.ID_
+				left join
+	            t_users users1
+	            on custcontact.creator_ = users1.id_ 
+	            left join
+	            t_users users2
+	            on custcontact.modificator_ = users2.id_ 
+				where 1=1
+				/~custid: and custcontact.CUST_ID = '{custid}'~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+     </data>
+  </table>
+</table-root>

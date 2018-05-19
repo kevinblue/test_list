@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+		
+ select 
+         SG.NUM AS num,
+         SG.TARGET AS target,
+         ROUND(TO_NUMBER(SG.SCOREWEIGHT)*100,2)||'%' AS scoreweight,
+         SG.TYPE AS type,
+         SG.RESPONSIBLE_DEPT AS responsibledept,
+         SG.PROCESS AS process,
+         to_number(SG.SCORE) AS score
+          from supplier_grade SG left join
+        (select  id,create_date,rownum from (
+        select id,create_date  
+        from BASE_FILE where SGRADE_ID='{sgradeid}' and exists(
+        select up_id from supplier_grade) order by to_date(create_date,'
+             YYYY - MM - DD HH24 :MI :SS
+             ')desc ) t where rownum=1
+          ) b
+        on SG.up_id = b.id where SG.up_id= b.id
+
+union all
+
+select '' num,
+       '' target,
+       '' scoreweight,
+       '' type,
+       '' dept,
+       '' process,
+sum(nvl(to_number(sg.score), 0)) as score
+  from supplier_grade sg
+  left join (select id, create_date, rownum
+               from (select id, create_date
+                       from BASE_FILE
+                      where SGRADE_ID='{sgradeid}' and exists (select up_id from supplier_grade)
+                      order by to_date(create_date,'
+         YYYY - MM - DD HH24 :MI :SS
+         ') desc) t
+              where rownum = 1) b
+    on sg.up_id = b.id where SG.up_id= b.id
+
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

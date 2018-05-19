@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+				ps.id,
+				ps.start_list startlist,
+				ps.end_list endlist,
+				ps.regular_planmoney regularplanmoney,
+				ps.regular_months regularmonths,
+				ps.rate_float_amt ratefloatamt,
+				ps.base_rate baserate,
+				ps.year_rate yearrate,
+				ps.ratefloat_type ratefloattype,
+				td2.name_ ratefloattypename,
+				ps.regular_settlemethod regularsettlemethod,
+				td3.name_ regularsettlemethodname,
+				ps.regular_incomenumberyear regularincomenumberyear,
+				td1.name_ regularincomenumberyearname
+				from 
+				contract_SPECIAL_RULES_BEAN ps
+				left join t_dicts_datas td1 on ps.regular_incomenumberyear=td1.id_
+				left join t_dicts_datas td2 on ps.ratefloat_type=td2.id_
+				left join t_dicts_datas td3 on ps.regular_settlemethod=td3.id_
+                WHERE ps.contract_ID = '{contract_id}' 
+              <EXTRACTEND> order by startlist <EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

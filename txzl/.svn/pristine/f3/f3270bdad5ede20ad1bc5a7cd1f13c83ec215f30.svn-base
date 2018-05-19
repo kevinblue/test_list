@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+select 
+r.id id,
+r.RECEIPT_COUNT receiptcount,
+r.AMOUNT amount,
+r.RECEIPT_TIME receipttime,
+r.PAYMENT_UNIT paymentunit,
+t.id_  plannameid,
+t.name_  plannameidname,
+r.fund_type fundtype,
+r.note_ note,
+r.DI_ID diid
+from RECEIPT_COUNT_DETAIL r 
+left join DEPOSIT_INTEREST d on d.id=r.DI_ID
+left join t_dicts_datas t on t.id_=r.plan_name
+ where 1=1 
+	       	/~plantimeStart: and r.RECEIPT_TIME >= '{plantimeStart}' ~/
+            /~plantimeEnd: and r.RECEIPT_TIME <= '{plantimeEnd}' ~/
+			 <EXTRACTEND> ORDER BY receipttime	<EXTRACTEND>		
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

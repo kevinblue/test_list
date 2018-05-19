@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 保理催款openlist -->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+	        select * from(
+	        	select 
+	        		vi1.cust_name custname,--客户名
+	        		vi1.business_type,
+					vi1.custid custid,--客户编号
+					vi1.id contractid,--合同序号
+					vi1.contract_id contractid1,--合同编号
+					vi1.contract_number contractnumber,--业务合同编号
+					status.status_name statusname,--合同状态
+					vi1.PROJECT_NAME projmanage,--项目经理
+					 vi1.PROJMANAGENAME,
+                    dunning.part_dept partdept,--催款员
+                    dunning.id dunningid,--催款编号
+                    tusers.realname_ rawValue_partdept,--催款员
+                    contractoutlist.out_list outlist,--逾期期数
+                    --contractoutlist.inc_rent incrent,
+                    incrent,--逾期租金
+                    penalty,--逾期罚息
+                    next_commitment_date,--计划下次联系日
+                    commitment_date--承诺还款日期
+          from (
+                     select * from (select vi2.contractid contractid from vi_contract_fund_rent_plan vi2 group by vi2.contractid
+                     having sum(vi2.CURRENTINCOME)<sum(vi2.rent))   fundrentplan) fundrentplan1 
+                   left join 
+                   vi_contract_info vi1 on fundrentplan1.contractid =vi1.id
+                   left join OVERDUE_DUNNING_INFO dunning 
+                   on vi1.id = dunning.contract_id 
+                   left join T_USERS tusers
+                   on dunning.part_dept = tusers.id_
+           left join 
+           base_contract_status status
+           on vi1.contract_status = status.status_code
+             left join
+             vi_contract_out_list contractoutlist
+             on vi1.id = contractoutlist.contract_id
+                 left join 
+                 (select sum(CURRENTOVERAGE) incrent,CONTRACTID from vi_contract_fund_rent_plan  
+                 where plandate <to_char(sysdate,'yyyy-mm-dd') group by CONTRACTID ) plan_
+                 on plan_.CONTRACTID = vi1.id
+                 left join
+                 (select sum(penalty) penalty,contract_id  from vi_contract_penalty  group by contract_id) contract_penalty
+                 on contract_penalty.contract_id=vi1.id
+                 left join (select max(next_commitment_date) next_commitment_date, contract_id from OVERDUE_DUNNING_RECORD group by contract_id) record1
+                 on record1.contract_id = vi1.id 
+                 left join (select max(commitment_date) commitment_date, contract_id from OVERDUE_DUNNING_RECORD group by contract_id) record2
+                 on record2.contract_id = vi1.id
+             ) menutemp
+             where 1=1 and menutemp.business_type<>'business_type.lease'
+            	--	 and nvl(status,0)=0 
+		       -- and overduerent > 0 and outdate<=7
+			       /~next_commitment_date: AND menutemp.next_commitment_date like '%{next_commitment_date}%' ~/
+			        /~custname: AND menutemp.custname like '%{custname}%' ~/
+			        /~contractid1: AND menutemp.contractid1 like '%{contractid1}%' ~/
+			        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+			        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+			        /~projmanagename: AND menutemp.projmanage like '%{projmanagename}%' ~/
+			        /~next_commitment_date: AND menutemp.next_commitment_date >= '{next_commitment_date}' ~/
+			        /~commitment_date: AND menutemp.commitment_date >= '{commitment_date}' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        	select * from(
+	        	select 
+	        		vi1.cust_name custname,
+					vi1.custid custid,
+					vi1.id contractid,
+					vi1.contract_id contractid1,
+					vi1.contract_number contractnumber,
+					status.status_name,
+					vi1.PROJECT_NAME projmanage,
+                    dunning.part_dept partdept,
+                    dunning.id dunningid,
+                    tusers.realname_ rawValue_partdept,
+                    contractoutlist.out_list outlist,
+                    --contractoutlist.inc_rent incrent,
+                    incrent,
+                    penalty,
+                    next_commitment_date,
+                    commitment_date
+				  from (
+                     select * from (select vi2.contractid contractid from vi_contract_fund_rent_plan vi2 group by vi2.contractid
+				             having sum(vi2.CURRENTINCOME)<sum(vi2.rent))   fundrentplan) fundrentplan1 
+                   left join 
+                   vi_contract_info vi1 on fundrentplan1.contractid =vi1.id
+                   left join OVERDUE_DUNNING_INFO dunning 
+                   on vi1.id = dunning.contract_id 
+                   left join T_USERS tusers
+                   on dunning.part_dept = tusers.id_
+				   left join 
+				   base_contract_status status
+				   on vi1.contract_status = status.status_code
+			       left join
+			       vi_contract_out_list contractoutlist
+			       on vi1.id = contractoutlist.contract_id
+		             left join 
+		             (select sum(CURRENTOVERAGE) incrent,CONTRACTID from vi_contract_fund_rent_plan  
+		             where plandate <CONVERT(varchar, getdate(), 120 ) group by CONTRACTID ) plan_
+		             on plan_.CONTRACTID = vi1.id
+		             left join
+		             (select sum(penalty) penalty,contract_id  from vi_contract_penalty  group by contract_id) contract_penalty
+		             on contract_penalty.contract_id=vi1.id
+		             left join (select max(next_commitment_date) next_commitment_date, contract_id from OVERDUE_DUNNING_RECORD group by contract_id) record1
+		             on record1.contract_id = vi1.id 
+		             left join (select max(commitment_date) commitment_date, contract_id from OVERDUE_DUNNING_RECORD group by contract_id) record2
+		             on record2.contract_id = vi1.id
+			       ) menutemp
+			       where 1=1 and outlist > 0
+			       and rawValue_partdept = '{login_realname}'
+			        /~custname: AND menutemp.custname like '%{custname}%' ~/
+			        /~contractid1: AND menutemp.contractid1 like '%{contractid1}%' ~/
+			        /~contractnumber: AND menutemp.contractnumber like '%{contractnumber}%' ~/
+			        /~rawValue_partdept: AND menutemp.rawValue_partdept like '%{rawValue_partdept}%' ~/
+			        /~projmanage: AND menutemp.projmanage like '%{projmanage}%' ~/
+			        /~nextdate: AND menutemp.nextdate >= '{nextdate}' ~/
+			        /~commitmentdate: AND menutemp.commitmentdate >= '{commitmentdate}' ~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

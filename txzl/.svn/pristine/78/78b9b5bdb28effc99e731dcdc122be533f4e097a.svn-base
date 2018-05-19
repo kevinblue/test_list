@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select 
+				wp.id id,
+			   	wp.proj_id projid,
+                wp.code code,
+                wp.equip_name equipname,
+                wp.unit unit,
+                wp.type type,
+                to_char(round(to_number(wp.amount),0)) amount,
+                wp.price price,
+                to_char(round(to_number(wp.total),2)) total,
+                wp.remark remark
+                from WIND_POWER_INVESTMENT_DETAILS wp
+				where 1=1
+				and not exists
+				(select 1 from t_dicts_datas  t where  t.pid_='write_innew' and t.name_=wp.equip_name)
+				
+				/~projid: and wp.proj_id = '{projid}'~/
+				 union 
+        
+        select '合计' as id,
+        
+        '' projid,
+        '' as code,
+        '' as equipname,
+        '' as unit,
+        '' as type,
+        '' as amount,
+        '' as price,
+         round(sum(nvl(s.total,0)),2)||''  as total,
+        '' as remark
+        from  WIND_POWER_INVESTMENT_DETAILS  s where not exists 
+        
+        (select 1 from t_dicts_datas  t where  t.pid_='total_out' and t.name_=s.equip_name)
+        
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

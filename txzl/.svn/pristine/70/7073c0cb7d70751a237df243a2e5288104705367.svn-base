@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			   select  distinct
+                pro.id pid, 
+                pro.proj_id  projid, --项目编号
+                pro.project_name proname, --项目名称
+                pro.proj_date projdate,   --立项日期
+                cust.cust_name custname, --承租人姓名
+                pro.cust_id custid,
+                vc.rawprovince province,  --省份
+                vc.city city,             --城市
+                tds.name_ districtname,    --区域
+                pt.flow_status flowstatus, --流程状态
+                pt.plan_users planusers,--最新步骤名称
+                pt.task_name taskname,--最新节点处理人
+                d5.name_ industrytypename, --内部行业（项目）
+                d6.name_ subcustkind,      --内部子行业（项目）
+               pc.equip_amt  equipamt ,	--合同金额
+                pc.clean_lease_money  cleanleasemoney,    --融资金额
+                sta.status_name contractstatusname,
+                u1.realname_ projmanagename, --项目经理
+                u1.id_ projmanage,
+                u2.realname_ projassistname, --项目助理
+                u2.id_ projassist,
+               -- u3.realname_ projregistrarname,
+                u4.realname_ projimpotername, --项目导入人
+                dept.name_ projdeptname,      --业务部
+                 dept.id_ projdept,
+                 (select trim(leading '》' from sys_connect_by_path(name_,'》')) name from t_depts t      
+     	 where id_=pro.dept_route     
+       start with pid_='402811814a22c45f014a2353d45d0032' connect  by prior t.id_=t.pid_) deptroute,                    --业务子部门
+                 pro.dept_route ,                        
+                dict.name_ leasformname, --租赁形式
+                bcs.status_name statusname,
+                to_char(contractsupplier.seller) seller, --供应商
+                contractsupplier.vndr    
+                 from  proj_info pro 
+                 left join base_contract_status bcs on pro.proj_status=bcs.status_code
+                 left join cust_info cust on cust.id=pro.cust_id 
+                 left join base_contract_status sta on sta.status_code=pro.proj_status  
+                  left join(select equip.proj_id projid,
+                  wm_concat(custinfo.cust_name) seller,
+                   max(equip.vndr) as vndr
+                   from (select proj_id, vndr from proj_equip group by proj_id, vndr) equip
+                left join cust_info custinfo
+                 on custinfo.id = equip.vndr
+                group by equip.proj_id ) contractsupplier on contractsupplier.projid=pro.id 
+                 left join T_DICTS_DATAS d1 on pro.proj_scale=d1.id_  
+                 left join T_DICTS_DATAS d2 on pro.leas_type=d2.id_ 
+                 left join T_DICTS_DATAS d5 on pro.industry_type=d5.id_ 
+                 left join t_dicts_datas d6 on pro.sub_cust_kind=d6.id_
+                 left join t_dicts_datas dict on dict.code_=pro.leas_form 
+                 left join t_users u1 on pro.proj_manage=u1.id_  
+                 left join t_users u2 on pro.proj_assist=u2.id_  
+                -- left join t_users u3 on pro.proj_registrar=u3.id_ 
+                 left join t_users u4 on pro.proj_impoter=u4.id_
+                 LEFT JOIN  T_DEPTS DEPT ON pro.proj_dept =DEPT.ID_
+                 left join vi_user_leader leader on leader.id_ = pro.proj_manage
+                 
+                 left join (select vcic.id id,vcic.custname name,vcic.province province,vcic.rawValue_province rawprovince,vcic.rawValue_city city from vi_cust_info_company vcic
+                           union
+                           select vcip.id id,vcip.custname name,vcip.province province,vcip.rawValue_province rawprovince,vcip.rawValue_city city from vi_cust_info_person vcip) vc
+                  on cust.id=vc.id
+                 left join dunning_district dd on vc.province=dd.district
+                 left join T_DISTRICT tt on dd.district=tt.id 
+                 left join t_dicts_datas tds on tds.id_=tt.district
+                 left join proj_condition pc on pro.id=pc.proj_id 
+                 left join (select key_one_ proj_id,workflow_display_name_||'['||decode(processinstance_state_,'Draft','草稿','Pending','进行中','Finish','已结束')||']' flow_status,
+                LISTAGG(realname_,',') WITHIN GROUP (ORDER BY key_one_)  plan_users,history_activity_name_ task_name 
+                 from (
+                select key_one_,tjwi.processinstance_state_,tjwi.JBPM4_HIST_ACTINST_DBID_,workflow_display_name_,
+                tu.realname_,tjwi.history_activity_name_,
+                rank() over(partition by key_one_  order by JBPM4_HIST_ACTINST_DBID_ desc) rown from t_jbpm_workflow_info  tjwi 
+                left join t_jbpm_workflow_infos_users tjw on tjwi.id_=tjw.jbpmworkflowhistoryinfo_id_ 
+                left join t_users tu on tu.id_=tjw.plan_actor_user_id_
+                where  processdefinition_id_ like '项目%' 
+                and JBPM4_HIST_ACTINST_DBID_ is not null ) temp where rown=1 
+                group by key_one_,workflow_display_name_,processinstance_state_,
+                 history_activity_name_) pt on pro.proj_id=pt.proj_id
+           where 1=1   
+           and  pro.business_type='business_type.lease'   --租赁       
+           /~province: and vc.rawprovince like '%{province}%'~/
+            /~districtname: and tds.id_ = '{districtname}'~/
+           /~projid: and pro.proj_id like '%{projid}%'~/
+           /~projectname: and pro.project_name like '%{projectname}%'~/
+           /~contractstatusname: and sta.status_name like '%{contractstatusname}%'~/
+           /~statusname: and sta.status_name like '%{statusname}%'~/
+           /~projmanagename: and u1.realname_ like '%{projmanagename}%'~/
+           /~contractid: and info.contract_id like '%{contractid}%'~/
+           /~contractnumber: and info.contract_number like '%{contractnumber}%'~/
+           /~custname: and cust.cust_name like '%{custname}%'~/
+           /~projdeptname: and dept.name_ like '%{projdeptname}%'~/
+           /~seller: and contractsupplier.seller like '%{seller}%'~/
+           /~industrytypename: and d5.name_ like '%{industrytypename}%'~/
+           /~flowstatus: and pt.flow_status like '%{flowstatus}%'~/
+           /~leasformname: and pro.leas_form='{leasformname}'~/
+           /~proname: and pro.project_name like'%{proname}%'~/
+           /~projdateStart: and pro.proj_date >= '{projdateStart}' ~/ 
+	       /~projdateEnd: and pro.proj_date <= '{projdateEnd}' ~/ 
+           /~condition: {condition} ~/
+           /~extendsql: <<extendsql>>~/
+           order by projdate desc 	
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+			   select 
+                pro.id pid,
+                pro.proj_id  projid,
+                pro.proj_date projdate,
+                cust.cust_name custname,
+                d5.name_ industrytypename,
+                sta.status_name contractstatusname,
+                u1.realname_ projmanagename,
+                u1.id_ projmanage,
+                u2.realname_ projassistname,
+                u2.id_ projassist,
+                u3.realname_ projregistrarname,
+                dept.name_ projdeptname,
+                dept.id_ projdept,
+                dict.name_ leasformname,
+                bcs.status_name statusname,
+                contractsupplier.seller
+                from  proj_info pro 
+                left join base_contract_status bcs on pro.proj_status=bcs.status_code
+                left join cust_info cust on cust.id=pro.cust_id 
+                left join base_contract_status sta on sta.status_code=pro.proj_status  
+                left join(
+                     select p.PROJ_ID projid, [seller]=stuff((select ','+[cust_name] 
+                     from CUST_INFO t where 
+                     id in(select vndr from proj_equip where PROJ_ID=p.PROJ_ID ) for xml path('')), 1, 1, '')
+                     from proj_equip p
+                     group by p.proj_id ) 
+                 contractsupplier on contractsupplier.projid=pro.id 
+                 left join T_DICTS_DATAS d1 on pro.proj_scale=d1.id_  
+                 left join T_DICTS_DATAS d2 on pro.leas_type=d2.id_ 
+                 left join T_DICTS_DATAS d5 on pro.industry_type=d5.id_ 
+                 left join t_dicts_datas dict on dict.code_=pro.leas_form 
+                 left join t_users u1 on pro.proj_manage=u1.id_  
+                 left join t_users u2 on pro.proj_assist=u2.id_  
+                 left join t_users u3 on pro.proj_registrar=u3.id_ 
+                 LEFT JOIN  T_DEPTS DEPT ON pro.proj_dept =DEPT.ID_
+           where 1=1 
+           /~projid: and pro.proj_id like '%{projid}%'~/
+           /~projectname: and pro.project_name like '%{projectname}%'~/
+           /~contractstatusname: and sta.status_name like '%{contractstatusname}%'~/
+           /~statusname: and sta.status_name like '%{statusname}%'~/
+           /~projmanagename: and u1.realname_ like '%{projmanagename}%'~/
+           /~contractid: and info.contract_id like '%{contractid}%'~/
+           /~contractnumber: and info.contract_number like '%{contractnumber}%'~/
+           /~custname: and cust.cust_name like '%{custname}%'~/
+           /~projdeptname: and dept.name_ like '%{projdeptname}%'~/
+           /~seller: and contractsupplier.seller like '%{seller}%'~/
+           /~industrytypename: and d5.name_ like '%{industrytypename}%'~/
+           /~leasformname: and pro.leas_form='{leasformname}'~/
+           /~condition: {condition} ~/
+           <EXTRACTEND> order by projdate desc 	<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+	  <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

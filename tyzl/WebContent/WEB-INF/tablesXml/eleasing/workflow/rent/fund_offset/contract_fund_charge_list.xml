@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			SELECT TDD3.NAME_ AS PAY_TYPE,
+			       CFFP.PAYMENT_ID,
+			       CHARGE.FACT_OBJECT,
+			       TDD1.NAME_         AS FEE_TYPE,
+			       TDD2.NAME_         AS SETTLE_METHOD,
+			       CHARGE.FACT_MONEY,
+			       CHARGE.FACT_DATE,
+			       CHARGE.FFCMEMO
+			  FROM CONTRACT_FUND_FUND_CHARGE CHARGE
+			  LEFT JOIN CONTRACT_FUND_FUND_PLAN CFFP ON CHARGE.PAYMENT_ID = CFFP.ID
+			  LEFT JOIN T_DICTS_DATAS TDD1 ON CHARGE.FEE_TYPE = TDD1.ID_
+			  LEFT JOIN T_DICTS_DATAS TDD2 ON CHARGE.SETTLE_METHOD = TDD2.ID_
+			  LEFT JOIN T_DICTS_DATAS TDD3 ON CHARGE.PAY_TYPE = TDD3.ID_
+			 WHERE CHARGE.FEE_TYPE = 'feetype2'
+			   AND CHARGE.CONTRACT_ID = '4028828f4a33302c014a33460ed30052'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

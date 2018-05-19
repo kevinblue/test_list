@@ -1,0 +1,89 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="/WEB-INF/tlds/c.tld"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<c:if test="${sessionScope['login_userlanguage'].language == 'zh'}">
+	<c:set var="currentLocale" value="zh_CN"></c:set>
+</c:if>
+<c:if test="${sessionScope['login_userlanguage'].language == 'en'}">
+	<c:set var="currentLocale" value="en_US"></c:set>
+</c:if>
+
+<c:set var="currentTimestamp" value="20140109000"></c:set>
+<c:set var="currentSkin" value="blue3"></c:set>
+<c:set var="urlPrefix" value="${pageContext.request.contextPath}/table/getTableData.action?tracywindyRandom=1&decorate=none&xmlFileName=" scope="request"></c:set>
+<script src="${pageContext.request.contextPath}/js/jquery/jquery-1.11.0.min.js?${currentTimestamp}" type="text/javascript"></script>
+<script type="text/javascript">
+	var globalTimestamp = "${currentTimestamp}";
+	var globalLocale = "${currentLocale}";
+	var globalSkin = "${currentSkin}";
+	var globalClientWidth = document.documentElement.clientWidth;
+	var globalClientHeight = document.documentElement.clientHeight;
+	var globalWebRoot = "${pageContext.request.contextPath}";
+	var urlPrefix = "${urlPrefix}";
+	var al = 0;
+	
+	document.onkeydown=function(e){
+		var keyCode = e.keyCode || e.which;
+		if($("#alertFram")[0] == undefined ){
+			if(e.altKey && keyCode == 49){
+				alert("<%=request.getServletPath()%>");
+			}
+		}
+	<%-- 	if($("#alertFram").css("display") == "none" ){
+			if(e.altKey && keyCode == 49){
+				alert("<%=request.getServletPath()%>");
+			}
+		}  --%>
+	}
+	
+	window.alert = function(str)
+    {
+	var title = "系统提示";
+	if(str.split(".")[1]=="jsp"){
+		title = "当前JSP路径";
+	}
+     var shield = document.createElement("DIV");
+     shield.id = "shield";
+     shield.style.position = "absolute";
+     shield.style.left = "0px";
+     shield.style.top = "0px";
+     shield.style.width = "100%";
+     shield.style.height = document.body.scrollHeight+"px";
+     //弹出对话框时的背景颜色
+     shield.style.background = "#DDDDDD";
+     shield.style.textAlign = "center";
+     shield.style.zIndex = "25"; 
+     //背景透明 IE有效
+     //shield.style.filter = "alpha(opacity=0)";
+     shield.style.opacity = '0.6';
+     var alertFram = document.createElement("DIV");
+     alertFram.id="alertFram";
+     alertFram.style.position = "absolute";
+     alertFram.style.left = "50%";
+     alertFram.style.top = "35%";
+     alertFram.style.marginLeft = "-225px";
+     alertFram.style.marginTop = "-75px";
+     alertFram.style.width = "450px";
+     alertFram.style.height = "150px";
+     //alertFram.style.background = "#ff0000";
+     alertFram.style.background = "#DDFFFF";
+     alertFram.style.textAlign = "center";
+     alertFram.style.lineHeight = "150px";
+     alertFram.style.zIndex = "300";
+     strHtml = "<table style=\"list-style:none;margin:0px;padding:0px;width:100%\">";
+     strHtml += " <tr><td style=\"background:#3399CC;text-align:left;padding-left:20px;font-family:微软雅黑;font-size:12px;height:25px;line-height:25px;border:1px solid #DDDDDD;\">"+title+"</td></tr>";
+     strHtml += " <tr><td style=\"background:#fff;text-align:center;font-size:13px;width:450px;word-wrap:break-word;write-space:nowrap;height:120px;line-height:30px;border-left:1px solid #DDDDDD;border-right:1px solid #DDDDDD;\">"+str.replace("/WEB-INF","")+"</td></tr>";
+     strHtml += " <tr><td style=\"background:#99CCFF;text-align:center;font-weight:bold;height:25px;line-height:25px; border:1px solid #DDDDDD;\"><input type=\"button\" value=\"确 定\" onclick=\"doOk()\" /></td></tr>";
+     strHtml += "</table>";
+     alertFram.innerHTML = strHtml;
+     document.body.appendChild(alertFram);
+     document.body.appendChild(shield);
+     //var ad = setInterval("doAlpha()",5);
+     this.doOk = function(){
+         $("#alertFram").remove();
+         $("#shield").remove();
+     }
+     alertFram.focus();
+     document.body.onselectstart = function(){return true;};
+    }
+</script>

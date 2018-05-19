@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+       SELECT 
+			t.id id,
+        	t.UNIT_NUM 机组编号,
+        	t.WIND_FIELD_NUM 风场编号,
+        	t.WIND_FIELD_NAME 风场名称,
+        	t.AREA 片区,
+        	t.PROJ_DEPT 项目部,
+        	t.PROJ_MANAGER 项目经理,
+        	t.MACHINE_STATUS 机组状态,
+        	t.MACHINE_NUM 运行机位号,
+        	t.MACHINE_NUM_SCA SCADA风机编号,
+        	t.FIELD_NUM_SCA SCADA风场编号,
+        	t.UNIT_CAPACITY 机组容量,
+        	t.MODEL 机型,
+        	t.WHEEL_HEIGHT 轮毂高度,
+        	t.ADDRESS_OF_IP IP地址,
+        	t.SUBNET_MASK 子网掩码,
+        	substr(t.EXCAVATION_TIME,0,10) 基础开挖时间,
+        	substr(t.CASTING_TIME,0,10) 基础浇筑时间,
+        	substr(t.BOXINSTALLATION_TIME,0,10) 箱变安装时间,
+        	substr(t.PICKUPSTART_TIME,0,10) 接货开始时间,
+        	substr(t.PICKUPEND_TIME,0,10) 接货结束时间,
+        	substr(t.LIFTINGSTART_TIME,0,10) 吊装开始时间,
+        	substr(t.LIFTINGEND_TIME,0,10) 吊装结束时间,
+        	substr(t.POWER_ON_TIME,0,10) 上电时间,
+        	substr(t.STATIC_START_TIME,0,10) 静调开始时间,
+        	substr(t.STATIC_END_TIME,0,10) 静调结束时间,
+        	substr(t.MOVE_START_TIME,0,10) 动调开始时间,
+        	substr(t.MOVE_END_TIME,0,10) 动调结束时间,
+        	substr(t.COMMISSIONING_STIME,0,10) 试运行开始时间,
+        	substr(t.COMMISSIONING_ETIME,0,10) 试运行结束时间,
+        	substr(t.PREACCEPTANCE_TIME,0,10) 预验收通过时间,
+        	substr(t.TURN_UNDER_WARRANTY,0,10) 在建转质保时间,
+        	t.MAIN_PROGRAM_VNUM 主控程序版本号,
+        	t.TRANSFORMER_VNUM 变流版本号,
+        	t.ISANALYZED_VNUM 变桨版本号,
+        	t.INIT_FILE_VNUM 初始化文件版本号,
+        	t.PROPELLER_TYPE 变桨类型,
+        	t.CONVERTER_TYPE 变流类型,
+        	t.COLD 冷却,
+        	t.LEAF_BLADE 叶片,
+        	t.BUS_TYPE  总线类型,
+        	t.TOWER_DRUM 塔筒,
+        	t.BASIC_TYPE 基础形式,
+        	t.TOWER_CONNECTION 塔架连接方式,
+        	t.TOWER_DRAWING 塔架图号,
+        	substr(t.EXPECT_WARRANTY_TIME,0,10) 预计出质保时间,
+        	substr(t.FINHAND_END_TIME,0,10) 最终交接结束时间,
+        	substr(t.HOISTING_STIME,0,10) 吊装过程验收开始时间,
+        	substr(t.HOISTING_ETIME,0,10) 吊装过程验收结束时间,
+        	substr(t.TORQUE_STIME,0,10) 力矩验收开始时间,
+        	substr(t.TORQUE_ETIME,0,10) 力矩验收结束时间,
+        	substr(t.WIRING_STIME,0,10) 接线开始时间,
+        	substr(t.WIRING_ETIME,0,10) 接线结束时间,
+        	substr(t.ALLACCEPTANCE_STIME,0,10) 整体验收开始时间,
+        	substr(t.ALLACCEPTANCE_ETIME,0,10) 整体验收结束时间,
+        	substr(t.INACCEPTANCE_STIME,0,10) 内部验收开始时间,
+        	substr(t.INACCEPTANCE_ETIME,0,10) 内部验收结束时间,
+        	substr(t.WILL_ACCEPTANCE_STIME,0,10) 预验收开始时间,
+        	substr(t.LAST_HANDOVER_STIME,0,10) 最终交接开始时间,
+        	substr(t.LAST_ACCEPTANCE_STIME,0,10) 最终交接验收开始时间,
+        	substr(t.LAST_ACCEPTANCE_ETIME,0,10) 最终交接验收结束时间,
+        	substr(t.LAST_WARRANTY_TIME,0,10) 最终出质保时间,
+        	substr(t.SYST_CREATE_TIME,0,10) 系统创建时间
+			from t_machine_main_data t
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

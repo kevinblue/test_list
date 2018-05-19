@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+      SELECT p.id,
+       p.proj_number projnumber,
+       p.payment_id paymentid,
+       p.payment_node paymentnode,
+       p.condition_name conditionname,
+       p.remark,
+       p.contract_id projid,
+       p.device_name devicename,
+       t2.name_  devicenamename,
+       p.fee_type feetype,
+       p.ismeet ismeet,
+       p.conditionstub conditionstub,
+       t.name_  feetypename,
+       '' filename,     
+        p.id as createdual
+  FROM ConPAYMENT_PREMISE_CONDITION P
+  left join t_dicts_datas t on t.id_=p.fee_type
+   left join t_dicts_datas t2 on t2.id_=p.device_name
+              WHERE P.contract_id='{contract_id}'
+             /~payment_id: and P.payment_id='{payment_id}'~/
+             /~fee_type:   and P.fee_type='{fee_type}'~/
+             /~devicename:   and P.device_name='{devicename}'~/
+                order  by p.payment_id,p.payment_node asc
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib version="2.0" xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee web-jsptaglibrary_2_0.xsd">
+<tlib-version>1.0</tlib-version>
+<jsp-version>2.0</jsp-version>
+<short-name>cc</short-name>
+<uri>/minidict</uri>
+<tag>
+    <name>dict</name>
+    <tag-class>com.tenwa.leasing.tag.MiniDictTag</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>name</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>value</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>text</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>parentid</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>otherClass</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+      <attribute>
+        <name>otherproperties</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+ </tag>
+<tag>
+    <name>param</name>
+    <tag-class>com.tenwa.leasing.tag.GetParameter</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>name</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>defaultValue</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+        <attribute>
+        <name>scope</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+        <attribute>
+        <name>valuetype</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+ </tag>
+ <tag>
+    <name>user</name>
+    <tag-class>com.tenwa.leasing.tag.GetUser</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>name</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>valuetype</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+ </tag>
+  <tag>
+    <name>dept</name>
+    <tag-class>com.tenwa.leasing.tag.GetDept</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>name</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>valuetype</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+ </tag>
+   <tag>
+    <name>ErrorHandler</name>
+    <tag-class>com.tenwa.leasing.tag.GetErrorHandler</tag-class>
+    <body-content>empty</body-content>
+ </tag>
+</taglib>

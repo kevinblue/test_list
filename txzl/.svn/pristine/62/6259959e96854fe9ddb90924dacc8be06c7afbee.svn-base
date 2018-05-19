@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				       		select 
+				wp.id id,
+			   	wp.proj_id projid,
+                wp.code codeid,
+                case when wp.equip_name='各项投资占比' then wp.equip_name
+                	else wp.code || '. ' || wp.equip_name 
+                	end as equipname,
+                case when wp.equip_name='各项投资占比' then null
+                	else
+                 to_char(nvl((round(wp.unit*100,2)),0),'999999999990.9')||'%' 
+                 end as typename
+                from WIND_POWER_INVESTMENT_DETAILS wp
+                where 1 = 1 
+				
+				/~projid: and wp.proj_id = '{projid}'~/
+			     and  exists 
+        
+      (select 1 from t_dicts_datas  t where  t.pid_='write_innew' and t.name_=wp.equip_name )
+      union 
+        select '' as id,
+        '' projid,
+        '' as codeid,
+        '总计' as equipname,
+        '100%' as typename
+        from  WIND_POWER_INVESTMENT_DETAILS  s 
+
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

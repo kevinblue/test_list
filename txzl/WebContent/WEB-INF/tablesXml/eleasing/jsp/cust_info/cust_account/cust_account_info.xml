@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        
+		   SELECT     
+			acc.id, 
+			acc.cust_id as custid,
+			cust_info.cust_name AS custname,
+			acc.acc_number as accnumber,
+			acc.account_type as accounttype,
+			acc.account_type_new as accounttypenew,
+			tdd.name_	accounttypenewname,
+			acc.bank_name as bankname,
+			acc.DEPOSIT_BANK_TYPE  depositbanktype,					
+			tdd1.name_  depositbanktypename,		
+					
+			--acc.deposit_province depositprovince,
+			--tdd2.name   depositprovincename,
+			--acc.deposit_city depositcity,
+			--tdd3.name   depositcityname,
+			
+			acc.province_ province,
+			tdd2.name   provincename,
+			acc.city_  city,
+			tdd3.name  cityname,
+			
+			acc.account as account,
+			acc.is_main as ismain,
+			acc.ACC_INFO as ACCINFO,
+			acc.bank_no bankno,
+			acc.UNION_BANK_NO unionbankno,
+			acc.creator_ as creator, 
+		    base2.Realname_ AS creatorname,
+			substr(acc.create_date,0,10) as createdate,
+			substr(acc.MODIFY_DATE,0,10) as MODIFYDATE,
+			acc.modificator_ modificator,
+			base3.Realname_ AS modificatorname, 
+			acc.modify_date 
+			
+			FROM  cust_account acc
+		    left join cust_info  on  acc.cust_id=cust_info.id
+		    left join t_dicts_datas  tdd1 on tdd1.id_=acc.deposit_bank_type
+		    left join t_district  tdd2 on tdd2.id=acc.province_
+		    left join t_district  tdd3 on tdd3.id=acc.city_
+		    left join t_users base2 on  acc.creator_=base2.id_
+		    left join t_users base3 on  acc.modificator_=base3.id_
+            left join t_dicts_datas tdd 
+	       			on tdd.id_ = acc.account_type_new
+	       			
+             where 1=1
+			 /~custid: and acc.cust_id = '{custid}'~/
+			 
+			 
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+		   SELECT     
+				acc.id, 
+				acc.cust_id as custid,
+				cust_info.cust_name AS custname,
+				acc.acc_number as accnumber,
+				acc.bank_name as bankname,
+				acc.account as account,
+				acc.is_main as ismain,
+				acc.ACC_INFO as ACCINFO,
+				acc.creator_ as creator, 
+			    base2.Realname_ AS creatorname,
+				CONVERT(varchar(100), acc.create_date,23) as createdate,
+				CONVERT(varchar(100), acc.MODIFY_DATE,23) as MODIFYDATE,
+				acc.modificator_ modificator,
+				base3.Realname_ AS modificatorname, 
+				acc.modify_date FROM  cust_account acc
+			    left join cust_info  on  acc.cust_id=cust_info.id
+			    left join t_users base2 on  acc.creator_=base2.id_
+			    left join t_users base3 on  acc.modificator_=base3.id_
+             where 1=1
+			 /~custid: and acc.cust_id = '{custid}'~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,82 @@
+package com.tenwa.leasing.action.contract.contractPatrol;
+
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Component;
+
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ContractInvestInfo;
+import com.tenwa.leasing.entity.contract.ContractPatrolInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+
+
+
+@WorkflowAction(name = "contractPatrolEndAction", description = "流程结束动作", workflowName = "租后巡视")
+@Component(value = "contractPatrolEndAction")
+public class ContractPatrolEndAction implements JbpmBaseAction {
+	@Resource(name = "tableService")
+	private TableService  tableService;
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		//System.out.println("============================"+variablesMap);
+		String  custid = variablesMap.get("custid");
+		String contractid=variablesMap.get("contract_id");
+		CustInfo custInfo = this.tableService.findEntityByID(CustInfo.class, custid);
+		ContractInfo contractinfo=this.tableService.findEntityByID(ContractInfo.class, contractid);
+		//保存租后巡视信息 、 本次巡视结论
+		ContractPatrolInfo contractPatrolInfo = new ContractPatrolInfo();
+		this.tableService.copyAndOverrideExistedValueFromStringMap(variablesMap,contractPatrolInfo,null,"contract_patrol_info");
+		contractPatrolInfo.setCustInfo(custInfo);
+		//contractPatrolInfo.setContractId(contractinfo);
+		//this.tableService.saveOrUpdateEntity(contractPatrolInfo);
+		this.tableService.saveEntity(contractPatrolInfo);
+		
+		/*处理整体经营情况*/
+		ContractInvestInfo conractInvestInfo = new ContractInvestInfo();
+		this.tableService
+		.copyAndOverrideExistedValueFromStringMap(variablesMap, conractInvestInfo, null, "contract_invest_info");
+		conractInvestInfo.setContractPatrolInfo(contractPatrolInfo);
+		conractInvestInfo.setCustInfo(custInfo);
+		this.tableService.saveEntity(conractInvestInfo);
+		
+	}
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+
+	}
+
+	
+	 /**
+	 * (non-Javadoc)
+	 * @see com.business.action.JbpmBaseAction#back(javax.servlet.http.HttpServletRequest, java.util.Map)
+	 **/
+	
+	@Override
+	public void back(HttpServletRequest request,
+			Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

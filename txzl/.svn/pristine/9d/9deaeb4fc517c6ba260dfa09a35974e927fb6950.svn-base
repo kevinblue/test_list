@@ -1,0 +1,300 @@
+package com.tenwa.business.job;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+
+
+
+
+
+
+
+
+
+
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+
+import org.quartz.CronExpression;
+import org.quartz.CronTrigger;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.Scheduler;
+import org.quartz.Trigger;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.business.entity.notice.SmsNotice;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.SecurityUtil;
+import com.tenwa.kernal.utils.UUIDUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.leasing.entity.cust.CustInfo;
+public class QuartzJobMsg implements Job{
+	
+	public static final String MSG_GROUP_NAME = "MSG_DEFAULT_GROUP";
+	@Override
+	public void execute(JobExecutionContext context) throws JobExecutionException {
+		Trigger trigger = context.getTrigger(); 
+		BaseService baseService = (BaseService) WebUtil.getApplicationContext().getBean("baseService");
+		try {
+			List<Map<String, Object>> mc = baseService.queryListBySql("select * from msg_config where jobname=?", trigger.getJobName());
+			if(mc.size()>0){
+				Map<String,Object> msgconfig = mc.get(0);
+				//获取主键
+				String id = msgconfig.get("id_").toString();
+				//获取sql语句
+				String msgsql = msgconfig.get("msg_sql").toString();
+				//获取关键字
+				String msgsqlparam = msgconfig.get("msg_sql_param").toString();
+				//获取短信内容
+				String msgcontent = msgconfig.get("msg_content").toString();
+				//获取触发方式
+				String triggermode = msgconfig.get("trigger_mode").toString();
+				//获取短信发送时间类型、短信延迟发送天数、短信发送时间点
+				String msgobject = msgconfig.get("msg_object").toString();//短信发送类型
+				String msgsendtime = "";//短信发送时间点
+				String[] times = null;
+				boolean checkTime = false;
+				String[] timeNow = new SimpleDateFormat("HH:mm:ss").format(new Date()).split(":");
+				if(msgconfig.get("msg_send_time") != null){
+					msgsendtime = msgconfig.get("msg_send_time").toString();
+					times = msgsendtime.split(":");
+					for(int t=0;t<times.length;t++){
+						if(times[t].startsWith("0") && times[t].length()>1){
+							times[t] = times[t].substring(1);
+						}
+					}
+				}
+				String delayday = "";//延迟发送天数
+				if(msgconfig.get("delay_day") != null){
+					delayday = msgconfig.get("delay_day").toString();
+				}
+				//获得过期是否执行
+				String isoverdateexecute = msgconfig.get("is_overdate_execute").toString();
+				//获取短信类型
+				String msgtype = msgconfig.get("msg_type").toString();
+				//获取短信替换参数
+				int oldlength = msgcontent.length();
+				int newlength = msgcontent.replace("}", "").length();
+				String[] params = new String[oldlength-newlength];
+				if(params.length>0){
+					int index = 0;
+					for(int i=0;i<params.length;i++){
+						int start = msgcontent.indexOf("{", index);
+						int end = msgcontent.indexOf("}", index);
+						params[i] = msgcontent.substring(start+1, end);
+						index = end+1;
+					}
+				}
+				baseService.updateBySql("update msg_config set previous_fire_time=?,next_fire_time=? where id_=?", DateUtil.getDateTime(trigger.getPreviousFireTime()),DateUtil.getDateTime(trigger.getNextFireTime()),id);
+				List<Map<String,Object>> result = baseService.queryListBySql(msgsql);
+				if(result.size()>0){
+					for(int r=0;r<result.size();r++){
+						boolean flag = false;
+						for(int p=0;p<params.length;p++){
+							if(result.get(r).get(params[p]) == null){
+								flag = true;
+							}
+						}
+						if(flag){
+							continue;
+						}
+						String resultMsgContent = msgcontent;
+						Object obj = result.get(r).get("phonenumber");
+						if(obj == null || obj.toString().length() != 11){
+							continue;
+						}
+						String sql = "select * from msg_send_relative where 1=1 ";
+						String[] sqlparams = msgsqlparam.split(",");
+						if(sqlparams.length>0){
+							for(int i=0;i<sqlparams.length;i++){
+								sql += "and "+sqlparams[i]+"='"+result.get(r).get(sqlparams[i]).toString()+"' ";
+							}
+						}
+						if(msgtype.startsWith("holiday") || msgtype.startsWith("birthday")){//如果是生日祝福和节假日祝福必须添加短信类型和日期条件筛选
+							sql += "and msg_type='"+msgtype+"' and create_date='"+new SimpleDateFormat("yyyy-MM-dd").format(new Date())+"'";
+						}
+						List<Map<String,Object>> msgSend = baseService.queryListBySql(sql);
+						if(msgSend.size() == 0){
+							for(int i=0;i<params.length;i++){
+								resultMsgContent = resultMsgContent.replace(params[i], result.get(r).get(params[i]).toString());
+							}
+							resultMsgContent = resultMsgContent.replace("{", "");
+							resultMsgContent = resultMsgContent.replace("}", "");
+							
+							//创建短信发送记录
+							SmsNotice sn = new SmsNotice();
+							User user = baseService.findEntityByID(User.class, result.get(r).get("proj_manage")!=null?result.get(r).get("proj_manage").toString():context.getJobDetail().getDescription());
+							CustInfo cust = baseService.findEntityByID(CustInfo.class, result.get(r).get("cust_id").toString());
+							//SmsTemplate st = baseService.findEntityByID(SmsTemplate.class, msgtype);
+							//baseService.updateBySql("insert into t_sms_notice_tasks (id_,phone_number,sms_content,cust_id,send_flag,sms_type,creator_,create_date_) values(?,?,?,?,?,?,?,?)", smsId,obj.toString(),resultMsgContent,result.get(r).get("cust_id").toString(),0,"trigger_mode01".equals(triggermode)?"IMMEDIATELY":"DELAYED",result.get(r).get("proj_manage").toString(),DateUtil.getDateTime(new Date()));
+							sn.setPhoneNumber(obj.toString());
+							sn.setCustId(cust);
+							sn.setSendFlag(0);
+							sn.setSmsContent(resultMsgContent);
+							sn.setSmsType("DELAYED");
+							//sn.setSmsTemplateId(st);
+							sn.setCreator(user);
+							sn.setCreateDate(DateUtil.getDateTime(new Date()));
+							baseService.saveEntity(sn);
+							//关联表生成记录
+							String insertSql = "insert into msg_send_relative (id_,sms_id,msg_type,column) values('"+UUIDUtil.getUUID()+"','"+sn.getId()+"','"+msgtype+"',data)";
+							String column = "";
+							String value = "";
+							for(int m=0;m<sqlparams.length;m++){
+								column += ","+sqlparams[m];
+								value += ",'"+result.get(r).get(sqlparams[m]).toString()+"'";
+							}
+							column = column.substring(1, column.length());
+							value = value.substring(1,value.length());
+							if(msgtype.startsWith("holiday") || msgtype.startsWith("birthday")){
+								column += ",create_date";
+								value += ",'"+new SimpleDateFormat("yyyy-MM-dd").format(new Date())+"'";
+							}
+							insertSql = insertSql.replace("column", column);
+							insertSql = insertSql.replace("data", value);
+							baseService.updateBySql(insertSql);
+							
+							if("trigger_mode02".equals(triggermode)){//手动触发,不需要定时代理
+								return;
+							}
+							
+							//拼接短信发送定时代理
+							String jobName = UUIDUtil.getUUID();
+							String triggerName = UUIDUtil.getUUID();
+							
+							JobDetail jobDetail = new JobDetail();
+							jobName = UUIDUtil.getUUID();
+							jobDetail.setJobClass(Class.forName("com.tenwa.business.job.Test"));//发送短信逻辑处理类
+							jobDetail.setName(jobName);
+							jobDetail.setGroup(MSG_GROUP_NAME);
+							//当该任务完成后，是否还在JobStore中继续保留该任务
+							jobDetail.setDurability(false);
+							//重启应用之后是否删除任务的相关信息，默认false
+							jobDetail.setVolatility(false);
+							//当系统重新启动后，是否再次执行过期任务
+							jobDetail.setRequestsRecovery("yes".equals(isoverdateexecute)?true:false);
+					        //添加quartz任务监听日志
+							jobDetail.addJobListener("QuartzJobListener");
+							getScheduler().addJob(jobDetail, true);
+							
+							CronTrigger cronTrigger = new CronTrigger();
+							cronTrigger.setName(triggerName);
+							cronTrigger.setGroup(MSG_GROUP_NAME);
+							Date startTime = DateUtil.getTimeByFormat(DateUtil.getDateTime(new Date()), "yyyy-MM-dd HH:mm:ss");
+							cronTrigger.setJobName(jobName);
+							cronTrigger.setJobGroup(MSG_GROUP_NAME);
+							Date currentDate  = new Date();
+							if(startTime.compareTo(currentDate)<=0){
+								startTime = new Date(currentDate.getTime()+1000);
+							}
+							cronTrigger.setStartTime(startTime);
+							cronTrigger.setVolatility(false);
+							cronTrigger.addTriggerListener("QuartzTriggerListener");
+							//动态创建时间表达式
+							String cron = "";
+							Calendar ca = Calendar.getInstance();
+							ca.setTime(new Date());
+							if(msgconfig.get("msg_send_time") != null){
+								int[] num = new int[timeNow.length];
+								for(int t=0;t<timeNow.length;t++){
+									if(Integer.parseInt(timeNow[t])==Integer.parseInt(times[t])){
+										num[t] = 1;
+									}
+									if(Integer.parseInt(timeNow[t])>Integer.parseInt(times[t])){
+										num[t] = 2;
+									}
+								}
+								if(num[0]==2){
+									checkTime = true;
+								}
+								if(num[0]==1 && num[1]==2){
+									checkTime = true;
+								}
+								if(num[0]==1 && num[1]==1 && num[2]==2){
+									checkTime = true;
+								}
+								cron += times[2]+" ";
+								cron += times[1]+" ";
+								cron += times[0]+" ";
+								if(checkTime){
+									cron = "";
+									cron += timeNow[2]+" ";
+									cron += timeNow[1]+" ";
+									cron += timeNow[0]+" ";
+								}
+							}
+							CronExpression ce = null;
+							baseService.updateBySql("update msg_send_relative set msg_send_jobname=?,msg_send_triggername=? where sms_id=?", jobName,triggerName,sn.getId());
+							
+							switch(msgobject){
+								case "msg_object01"://当天立即
+									getScheduler().triggerJob(jobName, MSG_GROUP_NAME);
+									baseService.updateBySql("update t_sms_notice_tasks set notice_time=?,sms_type=? where id_=?", DateUtil.getDateTime(new Date()),"IMMEDIATELY",sn.getId());
+									break;
+								case "msg_object02"://当天指定时间
+									cron += ca.get(Calendar.DAY_OF_MONTH)+" ";
+									cron += (ca.get(Calendar.MONTH)+1)+" ? *";
+									ce = new CronExpression(cron);
+									cronTrigger.setCronExpression(ce);
+									cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+									if(checkTime){
+										getScheduler().triggerJob(jobName, MSG_GROUP_NAME);
+									}else{
+										getScheduler().scheduleJob(cronTrigger);
+									}
+									baseService.updateBySql("update t_sms_notice_tasks set notice_time=? where id_=?", DateUtil.getDateTime(ce.getNextValidTimeAfter(startTime)),sn.getId());
+									break;
+								case "msg_object03"://本周最后一天
+									cron += ca.getActualMaximum(Calendar.DAY_OF_WEEK_IN_MONTH)+" ";
+									cron += (ca.get(Calendar.MONTH)+1)+" ? *";
+									ce = new CronExpression(cron);
+									cronTrigger.setCronExpression(ce);
+									cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+									getScheduler().scheduleJob(cronTrigger);
+									baseService.updateBySql("update t_sms_notice_tasks set notice_time=? where id_=?", DateUtil.getDateTime(ce.getNextValidTimeAfter(startTime)),sn.getId());
+									break;
+								case "msg_object04"://本月最后一天
+									cron += ca.getActualMaximum(Calendar.DAY_OF_MONTH)+" ";
+									cron += (ca.get(Calendar.MONTH)+1)+" ? *";
+									ce = new CronExpression(cron);
+									cronTrigger.setCronExpression(ce);
+									cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+									getScheduler().scheduleJob(cronTrigger);
+									baseService.updateBySql("update t_sms_notice_tasks set notice_time=? where id_=?", DateUtil.getDateTime(ce.getNextValidTimeAfter(startTime)),sn.getId());
+									break;
+								case "msg_object05"://延迟天
+									cron += (ca.get(Calendar.DAY_OF_MONTH)+Integer.parseInt(delayday))+" ";
+									cron += (ca.get(Calendar.MONTH)+1)+" ? *";
+									ce = new CronExpression(cron);
+									cronTrigger.setCronExpression(ce);
+									cronTrigger.setNextFireTime(ce.getNextValidTimeAfter(startTime));
+									getScheduler().scheduleJob(cronTrigger);
+									baseService.updateBySql("update t_sms_notice_tasks set notice_time=? where id_=?", DateUtil.getDateTime(ce.getNextValidTimeAfter(startTime)),sn.getId());
+									break;
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public Scheduler getScheduler() throws Exception
+	{
+		return WebUtil.getSchedulerFactory().getScheduler();
+	}
+}

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <!-- 重要个人 ，已审核 -->
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+						p.id 
+						,p.cust_id custid,
+						custinfo.cust_name custname
+						,p.person_name_ personname
+						,p.id_card_no idcardno
+						,p.birth_date birthdate
+						,p.sex_ sex
+						,p.relationship,
+						D1.name_ rawValue_relationship
+						,p.main_person_flag mainpersonflag
+						,p.mobile_number mobilenumber
+						,p.domicile_place domicileplace
+						,p.mail_add mailadd
+						,p.home_add homeadd
+						,p.post_code postcode
+						,p.phone_ phone
+						,p.service_life servicelife
+						,p.email_ email
+						,p.cpmemo
+						,p.creator_ creator
+						,substr(p.create_date,0,10) createdate
+						,p.modificator_ modificator
+						,substr(p.modify_date,0,10) modifydate
+						,users1.realname_ creatorname
+            			,users2.realname_ modificatorname
+            			,p.unit_position unitposition
+    					,D4.name_ rawValue_unitposition
+						from cust_related_person p
+						left join cust_info custinfo
+						on p.cust_id = custinfo.id
+						left join
+			            t_users users1
+			            on p.creator_ = users1.id_ 
+			            left join
+			            t_users users2
+			            on p.modificator_ = users2.id_ 
+			            LEFT JOIN 
+						T_DICTS_DATAS D1 ON p.relationship=D1.ID_
+						LEFT JOIN T_DICTS_DATAS D4
+  						ON p.unit_position=D4.ID_
+				where 1=1
+				  /~custid: and p.CUST_ID = '{custid}'~/
+				order by p.create_date desc
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <sqlserver>
+	      <table_sql> 
+		        <![CDATA[
+					select 
+							p.id 
+							,p.cust_id custid,
+							custinfo.cust_name custname
+							,p.person_name_ personname
+							,p.id_card_no idcardno
+							,p.birth_date birthdate
+							,p.sex_ sex
+							,p.relationship
+							,D1.name_ rawValue_relationship
+							,p.main_person_flag mainpersonflag
+							,p.mobile_number mobilenumber
+							,p.domicile_place domicileplace
+							,p.mail_add mailadd
+							,p.home_add homeadd
+							,p.post_code postcode
+							,p.phone_ phone
+							,p.service_life servicelife
+							,p.email_ email
+							,p.cpmemo
+							,p.creator_ creator
+							,CONVERT(varchar(100),p.create_date,23) createdate
+							,p.modificator_ modificator
+							,CONVERT(varchar(100),p.modify_date,23) modifydate
+							,users1.realname_ creatorname
+	            			,users2.realname_ modificatorname
+	            			,p.unit_position unitposition
+	    					,D4.name_ rawValue_unitposition
+							from cust_related_person p
+							left join cust_info custinfo
+							on p.cust_id = custinfo.id
+							left join
+				            t_users users1
+				            on p.creator_ = users1.id_ 
+				            left join
+				            t_users users2
+				            on p.modificator_ = users2.id_ 
+				            LEFT JOIN 
+							T_DICTS_DATAS D1 ON p.relationship=D1.ID_
+							LEFT JOIN T_DICTS_DATAS D4
+	  						ON p.unit_position=D4.ID_
+					 where 1=1
+					/~custid: and p.CUST_ID = '{custid}'~/
+				<EXTRACTEND>	order by createdate desc<EXTRACTEND>
+				 ]]> 
+		  </table_sql>
+	  </sqlserver>	  
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

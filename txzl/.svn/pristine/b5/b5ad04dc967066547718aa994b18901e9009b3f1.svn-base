@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审风控经办
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			
+select '情景' scene, 
+  to_char(rrd1.start_year+0) year_1,
+   to_char(rrd1.start_year+1) year_2,
+   to_char(rrd1.start_year+2) year_3,
+   to_char(rrd1.start_year+3) year_4,
+   to_char(rrd1.start_year+4) year_5,
+  to_char( rrd1.start_year+5) year_6,
+  to_char( rrd1.start_year+6) year_7,
+  to_char( rrd1.start_year+7) year_8,
+   to_char(rrd1.start_year+8) year_9,
+   to_char(rrd1.start_year+9) year_10,
+  to_char( rrd1.start_year+11) year_11,
+  to_char( rrd1.start_year+12) year_12,
+  to_char( rrd1.start_year+13) year_13,
+   to_char( rrd1.start_year+14) year_14,
+    to_char( rrd1.start_year+15) year_15,
+    'DSCR平均值' dscr
+  from T_RESERVE_RATIO_DATA rrd1
+  where rrd1.flowu_id = '{flowunid}' 
+  and rrd1.status = '1'
+  and rrd1.file_name like '%p90-标准%'
+
+union all
+
+select 'P90:' scene,
+  rrd2.year_1,
+  rrd2.year_2,
+  rrd2.year_3,
+  rrd2.year_4,
+  rrd2.year_5,
+  rrd2.year_6,
+  rrd2.year_7,
+  rrd2.year_8,
+  rrd2.year_9,
+  rrd2.year_10,
+  rrd2.year_11,
+  rrd2.year_12,
+  rrd2.year_13,
+   rrd2.year_14,
+    rrd2.year_15,
+  rrd2.dscr
+  from T_RESERVE_RATIO_DATA rrd2
+  where rrd2.flowu_id = '{flowunid}' 
+  and rrd2.status = '1'
+  and rrd2.file_name like '%p90-标准%'
+  
+  
+ union all
+ select 'p75:'scene, 
+ rrd3.year_1,
+  rrd3.year_2,
+  rrd3.year_3,
+  rrd3.year_4,
+  rrd3.year_5,
+  rrd3.year_6,
+  rrd3.year_7,
+  rrd3.year_8,
+  rrd3.year_9,
+  rrd3.year_10,
+  rrd3.year_11,
+  rrd3.year_12,
+  rrd3.year_13,
+  rrd3.year_14,
+  rrd3.year_15,
+  rrd3.dscr 
+  from T_RESERVE_RATIO_DATA rrd3
+  where rrd3.flowu_id ='{flowunid}' 
+  and rrd3.status = '1'
+  and rrd3.file_name like '%p75-标准%'
+  
+  
+  union all
+ select 'p50:'scene,
+ rrd4.year_1,
+  rrd4.year_2,
+  rrd4.year_3,
+  rrd4.year_4,
+  rrd4.year_5,
+  rrd4.year_6,
+  rrd4.year_7,
+  rrd4.year_8,
+  rrd4.year_9,
+  rrd4.year_10,
+  rrd4.year_11,
+  rrd4.year_12,
+  rrd4.year_13,
+  rrd4.year_14,
+  rrd4.year_15,
+  rrd4.dscr 
+  from T_RESERVE_RATIO_DATA rrd4
+  where rrd4.flowu_id = '{flowunid}' 
+  and rrd4.status = '1'
+  and rrd4.file_name like '%p50-标准%'
+  
+  
+  union all
+  select '投资规模'scene,
+  rrd5.year_1,
+  rrd5.year_2,
+  rrd5.year_3,
+  rrd5.year_4,
+  rrd5.year_5,
+  rrd5.year_6,
+  rrd5.year_7,
+  rrd5.year_8,
+  rrd5.year_9,
+  rrd5.year_10,
+  rrd5.year_11,
+  rrd5.year_12,
+  rrd5.year_13,
+  rrd5.year_14,
+  rrd5.year_15,
+  rrd5.dscr 
+  from T_RESERVE_RATIO_DATA rrd5
+  where rrd5.flowu_id ='{flowunid}' 
+  and rrd5.status = '1'
+  and rrd5.file_order='0'
+  
+  
+  
+   union all
+  select '投资规模（上浮5%）'scene, 
+  rrd7.year_1,
+  rrd7.year_2,
+  rrd7.year_3,
+  rrd7.year_4,
+  rrd7.year_5,
+  rrd7.year_6,
+  rrd7.year_7,
+  rrd7.year_8,
+  rrd7.year_9,
+  rrd7.year_10,
+  rrd7.year_11,
+  rrd7.year_12,
+  rrd7.year_13,
+   rrd7.year_14,
+    rrd7.year_15,
+  rrd7.dscr 
+  from T_RESERVE_RATIO_DATA rrd7
+  where rrd7.flowu_id = '{flowunid}' 
+  and rrd7.status = '1'
+  and rrd7.file_order='2'
+  
+   union all
+  select '投资规模（上浮10%）' scene,
+  rrd6.year_1,
+  rrd6.year_2,
+  rrd6.year_3,
+  rrd6.year_4,
+  rrd6.year_5,
+  rrd6.year_6,
+  rrd6.year_7,
+  rrd6.year_8,
+  rrd6.year_9,
+  rrd6.year_10,
+  rrd6.year_11,
+  rrd6.year_12,
+  rrd6.year_13,
+  rrd6.year_14,
+  rrd6.year_15,
+  rrd6.dscr  
+  from T_RESERVE_RATIO_DATA rrd6
+  where rrd6.flowu_id = '{flowunid}' 
+  and rrd6.status = '1'
+  and rrd6.file_order='1'
+       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <!-- 重要个人 ，已审核 -->
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+        select custperson.*  from 
+   (       select
+      
+        person.custname   as name,
+         person.sex       as sex,
+         person.brithdate as birthdate,
+         case  when cip.document_type='document_type1' then 
+           person.idcardno else '' end as idcardno,
+           person.domicileplace ,--户口所在地
+           person.mailadd,--邮件地址
+          person.oftenaddr,--常驻地址
+          person.postcode,--邮编
+          person.phone,--电话
+          person.mobilenumber,--手机
+          person.email,          --Email
+          person.unitposition   --aa职务
+          
+        from VI_CUST_INFO_PERSON   person
+        left join cust_info_person  cip  on  cip.cust_id=person.id
+        union
+		select 
+		crp.person_name_  name,
+		crp.sex_   sex,
+		crp.birth_date  birthdate,
+		crp.id_card_no  idcardno,
+		crp.domicile_place  domicileplace,
+		crp.mail_add  mailadd,
+		crp.home_add  oftenaddr,
+		crp.post_code  postcode,
+		crp.phone_  phone,
+		crp.mobile_number  mobilenumber,
+		crp.email_  email,
+		crp.unit_position unitposition
+		
+		from cust_related_person  crp
+		 where  crp.rowid       in  (select max(rowid)
+          from cust_related_person c2
+    
+         group by c2.person_name_,
+         c2.id_card_no)
+		)custperson
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      	<show_sql>true</show_sql>
+     </data>
+  </table>
+</table-root>

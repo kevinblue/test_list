@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+					cpc.id id,
+					cpc.CONTRACT_ID contract_id,
+					cpc.PAYMENT_ID paymentid,
+					cpc.PAY_TYPE paytype,
+					cpc.PAYMENT_NUMBER paymentnumber,
+					cpc.FEE_TYPE feetype,
+					tdd.NAME_ feetypename,
+					cpc.PREMISE_MONEY premisemoney,
+					cpc.PREMISE premise,
+					cpc.PREMISE_NOTE premisenote	 
+				from CONTRACT_PREMISE_CONDITION cpc
+				left join T_DICTS_DATAS tdd on tdd.ID_ = cpc.FEE_TYPE
+				WHERE cpc.CONTRACT_ID = '{contract_id}'
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,525 @@
+package com.tenwa.business.entity;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.kernal.utils.StringUtil;
+
+/**
+ * 项目名称：    系统名称
+ * 包名：              
+ * 文件名：         Menu.java
+ * 版本信息：    1.0.0
+ * 创建日期：     2013-3-4-下午05:52:19
+ * Copyright：2013XX公司-版权所有
+ **/
+
+/**
+ * 类名称： Menu
+ * 类描述：
+ * 创建人： Administrator
+ * 修改人： Administrator
+ * 修改时间：2013-3-4 下午05:52:19
+ * 修改备注：
+ * 
+ * @version 1.0.0
+ **/
+@Entity
+@Table(name = "T_MENUS")
+public class Menu implements Serializable,Comparable<Menu> {
+	private static final long serialVersionUID = -4588460153998534754L;
+	@Transient
+	private final static Pattern pattern_parameter = Pattern.compile("\\{.*?\\}");
+	@Transient
+	private final static Pattern pattern_level = Pattern.compile("\\[.*?\\]");
+
+	@Id
+	@GeneratedValue(generator = "paymentableGenerator")
+	@GenericGenerator(name = "paymentableGenerator", strategy = "uuid")
+	@Column(length = 32, name = "ID_")
+	private String id;
+	
+	@Column(name = "IS_SHOW_ON_APP", columnDefinition="INT DEFAULT 0",nullable = false, length = 1)
+	private Boolean isShowOnApp=false;
+
+	@Column(nullable = false, name = "NAME_")
+	private String name;
+	@Column(nullable = false, name = "CODE_", unique = true)
+	private String code;
+
+	@Column(name = "URL_")
+	private String url;
+
+	@Column(name = "ICON_")
+	private String icon;
+
+	@Column(name = "ICONCLOSE_")
+	private String iconClose;
+
+	@Column(name = "ICONOPEN_")
+	private String iconOpen;
+
+	@Column(name = "DESCRIPTION_")
+	private String description;
+
+	@Column(nullable = false, name = "POSITION_")
+	private int position;
+
+	@Column(name = "IS_RELATIVED_PATH_", nullable = false, length = 1)
+	/*@Type(type = "org.hibernate.type.YesNoType")*/
+	private Boolean isRelativedPath;
+
+	@ManyToOne(targetEntity = Menu.class, cascade = { CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
+	@JoinColumn(name = "PID_")
+	private Menu parentMenu;
+
+	@OneToMany(mappedBy = "parentMenu", fetch = FetchType.LAZY)
+	@OrderBy(value = "position ASC")
+	private Set<Menu> childrenMenus = new HashSet<Menu>();
+
+	@Transient
+	private Map<String, String> attributes = null;
+
+	@OneToMany(mappedBy = "menu", fetch = FetchType.LAZY)
+	private Set<MenuDepartment> menuDepts = new HashSet<MenuDepartment>();
+
+	@OneToMany(mappedBy = "menu", fetch = FetchType.LAZY)
+	private Set<MenuDepartmentRole> menuDeptRoles = new HashSet<MenuDepartmentRole>();
+
+	@OneToMany(mappedBy = "menu", fetch = FetchType.LAZY)
+	private Set<MenuGroup> menuGroups = new HashSet<MenuGroup>();
+
+	@OneToMany(mappedBy = "menu", fetch = FetchType.LAZY)
+	private Set<UserMenu> userMenus = new HashSet<UserMenu>();
+
+	@FieldName(name = "创建人")
+	@JoinColumn(name = "CREATOR_")
+	@ManyToOne(fetch = FetchType.LAZY)
+	private User creator;
+
+	@FieldName(name = "创建时间")
+	@Column(name = "CREATE_DATE_", length = 20)
+	private String createDate;
+
+	@FieldName(name = "修改人")
+	@JoinColumn(name = "MODIFICATOR_")
+	@ManyToOne(fetch = FetchType.LAZY)
+	private User modificator;
+
+	@FieldName(name = "修改时间")
+	@Column(name = "MODIFY_DATE_", length = 20)
+	private String modifyDate;
+
+	@Override
+	public int compareTo(Menu menu) {
+		return this.id.compareTo(menu.getId());
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public String getIcon() {
+		return icon;
+	}
+
+	public String getIconClose() {
+		return iconClose;
+	}
+
+	public String getIconOpen() {
+		return iconOpen;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public int getPosition() {
+		return position;
+	}
+
+	public Menu getParentMenu() {
+		return parentMenu;
+	}
+
+	public Set<Menu> getChildrenMenus() {
+		return childrenMenus;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public void setIcon(String icon) {
+		this.icon = icon;
+	}
+
+	public void setIconClose(String iconClose) {
+		this.iconClose = iconClose;
+	}
+
+	public void setIconOpen(String iconOpen) {
+		this.iconOpen = iconOpen;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setPosition(int position) {
+		this.position = position;
+	}
+
+	public void setParentMenu(Menu parentMenu) {
+		this.parentMenu = parentMenu;
+	}
+
+	public void setChildrenMenus(Set<Menu> childrenMenus) {
+		this.childrenMenus = childrenMenus;
+	}
+
+	public Set<MenuDepartment> getMenuDepts() {
+		return menuDepts;
+	}
+
+	public Set<MenuDepartmentRole> getMenuDeptRoles() {
+		return menuDeptRoles;
+	}
+
+	public Set<MenuGroup> getMenuGroups() {
+		return menuGroups;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public void setMenuDepts(Set<MenuDepartment> menuDepts) {
+		this.menuDepts = menuDepts;
+	}
+
+	public void setMenuDeptRoles(Set<MenuDepartmentRole> menuDeptRoles) {
+		this.menuDeptRoles = menuDeptRoles;
+	}
+
+	public void setMenuGroups(Set<MenuGroup> menuGroups) {
+		this.menuGroups = menuGroups;
+	}
+
+	public Set<UserMenu> getUserMenus() {
+		return userMenus;
+	}
+
+	public void setUserMenus(Set<UserMenu> userMenus) {
+		this.userMenus = userMenus;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public Boolean getIsRelativedPath() {
+		return isRelativedPath;
+	}
+
+	public void setIsRelativedPath(Boolean isRelativedPath) {
+		this.isRelativedPath = isRelativedPath;
+	}
+
+	
+	public Boolean getIsShowOnApp() {
+		return isShowOnApp;
+	}
+
+	public void setIsShowOnApp(Boolean isShowOnApp) {
+		this.isShowOnApp = isShowOnApp;
+	}
+
+	public Map<String, String> getAttributes() {
+		Map<String, String> nodeAttributes = new HashMap<String, String>();
+		String pid = this.getParentMenu() == null ? "-1" : this.getParentMenu().getId();
+		nodeAttributes.put("pid", pid);
+		nodeAttributes.put("code", this.getCode());
+		nodeAttributes.put("position", StringUtil.nullToString(this.getPosition()));
+		nodeAttributes.put("description", StringUtil.getJsonString(this.getDescription()));
+		nodeAttributes.put("icon", StringUtil.nullToString(this.getIcon()));
+		nodeAttributes.put("type", "menu");
+		nodeAttributes.put("isRelativedPath", ((null == this.isRelativedPath) ? Boolean.TRUE : this.isRelativedPath).toString());
+		nodeAttributes.put("isShowOnApp", ((null == this.isShowOnApp) ? Boolean.FALSE : this.isShowOnApp).toString());
+		if (null != this.attributes) {
+			nodeAttributes.putAll(this.attributes);
+		}
+		return nodeAttributes;
+	}
+
+	public void setAttributes(Map<String, String> attributes) {
+		this.attributes = attributes;
+	}
+
+	public boolean isHasChildren() {
+		return this.childrenMenus.size() >= 1;
+	}
+
+	public JSONArray getChildrenWithUsersJsonArray(boolean isInit, String state) throws Exception {
+		JSONArray jsonArray = new JSONArray();
+		if (isInit) {
+			JSONObject deptJsonObj = this.getJsonObjectMenu(this, isInit, null);
+			deptJsonObj.put("children", this.getChildrenWithUsersJsonArray(!isInit, state));
+			jsonArray.put(deptJsonObj);
+		} else {
+			for (Menu menu : this.getChildrenMenus()) {
+				JSONObject deptJsonObj = this.getJsonObjectMenu(menu, isInit, null);
+				jsonArray.put(deptJsonObj);
+			}
+			for (UserMenu usermenu : this.getUserMenus()) {
+				JSONObject userJsonObj = this.getJsonObjectUser(usermenu);
+				if (null != state) {
+					userJsonObj.put("state", state);
+				}
+				jsonArray.put(userJsonObj);
+			}
+		}
+		return jsonArray;
+	}
+
+	public JSONArray getChildrenJsonArray(boolean isInit) throws Exception {
+		JSONArray jsonArray = new JSONArray();
+		if (isInit) {
+			JSONObject deptJsonObj = this.getJsonObjectMenu(this, isInit, null);
+			deptJsonObj.put("children", this.getChildrenJsonArray(!isInit));
+			jsonArray.put(deptJsonObj);
+		} else {
+			for (Menu menu : this.getChildrenMenus()) {
+				String state = menu.isHasChildren() ? "closed" : "opened";
+				JSONObject deptJsonObj = this.getJsonObjectMenu(menu, isInit, state);
+				jsonArray.put(deptJsonObj);
+			}
+		}
+		return jsonArray;
+	}
+
+	public JSONObject getJsonObjectMenu(Menu menu, boolean isInit, String state) throws Exception {
+		String currentState = isInit ? "opened" : state;
+		if (null != state) {
+			currentState = state;
+		}
+		JSONObject jsonObj = new JSONObject();
+		jsonObj.put("id", menu.getId());
+		jsonObj.put("text", menu.getName());
+		try {
+			String icon = menu.getIcon();
+			jsonObj.put("iconCls", "icon-" + icon.substring(0, icon.lastIndexOf(".")));
+		} catch (Exception e) {
+			jsonObj.put("iconCls", "");
+		}
+
+		jsonObj.put("state", currentState);
+		JSONObject atrributesJsonObj = new JSONObject(this.getArributesJsonString(menu));
+		atrributesJsonObj.put("url", menu.getUrl());
+		atrributesJsonObj.put("name", menu.getName());
+		atrributesJsonObj.put("code", menu.getCode());
+		atrributesJsonObj.put("iconOpen", menu.getIconOpen());
+		atrributesJsonObj.put("description", menu.getDescription());
+		atrributesJsonObj.put("position", ("0".equals(menu.getId())) ? -1 : (menu.getPosition()));
+		jsonObj.put("attributes", atrributesJsonObj);
+		return jsonObj;
+	}
+
+	public JSONObject getJsonObjectUser(UserMenu userMenu) throws Exception {
+		String currentState = "opened";
+		User user = userMenu.getUser();
+		JSONObject jsonObj = new JSONObject();
+		jsonObj.put("id", user.getId());
+		jsonObj.put("text", user.getRealname() + "(" + user.getUsername() + ")");
+		jsonObj.put("iconCls", "icon-users-black");
+		jsonObj.put("state", currentState);
+		JSONObject atrributesJsonObj = new JSONObject();
+		atrributesJsonObj.put("type", "user");
+		atrributesJsonObj.put("userMenuId", userMenu.getId());
+		atrributesJsonObj.put("menuId", userMenu.getMenu().getId());
+		jsonObj.put("attributes", atrributesJsonObj);
+		return jsonObj;
+	}
+
+	public String getArributesJsonString(Menu node) {
+		Map<String, String> nodeAttributes = node.getAttributes();
+
+		StringBuffer str_sb = new StringBuffer("{");
+		int index = 0;
+		if (null != nodeAttributes) {
+
+			for (String key : nodeAttributes.keySet()) {
+				String value = StringUtil.nullToString(nodeAttributes.get(key));
+				if (1 != ++index) {
+					str_sb.append(",");
+				}
+				str_sb.append("\"").append(key).append("\":\"").append(StringUtil.getJsonString(value)).append("\"");
+
+			}
+		}
+		str_sb.append("}");
+		return str_sb.toString();
+	}
+
+	public void toJsonString(Menu node, StringBuffer str_sb) {
+		String pid = node.getParentMenu() == null ? "0" : node.getParentMenu().getId();
+		str_sb.append("{");
+		str_sb.append("\"id\":" + "\"" + StringUtil.nullToString(node.getId()) + "\"");
+		str_sb.append(",\"pid\":" + "\"" + StringUtil.nullToString(pid) + "\"");
+		str_sb.append(",\"name\":" + "\"" + StringUtil.nullToString(node.getName()) + "\"");
+		str_sb.append(",\"url\":" + "\"" + StringUtil.nullToString(node.getUrl()) + "\"");
+		str_sb.append(",\"icon\":" + "\"" + StringUtil.nullToString(node.getIcon()) + "\"");
+		str_sb.append(",\"iconClose\":" + "\"" + StringUtil.nullToString(node.getIconClose()) + "\"");
+		str_sb.append(",\"iconOpen\":" + "\"" + StringUtil.nullToString(node.getIconOpen()) + "\"");
+		str_sb.append(",\"description\":" + "\"" + StringUtil.nullToString(node.getDescription()).replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n") + "\"");
+		str_sb.append(",\"position\":" + "\"" + StringUtil.nullToString(node.getPosition()) + "\"");
+		str_sb.append(",\"authorities\":\"ROLE_USER\"");
+		str_sb.append(",\"attributes\":" + this.getArributesJsonString(node));
+		str_sb.append(",\"children\":[");
+		if (node.isHasChildren()) {
+			Set<Menu> childrenNodes = node.getChildrenMenus();
+			int index = 0;
+			for (Menu mn : childrenNodes) {
+				if (0 < index++) {
+					str_sb.append(",");
+				}
+				toJsonString(mn, str_sb);
+			}
+		}
+		str_sb.append("]");
+		str_sb.append("}");
+	}
+
+	public String toString() {
+		StringBuffer str_sb = new StringBuffer("");
+		toJsonString(this, str_sb);
+		return str_sb.toString();
+	}
+
+	/**
+	 * 参数化URL
+	 * 
+	 * @return 解析菜单URL中的参数
+	 */
+	public String getParameterizedUrl() {
+		if (this.url == null || "".equals(this.url))
+			return this.url;
+	
+		String parameterizedUrl = this.url;
+		do{
+			Matcher m_param = pattern_parameter.matcher(parameterizedUrl);
+			if(m_param.find()){
+				String ptemp = parameterizedUrl.substring(m_param.start() + 1, m_param.end() - 1);
+				Matcher m_level = pattern_level.matcher(ptemp);
+				int level = 1;
+				String param = ptemp;
+				if (m_level.find()) {
+					String ltemp = ptemp.substring(m_level.start() + 1, m_level.end() - 1);
+					try {
+						level = Integer.parseInt(ltemp);
+					} catch (Exception e) {
+						System.out.println(e);
+						level = 1;
+					}
+					param = ptemp.substring(0, m_level.start());
+				}
+				// 替换参数
+				String paramValue = "";
+				if (param.equalsIgnoreCase("parent")) {
+					Menu menu = this;
+					paramValue = this.getId();
+					for (int k = 0; k < level; k++) {
+						menu = menu.getParentMenu();
+						if (menu != null) {
+							paramValue = menu.getId();
+						} else {
+							break;
+						}
+					}
+				}
+				parameterizedUrl = m_param.replaceFirst(paramValue);
+	
+			}else{
+				break;
+			}
+				
+		}while(true);
+		
+		
+		return parameterizedUrl;
+
+	}
+}

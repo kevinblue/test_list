@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		        select 
+				CONDITION_ID	AS	CONDITIONID,
+				CONTRACT_ID	AS	CONTRACTID,
+				CREATE_DATE	AS	CREATEDATE,
+				CREATOR_	AS	CREATOR,
+				CUST_ID	AS	CUSTID,
+				DOC_ID	AS	DOCID,
+				EQUIP_ID	AS	EQUIPID,
+				FILE_NAME	AS	FILENAME,
+				ID_	AS	ID,
+				IMAGE_HEIGHT	AS	IMAGEHEIGHT,
+				IMAGE_PATH	AS	IMAGEPATH,
+				IMAGE_SIZE	AS	IMAGESIZE,
+				IMAGE_TYPE	AS	IMAGETYPE,
+				IMAGE_WIDTH	AS	IMAGEWIDTH,
+				MODIFICATOR_	AS	MODIFICATOR,
+				MODIFY_DATE	AS	MODIFYDATE,
+				PROJ_ID	AS	PROJID,
+				THUMB_IMAGE_HEIGHT	AS	THUMBIMAGEHEIGHT,
+				THUMB_IMAGE_PATH	AS	THUMBIMAGEPATH,
+				THUMB_IMAGE_WIDTH	AS	THUMBIMAGEWIDTH,
+				TITLE_	AS	TITLE
+		        from t_file_images 
+		        where doc_id='{docid}'
+		     <EXTRACTEND>   ORDER BY CREATEDATE DESC<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

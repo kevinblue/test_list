@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	              	            select 
+       ci.ID as id,
+       cust.id as custid,--客户id
+       faic.DOC_ID as docid, --流水號
+       faic.adjust_id as adjustid, --调息编号
+       ci.proj_id as projid, --项目id
+        ci.project_name as projectname,--项目名称
+        ci.CONTRACT_ID as contractid, --合同号
+        ci.CONTRACT_NUMBER as contractnumber,--业务合同号
+        cust.cust_name as custname, --客户名
+        cc.EQUIP_AMT as equipamt,--设备款
+        cc.FIRST_PAYMENT as firstpayment,--首付款
+        cc.INCOME_NUMBER as incomenumber,--还租次数
+	    dicts1.name_ as incomenumberyear ,--付租类型
+	    dicts2.name_ as periodtype,--付租方式
+        cc.START_DATE as startdate,--起租日期
+        cc.YEAR_RATE as yearrate,--利率
+        cc.IRR as irr,--内部收益率
+        faic.RATE_ORIGINAL as rateoriginal,--调息前利率
+        faic.RATE_ADJUST as rateadjust,--调息后利率
+        faic.OLD_IRR as oldirr, --调息前内部收益率
+        faic.NEW_IRR as newirr ,--调息后内部收益率
+        adjust.adjust_style adjuststyle,
+        case adjust.adjust_style 	--调息类型(before/onhire)
+        when 'before' then '起租前调息'
+        when 'onhire' then '起租后调息'
+        else '未知'
+        end adjuststylename	
+       from  FUND_ADJUST_INTEREST_CONTRACT faic
+   		left join contract_info ci on faic.CONTRACT_ID = ci.ID 
+        left join contract_condition cc on ci.id = cc.contract_id
+        left join cust_info cust on ci.cust_id = cust.id 
+      	left join t_dicts_datas dicts1 on (cc.INCOME_NUMBER_YEAR=dicts1.id_)
+	    left join t_dicts_datas dicts2 on (cc.PERIOD_TYPE=dicts2.id_)
+	    --调息类型
+	    left join fund_adjust_interest_contract adjust on adjust.contract_id=faic.CONTRACT_ID
+   		where faic.adjust_id ='{adjustid}'
+   		and adjust.mod_reason='his_rate_change'
+       	and adjust.status_='rate_change_in'
+   		and faic.mod_reason='his_rate_change' and faic.status_='rate_change_in'
+   		and ci.ID not in (
+   			select contract_id from FUND_ADJUST_INTEREST_C_TEMP where adjust_id ='{adjustid}' and doc_id='{docid}'
+   		)
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

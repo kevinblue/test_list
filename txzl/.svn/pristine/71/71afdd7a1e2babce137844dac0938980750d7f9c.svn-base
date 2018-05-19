@@ -1,0 +1,126 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<div id="risk_info_list" title="风险跟踪">
+	<fieldset class="fieldset-title">
+		<table cellspacing="0" cellpadding="0" style="width:100%" class="fillTable">
+		<tr class="tr-odd">
+				<td class="td-content-title">内容</td>
+				<td class="td-content-title">情况说明/备注</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title"  width="220px">与前一次检查有重大出入的信息：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.lastMajorInfo" 
+					name="contract_patrol_info.lastMajorInfo" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.lastMajorInfo']}"/>
+				</td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title" >前次风险政策清单及关注点：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.lastPolicyPoint" 
+					name="contract_patrol_info.lastPolicyPoint" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.lastPolicyPoint']}"/>
+				</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title" >本次跟踪反馈说明：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.feedback" 
+					name="contract_patrol_info.feedback" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.feedback']}"/>
+				</td>
+			</tr>
+			<tr  class="tr-even">
+				<td class="td-content-title" >后期风险政策清单及关注点：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.nextPolicyPoint" 
+					name="contract_patrol_info.nextPolicyPoint" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.nextPolicyPoint']}"/>
+				</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title" >售后回租融资款用途调查：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.leasebackResearch" 
+					name="contract_patrol_info.leasebackResearch" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.leasebackResearch']}"/>
+				</td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title" >逾期租金说明：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="contract_patrol_info.overdueRent" 
+					name="contract_patrol_info.overdueRent" class="mini-textarea" 
+					value="${requestScope['contract_patrol_info.overdueRent']}"/>
+				</td>
+			</tr>
+		</table>
+			<br/>
+	</fieldset>
+</div>
+
+<%-- <div id="risk_info_list" title="风险跟踪">
+	<fieldset class="fieldset-title">
+		<table cellspacing="0" cellpadding="0" style="width:100%" class="fillTable">
+		<tr class="tr-odd">
+				<td class="td-content-title">内容</td>
+				<td class="td-content-title">情况说明/备注</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title"  width="220px">与前一次检查有重大出入的信息：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.dccontent" 
+					name="risk_info.dccontent" class="mini-textarea" 
+					value="${requestScope['risk_info.dccontent']}"/>
+				</td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title" >前次风险政策清单及关注点：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.pointconent" 
+					name="risk_info.pointconent" class="mini-textarea" 
+					value="${requestScope['risk_info.pointconent']}"/>
+				</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title" >本次跟踪反馈说明：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.fkmemo" 
+					name="risk_info.fkmemo" class="mini-textarea" 
+					value="${requestScope['risk_info.fkmemo']}"/>
+				</td>
+			</tr>
+			<tr  class="tr-even">
+				<td class="td-content-title" >后期风险政策清单及关注点：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.houqpoint" 
+					name="risk_info.houqpoint" class="mini-textarea" 
+					value="${requestScope['risk_info.houqpoint']}"/>
+				</td>
+			</tr>
+			<tr class="tr-odd">
+				<td class="td-content-title" >售后回租融资款用途调查：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.huizuuse" 
+					name="risk_info.huizuuse" class="mini-textarea" 
+					value="${requestScope['risk_info.huizuuse']}"/>
+				</td>
+			</tr>
+			<tr class="tr-even">
+				<td class="td-content-title" >逾期租金说明：</td>
+				<td style="padding-top: 4px;padding-bottom: 4px;" colspan="3">
+					<input style="width:73%;height:80px;" id="risk_info.rentmemo" 
+					name="risk_info.rentmemo" class="mini-textarea" 
+					value="${requestScope['risk_info.rentmemo']}"/>
+				</td>
+			</tr>
+		</table>
+			<br/>
+	</fieldset>
+</div> --%>
+
+<script type="text/javascript">
+jQuery(function(){
+	if('${param.isView}' == 'true' || isViewHistoryTask==true){miniui_ext.disableFormFields("risk_info_list");};
+});
+</script>

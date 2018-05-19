@@ -1,0 +1,52 @@
+package com.tenwa.business.job;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.annotation.QuartzJob;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.leasing.controller.SM.SMserviceImpl;
+import com.tenwa.leasing.controller.SM.newSM;
+import com.tenwa.leasing.entity.SM.MachineMainData;
+import com.tenwa.leasing.entity.SM.PickUpMainData;
+import com.tenwa.leasing.entity.SM.ProjMainData;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.utils.BSDataBaseManager;
+import com.tenwa.leasing.utils.DataBaseManager;
+import com.tenwa.report.dao.ReportDao;
+
+@QuartzJob(description = "SM接口后台自动同步")
+public class QuartzSMInterface implements Job {
+	
+	@Resource(name = "SMserviceImplController")
+	private SMserviceImpl smserviceImpl;
+	
+	@Override
+	public void execute(JobExecutionContext arg0) throws JobExecutionException {
+		try {
+			smserviceImpl.updateMachineMainData();
+			smserviceImpl.updatePickupMainData();
+			smserviceImpl.updateProjMainData();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

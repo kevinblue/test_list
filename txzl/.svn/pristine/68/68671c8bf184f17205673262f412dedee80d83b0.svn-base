@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+			select pei.id,
+       pei.proj_name as projname,
+       pei.obtain_time as obtaintime,
+       pei.manufacturer,
+       pei.devicename,
+       pei.specimodel,
+       pei.quantum,
+       pei.original_value as originalvalue,
+       pei.networth,
+       pei.lease_assets_number as leaseassetsnumber,
+       pei.invoice_number as invoicenumber,
+       pei.storage_location as storagelocation
+  from PROJ_EQUIPMENT_INFO pei
+  where 1=1   
+        /~obtaintime: and pei.obtain_time ='{obtaintime}' ~/
+        /~projname: and pei.proj_name like '%{projname}%' ~/        
+        <EXTRACTEND> order by projname,obtaintime <EXTRACTEND>
+				
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

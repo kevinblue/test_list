@@ -1,0 +1,394 @@
+package com.tenwa.leasing.entity.fund;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+
+
+@Entity
+@FieldName(name = "付款信息中间表")
+@Table(name="CONTRACT_PAYMENT_INTERFACE")
+public class ContractFundPaymentInterface {
+	@Id
+	@OrderBy
+    @GeneratedValue(generator = "paymentableGenerator")     
+    @GenericGenerator(name = "paymentableGenerator", strategy = "uuid") 
+	@Column(name="ERP_PAYMENT_ID",length = 50)
+	@FieldName(name="主键ID")
+	private String erpPaymentId;
+	
+	@FieldName(name="指令状态")
+	@Column(name="RECORD_STATUS",length = 50)
+	private String recordStatus;
+	
+	@FieldName(name="支付类型")
+	@Column(name="PAYMENT_TYPE_ID",length = 50)
+	private String paymentTypeId;
+
+	@FieldName(name="结算方式")
+	@Column(name="PAYMENT_METHOD_TYPE_ID",length = 50)
+	private String paymentMethodTypeId;
+	
+
+	@FieldName(name="付款方银行账号")
+	@Column(name="PAYMENT_ACCOUNTS",length = 50)
+	private String paymentAccounts;
+
+	@FieldName(name="币种")
+	@Column(name="CURRENCY_TYPE",length = 50)
+	private String currencyType;
+	
+	@FieldName(name="收款方开户行")
+	@Column(name="DEPOSIT_BANK_NAME",length = 60)
+	private String depositBankName;
+	
+	@FieldName(name="收款方银行账户名称")
+	@Column(name="DEPOSIT_ACCOUNTS_NAME",length = 60)
+	private String depositAccountsName;
+	
+	@FieldName(name="收款方银行账号")
+	@Column(name="DEPOSIT_ACCOUNTS",length = 50)
+	private String depositAccounts;
+	
+	@FieldName(name="收款方银行简称")
+	@Column(name="DEPOSIT_BANK_TYPE",length = 50)
+	private String depositBankType;
+	
+	@FieldName(name="收款方开户行省")
+	@Column(name="DEPOSIT_PROVINCE",length = 50)
+	private String depositProvince;
+	
+	@FieldName(name="收款方开户行市")
+	@Column(name="DEPOSIT_CITY",length = 50)
+	private String depositCity;
+	
+	@FieldName(name="同城标识")
+	@Column(name="CITY_FLAG",length = 50)
+	private String cityFlag;
+	
+	@FieldName(name="加急标识")
+	@Column(name="PRIORITY_FLAG",length = 50)
+	private String priorityFlag;
+	
+	@FieldName(name="支付渠道")
+	@Column(name="OPERATION_TYPE",length = 50)
+	private String operationType;
+	
+	@FieldName(name="收款方银行号")
+	@Column(name="BANK_NUMBER",length = 50)
+	private String bankNumber;
+	
+	@FieldName(name="收款方联行号")
+	@Column(name="UNION_BANK_NUMBER",length = 50)
+	private String unionBankNumber;
+	
+	@FieldName(name="交易金额")
+	@Column(name="AMOUNT")
+	private Double amount;
+	
+	@FieldName(name="用途")
+	@Column(name="PURPOSE")
+	private String purpose;
+	
+	@FieldName(name="摘要")
+	@Column(name="ABSTRACT",length = 100)
+	private String abstracts;
+	
+	@FieldName(name="版本")
+	@Column(name="VERSION")
+	private Float version;
+	
+	@FieldName(name="校验码")
+	@Column(name="CHECK_CODE",length = 50)
+	private String checkCode;
+	
+	@FieldName(name="转账方式")
+	@Column(name="BANK_TRASTY",length = 50)
+	private String bankTrasty;
+	
+	@FieldName(name="付款状态")
+	@Column(name="PAYMENT_STATUS",length = 50)
+	private String paymentStatus;
+	
+	
+	@FieldName(name="错误原因")
+	@Column(name="ERROR_REASON",length = 60)
+	private String errorReason;
+	
+	@ManyToOne
+	@FieldName(name = "登记人")
+	@JoinColumn(name="CREATOR_")
+	private User creator;
+	
+	@FieldName(name = "登记时间")
+	@Column(name="CREATE_DATE")
+	private String createDate;
+	
+	@ManyToOne
+	@FieldName(name = "更新人")
+	@JoinColumn(name="MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name = "更新日期")
+	@Column(name="MODIFY_DATE", length=50)
+	private String modifyDate;
+
+	@FieldName(name = "docid")
+	@Column(name="DOC_ID", length=64)
+	private String docId;
+	
+	
+	public String getDocId() {
+		return docId;
+	}
+
+	public void setDocId(String docId) {
+		this.docId = docId;
+	}
+
+	public String getErpPaymentId() {
+		return erpPaymentId;
+	}
+
+	public void setErpPaymentId(String erpPaymentId) {
+		this.erpPaymentId = erpPaymentId;
+	}
+
+	public String getRecordStatus() {
+		return recordStatus;
+	}
+
+	public void setRecordStatus(String recordStatus) {
+		this.recordStatus = recordStatus;
+	}
+
+	public String getPaymentTypeId() {
+		return paymentTypeId;
+	}
+
+	public void setPaymentTypeId(String paymentTypeId) {
+		this.paymentTypeId = paymentTypeId;
+	}
+
+	public String getPaymentMethodTypeId() {
+		return paymentMethodTypeId;
+	}
+
+	public void setPaymentMethodTypeId(String paymentMethodTypeId) {
+		this.paymentMethodTypeId = paymentMethodTypeId;
+	}
+
+	public String getPaymentAccounts() {
+		return paymentAccounts;
+	}
+
+	public void setPaymentAccounts(String paymentAccounts) {
+		this.paymentAccounts = paymentAccounts;
+	}
+
+	public String getCurrencyType() {
+		return currencyType;
+	}
+
+	public void setCurrencyType(String currencyType) {
+		this.currencyType = currencyType;
+	}
+
+	public String getDepositBankName() {
+		return depositBankName;
+	}
+
+	public void setDepositBankName(String depositBankName) {
+		this.depositBankName = depositBankName;
+	}
+
+	public String getDepositAccountsName() {
+		return depositAccountsName;
+	}
+
+	public void setDepositAccountsName(String depositAccountsName) {
+		this.depositAccountsName = depositAccountsName;
+	}
+
+	public String getDepositAccounts() {
+		return depositAccounts;
+	}
+
+	public void setDepositAccounts(String depositAccounts) {
+		this.depositAccounts = depositAccounts;
+	}
+
+	public String getDepositBankType() {
+		return depositBankType;
+	}
+
+	public void setDepositBankType(String depositBankType) {
+		this.depositBankType = depositBankType;
+	}
+
+	public String getDepositProvince() {
+		return depositProvince;
+	}
+
+	public void setDepositProvince(String depositProvince) {
+		this.depositProvince = depositProvince;
+	}
+
+	public String getDepositCity() {
+		return depositCity;
+	}
+
+	public void setDepositCity(String depositCity) {
+		this.depositCity = depositCity;
+	}
+
+	public String getCityFlag() {
+		return cityFlag;
+	}
+
+	public void setCityFlag(String cityFlag) {
+		this.cityFlag = cityFlag;
+	}
+
+	public String getPriorityFlag() {
+		return priorityFlag;
+	}
+
+	public void setPriorityFlag(String priorityFlag) {
+		this.priorityFlag = priorityFlag;
+	}
+
+	public String getOperationType() {
+		return operationType;
+	}
+
+	public void setOperationType(String operationType) {
+		this.operationType = operationType;
+	}
+
+	public String getBankNumber() {
+		return bankNumber;
+	}
+
+	public void setBankNumber(String bankNumber) {
+		this.bankNumber = bankNumber;
+	}
+
+	public String getUnionBankNumber() {
+		return unionBankNumber;
+	}
+
+	public void setUnionBankNumber(String unionBankNumber) {
+		this.unionBankNumber = unionBankNumber;
+	}
+
+	public Double getAmount() {
+		return amount;
+	}
+
+	public void setAmount(Double amount) {
+		this.amount = amount;
+	}
+
+	public String getPurpose() {
+		return purpose;
+	}
+
+	public void setPurpose(String purpose) {
+		this.purpose = purpose;
+	}
+
+	public String getAbstracts() {
+		return abstracts;
+	}
+
+	public void setAbstracts(String abstracts) {
+		this.abstracts = abstracts;
+	}
+
+	public Float getVersion() {
+		return version;
+	}
+
+	public void setVersion(Float version) {
+		this.version = version;
+	}
+
+	public String getCheckCode() {
+		return checkCode;
+	}
+
+	public void setCheckCode(String checkCode) {
+		this.checkCode = checkCode;
+	}
+
+	public String getBankTrasty() {
+		return bankTrasty;
+	}
+
+	public void setBankTrasty(String bankTrasty) {
+		this.bankTrasty = bankTrasty;
+	}
+
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
+	}
+
+	public String getErrorReason() {
+		return errorReason;
+	}
+
+	public void setErrorReason(String errorReason) {
+		this.errorReason = errorReason;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+	
+	
+}

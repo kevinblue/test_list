@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+      <alldb>
+	      <table_sql> 
+		        <![CDATA[
+			        SELECT
+		                '{menuId}'   AS MENUID,
+		                TT.GROUPID   AS GROUPID,
+		                TT.GROUPNAME AS NAME,
+		                TT.GROUPCODE AS CODE,
+		                TT.GROUPDESCRIPTION as DESCRIPTION,
+		                SUM(TT.ISGRANT) AS ISGRANT
+		               FROM(
+		                  SELECT 
+		                             D.ID_      AS MENUID,
+		                             R.ID_      AS GROUPID,
+		                             R.name_    AS GROUPNAME ,
+		                             R.CODE_    AS GROUPCODE,
+		                             R.DESCRIPTION_    AS GROUPDESCRIPTION,
+		                             (CASE WHEN D.ID_='{menuId}' THEN 1 ELSE 0 END) AS ISGRANT
+		                             FROM(
+		                                 SELECT * FROM T_GROUPS 
+		                                 where enabled_ = 1
+										  /~queryText: AND (
+										        UPPER(NAME_) like '%{queryText}%' 
+										    OR  UPPER(CODE_) like '%{queryText}%' 
+										  )~/
+		                             )R LEFT JOIN(
+		                                SELECT * FROM  T_MENUS_GROUPS WHERE MENU_ID_='{menuId}'
+		                             )DR ON R.ID_ = DR.GROUP_ID_ 
+		                             LEFT JOIN(
+										SELECT ID_  FROM T_MENUS WHERE ID_='{menuId}'
+									 )D ON D.ID_=DR.MENU_ID_ 
+					 )TT 
+					 GROUP BY TT.MENUID,TT.GROUPID,TT.GROUPNAME,TT.GROUPCODE,TT.GROUPDESCRIPTION
+				 ]]> 
+		  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

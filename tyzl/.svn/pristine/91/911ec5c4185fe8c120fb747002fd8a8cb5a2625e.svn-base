@@ -1,0 +1,12 @@
+<styles>
+	<definition>
+		<style name='DataShadow' type='Shadow' alpha='40'/>
+		<style name='CanvasAnim' type='animation' param='_xScale' start='0' duration='1'/>
+		<style name="myCaptionFont" type="font" font="Arial" size="14" color="666666" bold="1"/> 
+	</definition>
+	<application>
+		<apply toObject='DATALABELS' styles='DataShadow,Anim2' />
+		<apply toObject='Canvas' styles='CanvasAnim' />
+		<apply toObject="Caption" styles="myCaptionFont" /> 
+    </application>	
+</styles>

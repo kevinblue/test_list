@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目立项清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select * from VI_PROJ_DEVELOPE_INFO p
+	          where p.leasformname<>'保理'
+	         and not exists   (select 1 from proj_info p1 where p1.develop_id=p.projid )
+	       --  select * from VI_CUST_INFO_ALL aa
+	        --left join vi_user_leader leader on leader.id_ = aa.belongingpeople
+           -- where aa.CUSTTYPE like '%cust_type.cust%' 
+            --AND NVL(DRAFT_,'否')='否' 
+          	/~custname: AND custname like '%{custname}%' ~/
+          	/~projname: AND projname like '%{projname}%' ~/
+          	/~orgcodecardno: AND orgcodecardno like '%{orgcodecardno}%' ~/
+          	--/~custkindname: AND custkind = '{custkindname}' ~/
+          	/~leasformname: AND leasform = '{leasformname}' ~/
+          	/~department: AND department like '%{department}%' ~/
+          	/~extendsql: <<extendsql>>~/
+          	<EXTRACTEND>order by createdate desc<EXTRACTEND>           	       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

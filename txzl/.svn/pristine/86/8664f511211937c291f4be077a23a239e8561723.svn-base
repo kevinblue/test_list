@@ -1,0 +1,475 @@
+package com.tenwa.leasing.entity.fund;
+
+import java.math.BigDecimal;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.base.FundEbankData;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+
+
+
+/**
+ * 
+ * @author 孙传良
+ * @date 2013-3-7上午11:57:06
+ * @info 合同资金实收表
+ * @Copyright 
+ * Tenwa
+ */
+@Entity
+@FieldName(name = "合同资金实收表")
+@Table(name="CONTRACT_FUND_FUND_CHARGE")
+public class ContractFundFundCharge {
+	@Id
+    @GeneratedValue(generator = "paymentableGenerator")     
+    @GenericGenerator(name = "paymentableGenerator", strategy = "uuid") 
+    @Column(length=32)
+	private String id;
+
+	@FieldName(name="合同编号")
+	@ManyToOne(targetEntity=ContractInfo.class,fetch=FetchType.LAZY)
+	@JoinColumn(name="CONTRACT_ID")
+	private ContractInfo contractId ;
+	
+	@FieldName(name="网银编号[S]")
+	@ManyToOne(targetEntity=FundEbankData.class,fetch=FetchType.LAZY)
+	@JoinColumn(name="EBANK_NUMBER")
+	private FundEbankData ebankNumber ;
+
+	@FieldName(name="资金计划[S]")
+	@ManyToOne(targetEntity=ContractFundFundPlan.class,fetch=FetchType.LAZY)
+	@JoinColumn(name="PAYMENT_ID")
+	private ContractFundFundPlan fundFundChargePlan ;
+	
+	@FieldName(name="收付款期项")
+	@Column(name="CHARGE_LIST")
+	private Integer   chargeList;
+
+	@ManyToOne
+	@FieldName(name="费用类型[D]")
+	@JoinColumn(name="FEE_TYPE")
+	private DictionaryData feeType;
+	
+	@ManyToOne
+	@FieldName(name="结算方式[D]")
+	@JoinColumn(name="SETTLE_METHOD")
+	private DictionaryData settleMethod;
+	
+	@FieldName(name="收支日期")
+	@Column(name="FACT_DATE",length=20)
+	private String   factDate;
+
+	@FieldName(name="收支金额")
+	@Column(name="FACT_MONEY",precision=22,scale=2)
+	private BigDecimal factMoney;
+
+	@FieldName(name="费用调整[调整金额]")
+	@Column(name="FEE_ADJUST",precision=22,scale=2)
+	private BigDecimal feeAdjust;
+
+	@ManyToOne
+	@FieldName(name="货币类型[D]")
+	@JoinColumn(name="CURRENCY")
+	private DictionaryData currency;
+
+	@FieldName(name="收支对象")
+	@Column(name="FACT_OBJECT")
+	private String   factObject;
+	
+	@ManyToOne
+	@FieldName(name="客户类型")
+	@JoinColumn(name="CUST_OMER_TYPE")
+	private DictionaryData custOmerType;
+	
+	@FieldName(name="银行名称")
+	@Column(name="ACCOUNT_BANK")
+	private String   accountBank;
+
+	@FieldName(name="帐户名称")
+	@Column(name="ACCOUNT")
+	private String   account;
+
+	@FieldName(name="银行帐号")
+	@Column(name="ACC_NUMBER")
+	private String   accNumber;
+
+	@FieldName(name="客户银行")
+	@Column(name="CLIENT_BANK")
+	private String   clientBank;
+
+	@FieldName(name="客户帐户")
+	@Column(name="CLIENT_ACCOUNT")
+	private String   clientAccount;
+
+	@FieldName(name="客户帐号")
+	@Column(name="CLIENT_ACCNUMBER")
+	private String   clientAccnumber;
+
+	@FieldName(name="单据号")
+	@Column(name="INVOICE_NO")
+	private String   invoiceNo;
+
+	@FieldName(name="会计处理日")
+	@Column(name="ACCOUNTING_DATE",length=20)
+	private String   accountingDate;
+
+	@ManyToOne
+	@FieldName(name="收付类型")
+	@JoinColumn(name="PAY_TYPE")
+	private DictionaryData payType;
+
+
+	@FieldName(name="申请放款日期")
+	@Column(name="APPLY_PAY_DATE",length=20)
+	private String   applyPayDate;
+	
+	@FieldName(name="上传日期")
+	@Column(name="UPLOAD_DATE",length=20)
+	private String   uploadDate;
+
+	@ManyToOne
+	@FieldName(name="上传人")
+	@JoinColumn(name="UPLOAD_CREATOR")
+	private User uploadCreator;
+
+	@ManyToOne
+	@FieldName(name="开票人")
+	@JoinColumn(name="INVOICE_PERSON")
+	private User invoicePerson;
+
+	@FieldName(name="开票时间")
+	@Column(name="INVOICE_DATE", length=20)	
+	private String invoiceDate;
+
+	@FieldName(name="备注")
+	@Column(name="FFCMEMO", length=2000)
+	private String   ffcmemo;
+	
+	@FieldName(name="是否红冲或被红冲记录")
+	@Column(name="ROLL_BACK",length=2)
+	private String   roll_Back;
+	
+	@FieldName(name="租金款项来源")
+	@Column(name="PID",length=50)
+	private String PID;
+	
+	public String getIsPrePay() {
+		return isPrePay;
+	}
+
+	public void setIsPrePay(String isPrePay) {
+		this.isPrePay = isPrePay;
+	}
+
+	@FieldName(name = "是否预付款")
+	@Column(name = "IS_PREPAY")
+	private String isPrePay;
+	
+	@ManyToOne
+	@FieldName(name="创建人")
+	@JoinColumn(name="CREATOR_")
+	private User creator;
+	
+	@FieldName(name="创建时间")
+	@Column(name="CREATE_DATE", length=20)	
+	private String createDate;
+	
+	@ManyToOne
+	@FieldName(name="修改人")
+	@JoinColumn(name="MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name="修改时间")
+	@Column(name="MODIFY_DATE", length=20)	
+	private String modifyDate;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public ContractInfo getContractId() {
+		return contractId;
+	}
+
+	public void setContractId(ContractInfo contractId) {
+		this.contractId = contractId;
+	}
+
+	public FundEbankData getEbankNumber() {
+		return ebankNumber;
+	}
+
+	public void setEbankNumber(FundEbankData ebankNumber) {
+		this.ebankNumber = ebankNumber;
+	}
+
+	
+
+	public ContractFundFundPlan getFundFundChargePlan() {
+		return fundFundChargePlan;
+	}
+
+	public void setFundFundChargePlan(ContractFundFundPlan fundFundChargePlan) {
+		this.fundFundChargePlan = fundFundChargePlan;
+	}
+
+	public Integer getChargeList() {
+		return chargeList;
+	}
+
+	public void setChargeList(Integer chargeList) {
+		this.chargeList = chargeList;
+	}
+
+	public DictionaryData getFeeType() {
+		return feeType;
+	}
+
+	public void setFeeType(DictionaryData feeType) {
+		this.feeType = feeType;
+	}
+
+	public DictionaryData getSettleMethod() {
+		return settleMethod;
+	}
+
+	public void setSettleMethod(DictionaryData settleMethod) {
+		this.settleMethod = settleMethod;
+	}
+
+	public String getFactDate() {
+		return factDate;
+	}
+
+	public void setFactDate(String factDate) {
+		this.factDate = factDate;
+	}
+
+	public BigDecimal getFactMoney() {
+		return factMoney;
+	}
+
+	public void setFactMoney(BigDecimal factMoney) {
+		this.factMoney = factMoney;
+	}
+
+	public BigDecimal getFeeAdjust() {
+		return feeAdjust;
+	}
+
+	public void setFeeAdjust(BigDecimal feeAdjust) {
+		this.feeAdjust = feeAdjust;
+	}
+
+	public DictionaryData getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(DictionaryData currency) {
+		this.currency = currency;
+	}
+
+	public String getFactObject() {
+		return factObject;
+	}
+
+	public void setFactObject(String factObject) {
+		this.factObject = factObject;
+	}
+
+	public String getAccountBank() {
+		return accountBank;
+	}
+
+	public void setAccountBank(String accountBank) {
+		this.accountBank = accountBank;
+	}
+
+	public String getAccount() {
+		return account;
+	}
+
+	public void setAccount(String account) {
+		this.account = account;
+	}
+
+	public String getAccNumber() {
+		return accNumber;
+	}
+
+	public void setAccNumber(String accNumber) {
+		this.accNumber = accNumber;
+	}
+
+	public String getClientBank() {
+		return clientBank;
+	}
+
+	public void setClientBank(String clientBank) {
+		this.clientBank = clientBank;
+	}
+
+	public String getClientAccount() {
+		return clientAccount;
+	}
+
+	public void setClientAccount(String clientAccount) {
+		this.clientAccount = clientAccount;
+	}
+
+	public String getClientAccnumber() {
+		return clientAccnumber;
+	}
+
+	public void setClientAccnumber(String clientAccnumber) {
+		this.clientAccnumber = clientAccnumber;
+	}
+
+	public String getInvoiceNo() {
+		return invoiceNo;
+	}
+
+	public void setInvoiceNo(String invoiceNo) {
+		this.invoiceNo = invoiceNo;
+	}
+
+	public String getAccountingDate() {
+		return accountingDate;
+	}
+
+	public void setAccountingDate(String accountingDate) {
+		this.accountingDate = accountingDate;
+	}
+
+	public String getApplyPayDate() {
+		return applyPayDate;
+	}
+
+	public void setApplyPayDate(String applyPayDate) {
+		this.applyPayDate = applyPayDate;
+	}
+
+	public String getUploadDate() {
+		return uploadDate;
+	}
+
+	public void setUploadDate(String uploadDate) {
+		this.uploadDate = uploadDate;
+	}
+
+	public User getUploadCreator() {
+		return uploadCreator;
+	}
+
+	public void setUploadCreator(User uploadCreator) {
+		this.uploadCreator = uploadCreator;
+	}
+
+	public User getInvoicePerson() {
+		return invoicePerson;
+	}
+
+	public void setInvoicePerson(User invoicePerson) {
+		this.invoicePerson = invoicePerson;
+	}
+
+	public String getInvoiceDate() {
+		return invoiceDate;
+	}
+
+	public void setInvoiceDate(String invoiceDate) {
+		this.invoiceDate = invoiceDate;
+	}
+
+	public String getFfcmemo() {
+		return ffcmemo;
+	}
+
+	public void setFfcmemo(String ffcmemo) {
+		this.ffcmemo = ffcmemo;
+	}
+
+	
+
+	public String getRoll_Back() {
+		return roll_Back;
+	}
+
+	public void setRoll_Back(String roll_Back) {
+		this.roll_Back = roll_Back;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public DictionaryData getPayType() {
+		return payType;
+	}
+
+	public void setPayType(DictionaryData payType) {
+		this.payType = payType;
+	}
+
+	public String getPID() {
+		return PID;
+	}
+
+	public void setPID(String pID) {
+		PID = pID;
+	}
+
+	public DictionaryData getCustOmerType() {
+		return custOmerType;
+	}
+
+	public void setCustOmerType(DictionaryData custOmerType) {
+		this.custOmerType = custOmerType;
+	}
+	
+}

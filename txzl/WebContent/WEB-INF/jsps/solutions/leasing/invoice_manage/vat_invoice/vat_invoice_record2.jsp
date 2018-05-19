@@ -1,0 +1,162 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>进项发票登记</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+
+<script type="text/javascript">
+	jQuery(function() {seajs.use([ "js/apcomponent/aptable/aptable.js" ],
+		function(ApTable) {new ApTable({
+			id : 'vat_invoice_info',
+			renderTo : 'id_table_container_vat_invoice_info',
+			title : "进项发票登记",
+			width : globalClientWidth,
+			height : globalClientHeight,
+			iconCls : 'icon-node',
+			lazyLoad : false,
+			showPage : true,
+			showPager : true,//分页按钮是否显示
+			multiSelect : false,
+			hiddenQueryArea : false,
+			loadMode:'ajax',
+			pageSize : 50,
+			frozenEndColumn : 2,
+			frozenStartColumn : 0,
+			queryButtonColSpan : 4,
+			queryButtonNewLine : true,
+			xmlFileName : '/eleasing/jsp/invoice_manage/vat_invoice/vat_invoice_record2.xml',
+			tools :[{
+				html : '进项发票登记',
+				plain : true,
+				iconCls : 'icon-add',
+				handler : function(miniTable, buttonText) {
+					var row=miniTable.getSelected();
+					if(row){
+						showDetail(row.contractid,row.id);
+					}else{
+						alert("未选中行");
+					}
+				}
+			},'-','exportExcel','-',
+			{
+				html : '下载进项登记模板',
+				plain : true,
+				iconCls : 'icon-addfolder',
+				handler : function(miniTable, buttonText) {
+					var fileTeplate=new fileTemplateConfig({
+	                	 templateno:'F-201603010',
+	                	 tableid:miniTable.config.id,
+	                	 modelname:miniTable.config.title,
+	                     returntype:'file',
+	                     parames:{
+	                     }
+	                     });
+	                 fileTeplate.createFile();
+				}
+			}],
+			columns : [
+					{type:'indexcolumn'},
+					{type:'checkcolumn'},
+					{
+						field : 'id',
+						header : 'id',
+						visible : false
+					},
+					{
+						field : 'contractid',
+						header : '合同编号',
+						visible:true
+					},
+					{
+						field : 'projectname',
+						header : '项目名称',
+						queryConfig : {width:212}
+					},
+					{
+						field : 'custname',
+						header : '客户名称',
+						queryConfig : {width:212}
+					},
+					{
+						field : 'equipamt',
+						header : '设备款',
+						align: 'right',dataType:'currency',
+						queryConfig : {
+			                range:true,
+							type:'float',
+			                vtype:'float'
+						}
+					},
+					
+					{
+						field : 'invoicemoney',
+						header : '已登记金额',
+						align: 'right',dataType:'currency',
+						queryConfig : {
+							newLine : true,
+			                range:true,
+							type:'float',
+			                vtype:'float'
+						}
+					},
+					{
+						field : 'unrecordmoney',
+						header : '未登记金额',
+						align: 'right',dataType:'currency',
+						queryConfig : {
+			                range:true,
+							type:'float',
+			                vtype:'float'
+						}
+					},
+					{
+						field : 'grantmoney',
+						header : '已发放金额',
+						align: 'right',dataType:'currency',
+						queryConfig : {
+			                range:true,
+							type:'float',
+			                vtype:'float'
+						}
+					},
+					{field : 'invoicerate',header : '发票金额比例(%)',align: 'right'},
+					{
+						field : 'statusname',
+						header : '状态',
+					} ]
+				});
+			});
+		});
+	function showDetail(contractid,id) {
+	    var url = getRootPath()
+			+ "/acl/showVatInvoiceInfoContro.acl?contractid="
+			+ contractid +"&id="+id+ "&opertype=view";
+		var sheight = window.screen.availHeight - 30;
+		var swidth = window.screen.availWidth - 10;
+		var winosption = "left=0px,top=0px,height="
+			+ sheight
+			+ "px,width="
+			+ swidth
+			+ "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+		window.open(url, '_blank', winosption);
+	} 
+	</script>
+</head>
+<body>
+	<div id="id_table_container_vat_invoice_info" style="height: 100%;"></div>
+</body>
+</html>
+

@@ -1,0 +1,326 @@
+  <%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/init.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyLoadMask.js"></script>
+<script type="text/javascript">
+var ifonlyread =  window.isCompletedTask||false;
+var tabname = "${param.tab_name}";
+var tabkey = "${param.tab_key}";
+var dockey = "${param.doc_key}";
+var isViewStr = "${param.isView}";
+var isView = true;
+if(isViewStr == 'true'){isView = false;};
+seajs.use(["${pageContext.request.contextPath}/js/tenwa/init.js"]);
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id:'due_diligence_report2',
+				renderTo:'table_due_diligence_report2',
+				width:globalClientWidth,
+				height:400,
+				title:tabname,
+				iconCls:'icon-node',
+				multiSelect:false,
+				hiddenQueryArea:false,//是否将查询区域折叠起来
+				queryButtonColSpan:2,
+				showPager:true,		
+				remoteOper : true,
+				params:{
+					flowunid:flowUnid,
+					tabkey:tabkey,
+					dockey:dockey
+					
+				},
+				entityClassName : "com.tenwa.leasing.entity.proj.DueDiligenceReport",
+				xmlFileName:'/eleasing/workflow/proj/proj_common/upload_due_diligence_report.xml',
+				columns:[ 
+				    {type:'indexcolumn'},
+				   	{type:'checkcolumn'},  
+				   	{field:'id',header:'id',visible:false},
+				   
+				   	{field:'filename',header:'文件类型名称'},
+				   	{field:'filekey',header:'bf文件类别',visible:false},
+				   	{field:'dockey',header:'流程类别',visible:false},
+					{field:'bfrealname',header:'上传文件信息', width:'30%',
+				   		renderer: function(e){
+				   		  var fileHtmlTd = '';
+				   		  //文件id
+				   		 var idStr = e.record.bffileid;
+				   		if(idStr == null || idStr == undefined || idStr == ''){
+				   			return "还未上传文件！";
+				   		}
+				   		var idArray = idStr.split(",");
+				   		//文件名
+				   	     var filenameStr = e.record.bffilename;
+				   	      var filenameArray = filenameStr.split(",");
+				   	    //上传时间
+				   	    var createdateStr = e.record.bfcreatedate;
+				   	    var createdateArray;
+				   	    if(typeof(createdateStr)== 'object'){
+				   	    	var date=tenwa.toDate(createdateStr+"","yyyy-MM-dd hh:mm:ss");
+				   	    	var ss=tenwa.toChar(date,"yyyy-MM-dd hh:mm:ss");
+				   	    	createdateArray = ss.split(",");
+				   	    }else{
+				   		    createdateArray = createdateStr.split(",");
+				   	    }
+				   	    //上传人
+				   	    var realnameStr = e.record.bfrealname;
+				   	    var realnameArray = realnameStr.split(",");
+				   	     //拼table
+				   	     var renderHtml1 = "<table style='border:0px solid #FFF;'>";
+				   	     var renderHtml2 = "</table>";
+				   	     for(var i=0;i<filenameArray.length;i++){
+				   	   	 var fnStr = filenameArray[i];
+				   	   	 if(ifonlyread==true){
+					   	   	fileHtmlTd +="<tr style='border:0px solid #FFF;'>"+
+							   	 "<td style='border:0px solid #FFF;'>"+
+		                         		  "<a href='javascript:void(0);' onclick='previewshowFile(\""+ idArray[i] + "\",\""+fnStr+"\")'>"+"[预览]"+"</a>"+
+		                		 "</td>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		                                  "<a href='javascript:void(0);' onclick='downloadDdrFile(\""+ idArray[i] + "\")'>"+"["+fnStr+"]"+"</a>"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+   realnameArray[i]+"】"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+ createdateArray[i]+"】"+
+		                         "</td>"+
+		   	                "</tr>";
+				   	   	 }else{
+					   	   	fileHtmlTd +="<tr style='border:0px solid #FFF;'>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		   	                             "<a href='javascript:void(0);' onclick='removeUploadDdrFilebyId(\""+ idArray[i] + "\");'style='color:red;'>"+"[删除]"+"</a>"+
+		   	                     "</td>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		                                  "<a href='javascript:void(0);' onclick='previewshowFile(\""+ idArray[i] + "\",\""+fnStr+"\")'>"+"[预览]"+"</a>"+
+		                         "</td>"+
+		   	                     "<td style='border:0px solid #FFF;'>"+
+		                                  "<a href='javascript:void(0);' onclick='downloadDdrFile(\""+ idArray[i] + "\")'>"+"["+fnStr+"]"+"</a>"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+   realnameArray[i]+"】"+
+		                         "</td>"+
+		                         "<td style='border:0px solid #FFF;'>"+
+		                                  "【"+ createdateArray[i]+"】"+
+		                         "</td>"+
+		   	                "</tr>";
+				   	   	 }
+				   	   	
+				   	             } 
+				   	     return renderHtml1+fileHtmlTd+renderHtml2; 
+				   		}},
+					/* {field:'bfcreatedate',header:'创建时间',
+						formEditorConfig:{
+							 newLine: true,
+							 fieldVisible: false
+						   }},
+					{field:'bffileid',header:'文件id',
+							   formEditorConfig:{
+							          fieldVisible: false},},
+							          {field:'bffilename',header:'bf文件名',
+										   formEditorConfig:{
+										          fieldVisible: false},},
+					{field:'bffileaddress',header:'文件地址',
+						formEditorConfig:{
+					          fieldVisible: false}}, */
+					          
+					          {
+									field: 'create', 
+									header: '操作',
+									visible:isView,
+								    renderer:function(e){
+								    	if(ifonlyread==true){
+								    		return "";
+								    	}else{
+								    		var id = e.record.dockey;
+											return "<a href='javascript:void(0);' onclick='upDdrFile(\"" + id + "\")'>上传文件</a>";    	
+								    	}
+								}}
+				   
+				]
+			});
+		});
+	});
+	
+function downloadDdrFile(DdrFileId) {
+	attachmentDown({returnType:'file',url:"${pageContext.request.contextPath}/leasing/template/downLoadAttachById.action?id="+DdrFileId});
+} 
+//上传附件
+function upDdrFile(id) {
+	var filekey = id;
+	var attachmentParams="";
+	switch(filekey){
+	case 'FinancialDDR002':  //财务尽调报告
+		attachmentParams=getAttachmentParams("FinancialAdjustment.01","${currentProcessInstanceDBID}")
+	  break;
+	case 'LegalDDR004':      //法务尽调报告
+		attachmentParams=getAttachmentParams("BusinessAdjustment.01","${currentProcessInstanceDBID}")
+	  break;
+	case 'TechnicalDDR003':  //技术尽调报告
+		attachmentParams=getAttachmentParams("TechnicalRiskControl.01","${currentProcessInstanceDBID}")
+		break;
+	default:
+	 }
+	var uploadutil = new uploadUtil({
+			isAttachment : attachmentParams==''?false:true,
+			attachmentParams:attachmentParams,
+			url : '/leasing/file/uploadFile.action',
+			tableid : "due_diligence_report",
+		    modelname : tabname,
+		    parames : {
+					flowUnid : flowUnid,
+					filekey : filekey　　　
+				},
+				jscallback : 'reloadcustcontactfile'
+		});
+	uploadutil.createFileAndShow();
+}
+
+//删除附件
+function removeUploadDdrFilebyId(uploadAttachmentFileDetailId) {
+	mini.confirm("确认删除？", "删除？", function(action){
+		if(action=="ok"){
+			var ids=[];
+				ids.push(uploadAttachmentFileDetailId);
+		    mini.mask({el: document.body,cls: 'mini-mask-loading',html: '正在删除合同 请稍等...'});
+			var url="/leasing/template/dropCreateFile.action";
+			var param=[];
+			param["ids"]=ids+"";
+			param["isAttachment"]=true;//连带级联操作删除自定义方法
+			ajaxRequest({
+				url:getRootPath()+url,
+				method:'POST',
+				success:function(rs){
+				var message= rs.responseText;
+					message=message.replace(/(^\s+)|(\s+$)/g, ""); 
+					mini.unmask(document.body);
+					mini.get("due_diligence_report2").reload();
+	        		loadcustomworkflowattachment();
+					mini.alert(message);
+				},
+				async:false,
+				failure:function(res){
+					mini.unmask(document.body);
+				},
+				params:param
+			});
+/* 			$.ajax({
+				cache : false,
+				async : false,
+		        type: "post",
+		        dataType: "JSON",
+		        url : getRootPath()+ "/acl/ContractEnclosureMarkDelect.acl",
+		        data: {uploadAttachmentFileDetailId:uploadAttachmentFileDetailId},
+		        success: function (data) {
+		        	if(data){
+		        		mini.alert("删除成功！");
+		        		mini.get("due_diligence_report2").reload();
+		        		loadcustomworkflowattachment();
+		        		return;
+		        	}else{
+		        		mini.alert("删除失败！");
+		        		return;
+		        	}
+		        	
+		        }
+		    }) */
+		}else{
+			return;
+		}
+	});
+}
+function reloadcustcontactfile(message){
+	mini.alert(message);
+	loadcustomworkflowattachment();
+	mini.get("id_uploadfile").hide();
+	mini.unmask(document.body);
+	mini.get("due_diligence_report2").reload();
+	
+}
+//预览
+function previewshowFile(filedict,filename){
+	var filenameStr = filename;
+	mini.mask({
+	    el: document.body,
+	    cls: 'mini-mask-loading'
+	});
+	var filename=filename.substring(filename.lastIndexOf('.') + 1);
+	var fileExtension = filename.toLowerCase();
+	if(fileExtension=="jpg"||fileExtension=="jpeg"||fileExtension=="png"||fileExtension=="bmp"||fileExtension=="gif"||fileExtension=="pdf"){
+		var url = getRootPath() + '/table/getTableData.action';
+		var params = { xmlFileName:'/common/queryCustFile.xml',"filedict":filedict};
+		//params.custid=custid;
+		$.ajax({
+	        url:url,
+	      data:params,
+	      type:'post',
+	        success:function(res){
+	            var result = JsonUtil.decode(res);
+			    var datas = result['datas'];
+			    if(datas && datas.length > 0){
+			    	jQuery("#imag").html('');
+			    	jQuery.each(datas, function(index, appImage){
+			    		var img = createAttachmentImageDiv8(appImage,filedict);
+			    		if(img){
+				    		jQuery("#imag").append(img);
+			    		}
+			    	});
+			    } else {
+			    	jQuery("#imag").html('');
+			    }
+			    mini.unmask(document.body);
+	        },
+	        failure:function(res){
+	        	mini.unmask(document.body);
+	        }
+	    });
+		mini.get("previewshowFile").show();
+	}else{
+		$.ajax({
+	        url: getRootPath()+"/acl/qeryCustfile.acl",
+	        type: "post",
+	        cache: false, 
+	        data :{"filedict":filedict,"previewtype":"second"},
+	        async : false,
+	        success: function (text) {
+			     var str=text;
+			   	 testwin = open("", "testwin","status=no,menubar=yes,toolbar=no");
+				 testwin.document.open();
+				 testwin.document.write(str);
+				 testwin.document.title = filenameStr;
+				 testwin.document.close();
+				
+	        }
+	    });
+		 mini.unmask(document.body);
+	}
+}
+//根据单个图片数据获取一个document
+function createAttachmentImageDiv8(appImage,filedict){
+	var $div = jQuery('<div/>');
+	if(appImage){
+		$div.addClass("img-box");
+		$div.attr("imageid", appImage.id);
+		var $image = jQuery("<img/>");
+		$image.attr("height", appImage.height);
+		$image.attr("width", appImage.width);
+		$image.attr("realUrl", appImage.imagepath);
+		$image.attr("alt", appImage.title);
+		$image.attr("src", getRootPath()+"/acl/qeryCustfile.acl?filedict="+filedict+"&previewtype=second");
+		$image.appendTo($div);
+	}
+	return $div;
+}
+</script>
+<div id="table_due_diligence_report2"></div>
+<div id="previewshowFile" class="mini-window" title="预览" showMaxButton="true"
+			style="width: 100%; height: 100%;" showCloseButton="true"  showModal="true"
+			allowResize="true" allowDrag="true" >
+			<div id="imag">
+			</div>
+	        </div>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+                SELECT  distinct CI.ID AS VALUE, CI.CUST_NAME AS NAME,
+                CI.CUST_CLASS AS custclass
+            FROM CUST_INFO CI
+            LEFT JOIN CUST_TYPE_INFO CTI ON CI.ID = CTI.CUST_ID
+            WHERE CTI.CUST_TYPE IN ('{cust_type}')
+            AND NVL(CI.INVALID_,'否')='否'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

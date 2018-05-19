@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+	        	select   case when px.pledge_state='未注销' then '0' 
+                              when px.pledge_state='部分注销' then '1'
+                              when px.pledge_state='已注销' then '2'
+                             else '' end   pledge_number,px.*
+                from
+	  				(select vip.*    				
+	  				from (
+		  				select
+		  			      case when ps.hascancel= ps.sumcancel then '已注销' 
+		                       when ps.hascancel>0 and  ps.nocancel>0 then '部分注销'
+		                       when ps.nocancel=ps.sumcancel then '未注销'
+		                       else '' end   pledge_state  
+		  			           , ps.*
+		  				from (select 
+				  					(select decode(sum(1), '', 0, sum(1))
+				                  		from PLEDGE p1
+				                  		where p1.contract_id = v.ID
+				                   		and p1.pledge_status = 1)  nocancel,
+				                   
+				                	(select decode(sum(1), '', 0, sum(1))
+				                 		 from PLEDGE p1
+				                 		 where p1.contract_id = v.ID
+				                         and p1.pledge_status = 2) hascancel,
+				                   
+				                    (select decode(sum(1), '', 0, sum(1))
+				                  		 from PLEDGE p1
+				                		 where p1.contract_id = v.ID
+				              			 ) sumcancel,  
+				                     v.*
+			         			 from vi_contract_info v                  
+			       			 	 where exists (select 1 from PLEDGE p where p.contract_id = v.ID)
+			       		) ps
+		         
+		        		 where 1=1
+		         		/~contract_id: AND ps.CONTRACT_ID like '%{contract_id}%' ~/
+						/~contract_number: AND ps.CONTRACT_NUMBER like '%{contract_number}%' ~/
+						/~project_name: AND ps.PROJECT_NAME like '%{project_name}%' ~/
+						/~cust_name: AND ps.CUST_NAME like '%{cust_name}%' ~/
+						/~card_no: AND ps.CARD_NO like '%{card_no}%' ~/
+	         
+	        	 ) vip
+	         	 where 1=1			
+					/~pledge_state: AND vip.PLEDGE_STATE like '%{pledge_state}%' ~/)px
+				
+				where 1=1
+				
+			<EXTRACTEND>order by pledge_number asc<EXTRACTEND>  
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

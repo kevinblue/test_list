@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+        SELECT VI1.CUST_NAME            CUSTNAME,
+               VI1.CUSTID               CUSTID,
+               VI1.ID                   CONTRACTID,
+               VI1.CONTRACT_NUMBER      CONTRACTNUMBER,
+               --DUNNING.PART_DEPT        PARTDEPT,
+               --DUNNING.ID               DUNNINGID,
+               --TUSERS.REALNAME_         RAWVALUE_PARTDEPT,
+               CONTRACTOUTLIST.OUT_LIST OUTLIST
+        FROM (
+          SELECT VI2.CONTRACTID CONTRACTID 
+            FROM VI_CONTRACT_FUND_RENT_PLAN VI2
+           GROUP BY VI2.CONTRACTID
+          HAVING SUM(VI2.CURRENTINCOME)<SUM(VI2.RENT)
+        ) FUNDRENTPLAN1
+        LEFT JOIN VI_CONTRACT_INFO VI1 ON FUNDRENTPLAN1.CONTRACTID =VI1.ID
+        LEFT JOIN VI_CONTRACT_OUT_LIST CONTRACTOUTLIST ON VI1.ID = CONTRACTOUTLIST.CONTRACT_ID
+        --LEFT JOIN OVERDUE_DUNNING_INFO DUNNING ON VI1.ID = DUNNING.CONTRACT_ID 
+        --LEFT JOIN T_USERS TUSERS ON DUNNING.PART_DEPT = TUSERS.ID_
+       WHERE 1=1 --and VI1.contract_status>=31
+        /~custid: AND VI1.CUSTID = '{custid}' ~/
+        /~contractnumber: AND VI1.CONTRACT_NUMBER LIKE '%{contractnumber}%' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

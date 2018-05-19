@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+      <alldb>
+	      <table_sql> 
+		        <![CDATA[
+			        SELECT
+		                '{deptId}'  AS DEPTID,
+		                TT.ROLEID   AS ROLEID,
+		                TT.ROLENAME AS NAME,
+		                TT.ROLECODE AS CODE,
+		                TT.ROLEDESCRIPTION as DESCRIPTION,
+		                SUM(TT.ISGRANT) AS ISGRANT
+		               FROM(
+		                  SELECT 
+		                             D.ID_      AS DEPTID,
+		                             R.ID_      AS ROLEID,
+		                             R.name_    AS ROLENAME ,
+		                             R.CODE_    AS ROLECODE,
+		                             R.DESCRIPTION_    AS ROLEDESCRIPTION,
+		                             (CASE WHEN D.ID_='{deptId}' THEN 1 ELSE 0 END) AS ISGRANT
+		                             FROM(
+		                                 SELECT * FROM T_ROLES 
+		                                 where enabled_ = 1
+										  /~queryText: AND (
+										        UPPER(NAME_) like '%{queryText}%' 
+										    OR  UPPER(CODE_) like '%{queryText}%' 
+										  )~/
+		                             )R LEFT JOIN(
+		                                SELECT * FROM  T_DEPTS_ROLES WHERE DEPT_ID_='{deptId}'
+		                             )DR ON R.ID_ = DR.ROLE_ID_ 
+		                             LEFT JOIN(
+										SELECT ID_  FROM T_DEPTS WHERE ID_='{deptId}'
+									 )D ON D.ID_=DR.DEPT_ID_ 
+					 )TT 
+					 GROUP BY TT.DEPTID,TT.ROLEID,TT.ROLENAME,TT.ROLECODE,TT.ROLEDESCRIPTION
+				 ]]> 
+		  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

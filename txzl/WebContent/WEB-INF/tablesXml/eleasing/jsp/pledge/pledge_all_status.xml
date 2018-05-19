@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+
+				  select 
+        p.ID                as  id,
+        p.REGIS_TYPE_ID     AS  registypeid,
+        tdd1.name_          AS  registypeidname,
+        ci.CONTRACT_ID       AS  contractid,
+        p.REGIS_NUM         AS  regisnum,
+        p.REGIS_UNIT        AS  regisunit,
+        p.ASSUROR           AS  assuror,
+        c.CUST_NAME         AS  assurorname,
+        P.PLEDGE_OWNNER     AS  pledgeownner,
+        p.PLEDGE_VALUE_NOW  AS  pledgevaluenow,
+        p.PLEDGE_VALUE      AS  pledgevalue,
+        p.ASSUROR_TOTALVAL  AS  assurortotalval,
+        p.DESCRIPTION_ONE   AS  descriptionone,
+        p.DEBT_START        AS   debtstart,
+        p.DEBT_END          AS   debtend,
+        p.PLEDGE_START      AS   pledgestart,
+        p.PLEDGE_END        AS   pledgeend,
+        p.REGIS_TIME        AS   registime,
+        p.PREPARER          AS   preparer,
+        p.PLEDGE_TIME       AS   pledgetime,
+        p.PLEDGE_REASON     AS   pledgereason
+        from pledge  p 
+        left join T_DICTS_DATAS tdd1 on   p.REGIS_TYPE_ID=tdd1.id_
+        left join CONTRACT_INFO ci on p.CONTRACT_ID=ci.id
+        left join CUST_INFO c on   p.ASSUROR =c.id
+        where 1=1 
+ 				/~contractid:AND p.contract_id= '{contractid}'~/
+				/~pledge_status:AND p.pledge_status = '{pledge_status}'~/
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

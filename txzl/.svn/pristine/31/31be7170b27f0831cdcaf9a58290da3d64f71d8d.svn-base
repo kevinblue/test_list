@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      <!-- -->
+	        <![CDATA[
+select name, a1 , a2 , a3
+  from (select '上年底' as str,
+                --fd.financial_date  as datename,
+                fs.subject_name name,
+                fd.subject_data as data
+           from financial_data fd
+           left join financial_subjects fs
+             on fd.fina_sub_id = fs.id
+           left join cust_info ci
+             on ci.id = fd.cust_id
+           left join cust_type_info ct on ct.cust_id =fd.cust_id
+          where to_date(to_char(fd.financial_date), 'yyyy-mm-dd') <
+                to_date(extract(year from to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss')) || '-01-01', 'yyyy-mm-dd')
+            and to_date(to_char(fd.financial_date), 'yyyy-mm-dd') >=
+                to_date(extract(year from to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss')) || '-01-01', 'yyyy-mm-dd') - 92
+            and ct.cust_type='cust_type.cust'
+            and (fs.subject_name  in('三、利润总额（亏损总额以“－”号填列）','四、净利润（净亏损以“－”号填列）','经营活动产生的现金流量净额'
+,'应付帐款','流动资产：','长期借款','资产总计','负债合计'
+) or fs.subject_name in ('短期借款','流动负债：','所有者权益合计','1、资产负债率','2、流动比率','1、应收帐款周转率')
+
+or fs.subject_name in ('2、销售净利率','六、期末现金及现金等价物余额','主营业务收入','4、净资产收益率'))
+            and ci.cust_number='{finance.custnumber}'
+         union
+         select '上年同期' as str,
+                --fd.financial_date  as datename,
+                fs.subject_name name,
+                fd.subject_data as data
+           from financial_data fd
+           left join financial_subjects fs
+             on fd.fina_sub_id = fs.id
+           left join cust_info ci
+             on ci.id = fd.cust_id
+           left join cust_type_info ct on ct.cust_id =fd.cust_id
+          where to_char(to_date(fd.FINANCIAL_DATE, 'yyyy-MM-dd'), 'Q') in
+                (to_char(to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss'), 'Q'))
+            and extract(year from to_date(fd.FINANCIAL_DATE, 'yyyy-MM-dd')) =
+                extract(year from to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss')) - 1
+            and ct.cust_type='cust_type.cust'
+            and (fs.subject_name  in('三、利润总额（亏损总额以“－”号填列）','四、净利润（净亏损以“－”号填列）','经营活动产生的现金流量净额'
+,'应付帐款','流动资产：','长期借款','资产总计','负债合计'
+) or fs.subject_name in ('短期借款','流动负债：','所有者权益合计','1、资产负债率','2、流动比率','1、应收帐款周转率')
+
+or fs.subject_name in ('2、销售净利率','六、期末现金及现金等价物余额','主营业务收入','4、净资产收益率'))
+            and ci.cust_number='{finance.custnumber}'
+         union
+         select '本期末' as str,
+                ---fd.financial_date  as datename,
+                fs.subject_name name,
+                fd.subject_data as data
+           from financial_data fd
+           left join financial_subjects fs
+             on fd.fina_sub_id = fs.id
+           left join cust_info ci
+             on ci.id = fd.cust_id
+           left join cust_type_info ct on ct.cust_id =fd.cust_id
+          where to_char(to_date(fd.FINANCIAL_DATE, 'yyyy-MM-dd'), 'Q') in
+                (to_char(to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss'), 'Q'))
+            and extract(year from to_date(fd.FINANCIAL_DATE, 'yyyy-MM-dd')) =
+                extract(year from to_date('{finance.financedate}','yyyy-mm-dd hh24:mi:ss'))
+            and ct.cust_type='cust_type.cust'
+            and (fs.subject_name  in('三、利润总额（亏损总额以“－”号填列）','四、净利润（净亏损以“－”号填列）','经营活动产生的现金流量净额'
+,'应付帐款','流动资产：','长期借款','资产总计','负债合计'
+) or fs.subject_name in ('短期借款','流动负债：','所有者权益合计','1、资产负债率','2、流动比率','1、应收帐款周转率')
+
+or fs.subject_name in ('2、销售净利率','六、期末现金及现金等价物余额','主营业务收入','4、净资产收益率')
+            and ci.cust_number='{finance.custnumber}'     
+                )) v 
+                
+            pivot(sum(data) --聚合操作函数
+            
+       for str --行转列标准
+       in('上年底' as a1, '上年同期' as a2, '本期末' as a3) --行转列列取值和顺序
+       )	   
+       ]]> 
+    </table_sql>
+    </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

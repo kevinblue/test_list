@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select 
+				TT.id id,
+			   	TT.proj_id projid,
+                TT.code code,
+                TT.TASK_name taskname,
+                TT.start_time starttime,
+                TT.end_time endtime, 
+                trunc(to_date(TT.end_time,'yyyy-mm-dd')-to_date(TT.start_time,'yyyy-mm-dd'))||'天' AS duartiontime
+                from TASK_TIME TT
+				where 1=1
+				/~projid: and TT.proj_id = '{projid}'~/
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

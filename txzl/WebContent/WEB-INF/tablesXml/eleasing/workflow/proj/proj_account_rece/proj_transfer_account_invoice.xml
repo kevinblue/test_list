@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	    select
+       ce.id id,
+       ce.TRANSFER_DATE transferdate,
+       ce.contract_id contractid,
+       ce.equip_status equipstatus,
+     
+        case
+        when ce.equip_status='1' then '未转让'
+        when ce.equip_status='2' then '已转让'
+        when ce.equip_status='3' then '已反转让'
+        else '未转让' 
+        end equipstatusname ,
+       ce.purchaser_name purchasername,
+       ce.invoice_code invoicecode,
+       ce.equip_price equipprice,
+       ce.invoice_date invoicedate,
+       ce.invoice_expiredate invoiceexpiredate
+       from  contract_equip ce
+	     left join contract_info  ci on ci.id= ce.contract_id
+	     WHERE 1=1 AND ce.contract_id = '{id}'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>
+
+<!--    case
+        when ce.equip_status='0' then '未转让'
+        when ce.equip_status='1' then '已转让'
+        when ce.equip_status='2' then '反转'
+        else '' 
+        end  -->

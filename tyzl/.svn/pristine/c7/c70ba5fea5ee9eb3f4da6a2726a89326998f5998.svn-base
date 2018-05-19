@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="tenwa5.1">
+        <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/commons"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/javaSrc"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/business"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/config.src"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/jbpm.src"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/entity"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/leasing"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/calc"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/kernal"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/jbpm"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/interface"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/report"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/quartz"/>
+        <property name="context-root" value="tenwa5.1"/>
+        <property name="java-output-path" value="/tyzl/WebContent/WEB-INF/classes"/>
+    </wb-module>
+</project-modules>

@@ -1,0 +1,254 @@
+package com.tenwa.leasing.entity.trade;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+@Entity
+@FieldName(name = "贸易基础交易情况")
+@Table(name = "TRADE_BASED_TRANSACTIONS")
+public class TradeBasedTransactions implements Serializable {
+	
+	private static final long serialVersionUID =  1L;
+
+	@Id
+	@GenericGenerator(name = "generator", strategy = "uuid")
+	@GeneratedValue(generator = "generator")
+	@FieldName(name="标识符")
+	@Column(name = "ID", nullable = false, length = 64)
+	private String id;	
+	
+	@FieldName(name="项目编号")
+	@OneToOne(targetEntity=ProjInfo.class,fetch=FetchType.LAZY)
+	@JoinColumn(name="PROJ_ID")
+	private ProjInfo projId;
+	
+	@Column(name = "SALE")
+	@FieldName(name = "销售商品")
+	private String sale;
+	
+	@FieldName(name = "合同付款期限")
+	@Column(name = "CONTRACT_PAYMENT_TERM",length=50)
+	private String contractpaymentterm;
+	
+	@FieldName(name = "付款条件")
+	@Column(name="PAYMENT_CONDITION",length=50)
+	private String paymentcondition;
+	
+	@FieldName(name = "付款方式")
+	@Column(name="PAYMENT_MODE",length=50)
+	private String paymentmode;
+	
+	@FieldName(name = "合同是否含有禁止转让条款")
+	@Column(name="ASSIGNMENT_CLAUSE",length=50)
+	private String assignmentclause;
+	
+	@FieldName(name = "合同是否为长期（一年以上）供应合同")
+	@Column(name="LONG_CONTRACT",length=50)
+	private String longcontract;
+	
+	@FieldName(name = "买卖双方预计年贸易额")
+	@Column(name="TRADE_VOLUME",length=50)
+	private String tradevolume;
+	
+	@FieldName(name = "买卖双方是否关联企业")
+	@Column(name="RELATION_BUSINESS",length=50)
+	private String relationbusiness;
+	
+	@FieldName(name = "买方是否同意付款至保理专户")
+	@Column(name="FACTORING_ACCOUNT",length=50)
+	private String factoringaccount;
+	
+	@FieldName(name = "实际基础交易与合同是否相符")
+	@Column(name="ACTUAL_TRANSACTION",length=50)
+	private String actualtransaction;
+	
+	@FieldName(name = "卖方整体情况及买卖双方贸易情况")
+	@Column(name="TRADE_SITUATION",length=2000)
+	private String tradesituation;
+	
+	@FieldName(name = "供应商已在金风融资情况")
+	@Column(name="FINANCING_SITUATION",length=2000)
+	private String financingsituation;	
+		
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "MODIFICATOR_")
+	@FieldName(name="修改人")
+	private User modificator;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "CREATOR_")
+	@FieldName(name="创建人")
+	private User creator;
+
+	@Column(name = "CREATE_DATE", length = 40)
+	@FieldName(name="创建时间")
+	private String createDate;
+
+	@Column(name = "MODIFY_DATE", length = 40)
+	@FieldName(name="修改时间")
+	private String modifyDate;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public ProjInfo getProjId() {
+		return projId;
+	}
+
+	public void setProjId(ProjInfo projId) {
+		this.projId = projId;
+	}
+
+	public String getSale() {
+		return sale;
+	}
+
+	public void setSale(String sale) {
+		this.sale = sale;
+	}
+
+	public String getContractpaymentterm() {
+		return contractpaymentterm;
+	}
+
+	public void setContractpaymentterm(String contractpaymentterm) {
+		this.contractpaymentterm = contractpaymentterm;
+	}
+
+	public String getPaymentcondition() {
+		return paymentcondition;
+	}
+
+	public void setPaymentcondition(String paymentcondition) {
+		this.paymentcondition = paymentcondition;
+	}
+
+	public String getPaymentmode() {
+		return paymentmode;
+	}
+
+	public void setPaymentmode(String paymentmode) {
+		this.paymentmode = paymentmode;
+	}
+
+	public String getAssignmentclause() {
+		return assignmentclause;
+	}
+
+	public void setAssignmentclause(String assignmentclause) {
+		this.assignmentclause = assignmentclause;
+	}
+
+	public String getLongcontract() {
+		return longcontract;
+	}
+
+	public void setLongcontract(String longcontract) {
+		this.longcontract = longcontract;
+	}
+
+	public String getTradevolume() {
+		return tradevolume;
+	}
+
+	public void setTradevolume(String tradevolume) {
+		this.tradevolume = tradevolume;
+	}
+
+	public String getRelationbusiness() {
+		return relationbusiness;
+	}
+
+	public void setRelationbusiness(String relationbusiness) {
+		this.relationbusiness = relationbusiness;
+	}
+
+	public String getFactoringaccount() {
+		return factoringaccount;
+	}
+
+	public void setFactoringaccount(String factoringaccount) {
+		this.factoringaccount = factoringaccount;
+	}
+
+	public String getActualtransaction() {
+		return actualtransaction;
+	}
+
+	public void setActualtransaction(String actualtransaction) {
+		this.actualtransaction = actualtransaction;
+	}
+
+	public String getTradesituation() {
+		return tradesituation;
+	}
+
+	public void setTradesituation(String tradesituation) {
+		this.tradesituation = tradesituation;
+	}
+
+	public String getFinancingsituation() {
+		return financingsituation;
+	}
+
+	public void setFinancingsituation(String financingsituation) {
+		this.financingsituation = financingsituation;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+}

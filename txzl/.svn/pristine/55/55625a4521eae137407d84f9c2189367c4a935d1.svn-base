@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+select oes1.subject_name subject,oes2.valuestr tableArea, v3.valueStr file1,v4.valueStr file2,v5.valueStr file3,v6.valueStr file4,v7.valueStr file5,v8.valueStr file6,v9.valueStr file7,v10.valueStr file8 
+from  T_ODBC_EVALUATION_SUBJECT oes1
+left join (select subject_order listid,'银行贷款-融资租赁' as valueStr from  T_ODBC_EVALUATION_SUBJECT) oes2
+    on oes2.listid = oes1.subject_order
+
+left join  ( select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}' 
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}'
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file0'  ) v3 on v3.listid = oes1.subject_order
+                            
+                            left join (select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}'
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                    and temd2.flowu_id = '{flowUnid}'
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file1') v4 on v4.listid = v3.listid
+ 
+                    left join ( select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}'
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}'
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file2'  ) v5  on v5.listid = v4.listid  
+                            
+                             left join ( select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}' 
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}'
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file3'  ) v6  on v5.listid = v6.listid          
+               left join (select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}'
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}' 
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file4') v7 on v7.listid = v6.listid 
+                            
+                             left join (select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}' 
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  --and temd2.flowu_id = '' 
+                                  and temd2.table_title = '2'
+                                  --and temd2.file_order = '0'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file5') v8 on v7.listid = v8.listid  
+                            
+                             left join (select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}' 
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}' 
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file6') v9 on v9.listid = v8.listid    
+                            
+                              left join (select  fileindex,rownum listid,valueStr from (
+                          select 'file'||v1.file_order as fileindex, 
+                                 nvl(v1.subject_1,'')||'-'||nvl(v2.subject_1,'') subject_1,
+                                 nvl(v1.subject_2,'')||'-'||nvl(v2.subject_2,'') subject_2,
+                                 nvl(v1.subject_3,'')||'-'||nvl(v2.subject_3,'') subject_3,
+                                 nvl(v1.subject_4,'')||'-'||nvl(v2.subject_4,'') subject_4,
+                                 nvl(v1.subject_5,'')||'-'||nvl(v2.subject_5,'') subject_5,
+                                 nvl(v1.subject_6,'')||'-'||nvl(v2.subject_6,'') subject_6,
+                                 nvl(v1.subject_7,'')||'-'||nvl(v2.subject_7,'') subject_7,
+                                 nvl(v1.subject_8,'')||'-'||nvl(v2.subject_8,'') subject_8,
+                                 nvl(v1.subject_9,'')||'-'||nvl(v2.subject_9,'') subject_9,
+                                 nvl(v1.subject_10,'')||'-'||nvl(v2.subject_10,'') subject_10,
+                                 nvl(v1.subject_11,'')||'-'||nvl(v2.subject_11,'') subject_11,
+                                 nvl(v1.subject_12,'')||'-'||nvl(v2.subject_12,'') subject_12,
+                                 nvl(v1.subject_13,'')||'-'||nvl(v2.subject_13,'') subject_13,
+                                 nvl(v1.subject_14,'')||'-'||nvl(v2.subject_14,'') subject_14,
+                                 nvl(v1.subject_15,'')||'-'||nvl(v2.subject_15,'') subject_15,
+                                 nvl(v1.subject_16,'')||'-'||nvl(v2.subject_16,'') subject_16,
+                                 nvl(v1.subject_17,'')||'-'||nvl(v2.subject_17,'') subject_17,
+                                 nvl(v1.subject_18,'')||'-'||nvl(v2.subject_18,'') subject_18,
+                                 nvl(v1.subject_19,'')||'-'||nvl(v2.subject_18,'') subject_19,
+                                 nvl(v1.subject_20,'')||'-'||nvl(v2.subject_20,'') subject_20
+                          from (select * from T_EVALUATION_MODEL_DATA temd1
+                                  where temd1.status = '1'
+                                  and temd1.flowu_id = '{flowUnid}' 
+                                  and temd1.table_title = '1'
+                                  order by temd1.file_order
+                                  ) v1
+                          left join (select * from T_EVALUATION_MODEL_DATA temd2
+                                      where temd2.status = '1'
+                                  and temd2.flowu_id = '{flowUnid}' 
+                                  and temd2.table_title = '2'
+                                  ) v2
+                              on v1.file_order = v2.file_order
+                        
+                  ) unpivot (valueStr for subject in ( subject_1,subject_2,subject_3,subject_4,subject_5,
+                                                       subject_6,subject_7,subject_8,subject_9,subject_10,
+                                                       subject_11,subject_12,subject_13,subject_14,subject_15,
+                                                       subject_16,subject_17,subject_18,subject_19,subject_20
+                                                     ) 
+                            )
+                            where fileindex ='file7') v10 on v9.listid = v10.listid   
+                             where   v10.fileindex ='file7'                      
+                            
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

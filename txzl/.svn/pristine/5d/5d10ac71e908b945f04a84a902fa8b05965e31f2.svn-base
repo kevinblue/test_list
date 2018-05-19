@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select ttt.* from (
+			  SELECT BM.ID AS ID,
+	          BM.MSG_TYPE AS MSGTYPE,
+	          BM.MSG_TITLE AS MSGTITLE,
+	          BM.SUBJECT_ AS MSGTEXT,
+	          BM.TO_USER_TYPE AS USERTYPE,
+	          BM.FROMUSER AS FROMUSER,
+	          BM.SEND_DATE AS SENDDATE,
+	          (SELECT WMSYS.WM_CONCAT(BMTG.GOUP_ID) USERS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_user'
+	          GROUP BY 'msggroup_user') USERS,
+	          (SELECT WMSYS.WM_CONCAT(BMTG.GOUP_ID) GROUPSS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_group'
+	          GROUP BY 'msggroup_group') GROUPSS,
+	          (SELECT WMSYS.WM_CONCAT(BMTG.GOUP_ID) DEPTS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_dept'
+	          GROUP BY 'msggroup_dept') DEPTS,
+	          (SELECT WMSYS.WM_CONCAT(BMTG.GOUP_ID) ROLESS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_roles'
+	          GROUP BY 'msggroup_roles') ROLESS,
+	          (SELECT WMSYS.WM_CONCAT(BMTG.GOUP_ID) DISTRICTS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_district'
+	          GROUP BY 'msggroup_district') DISTRICTS,
+		      (SELECT WMSYS.WM_CONCAT(TU.REALNAME_) FROM (SELECT BMTU.READ_USER READ_USER,BMTU.MSG_ID MSG_ID 
+		      FROM BASE_MESSAGE_TO_USER BMTU
+	          GROUP BY BMTU.MSG_ID,BMTU.READ_USER) BMM
+	          
+	          LEFT JOIN T_USERS TU ON TU.ID_ = BMM.READ_USER 
+	          where BMM.MSG_ID = BM.ID AND ROWNUM < 20) REALNAME
+	          FROM BASE_MESSAGE BM
+	          WHERE 1=1 
+		      /~MSG_TYPE: AND BM.MSG_TYPE = '{MSG_TYPE}'~/
+		      /~FROM_USER: AND BM.FROMUSER = '{FROM_USER}'~/
+		      )ttt
+		      where 1=1
+		      /~realname: AND REALNAME like '%{realname}%'~/
+		      
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+	        	select  ttt.* from (
+			  SELECT BM.ID AS ID,
+	          BM.MSG_TYPE AS MSGTYPE,
+	          BM.MSG_TITLE AS MSGTITLE,
+	          BM.SUBJECT_ AS MSGTEXT,
+	          BM.TO_USER_TYPE AS USERTYPE,
+	          BM.FROMUSER AS FROMUSER,
+	          BM.SEND_DATE AS SENDDATE,
+	          (SELECT 
+	          [USERS]=stuff((select ','+t.GOUP_ID from BASE_MESSAGE_TO_GROUP t where t.id=BMTG.id for xml path('')), 1, 1, '')
+	          FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_user'
+	          GROUP BY BMTG.id) USERS,
+	          (SELECT 
+	          [GROUPSS]=stuff((select ','+t.GOUP_ID from BASE_MESSAGE_TO_GROUP t where t.id=BMTG.id for xml path('')), 1, 1, '')
+	          FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_group'
+	          GROUP BY BMTG.id) GROUPSS,
+	          (SELECT 
+	          [ROLESS]=stuff((select ','+t.GOUP_ID from BASE_MESSAGE_TO_GROUP t where t.id=BMTG.id for xml path('')), 1, 1, '')
+	          FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_dept'
+	          GROUP BY BMTG.id) DEPTS,
+	          (SELECT 
+	          [ROLESS]=stuff((select ','+t.GOUP_ID from BASE_MESSAGE_TO_GROUP t where t.id=BMTG.id for xml path('')), 1, 1, '')
+	          FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_roles'
+	          GROUP BY BMTG.id) ROLESS,
+	          (SELECT 
+	          [DISTRICTS]=stuff((select ','+t.GOUP_ID from BASE_MESSAGE_TO_GROUP t where t.id=BMTG.id for xml path('')), 1, 1, '')
+	          FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_district'
+	          GROUP BY BMTG.id) DISTRICTS,
+		      (SELECT 
+		      [REALNAME_]=stuff((select ','+t.REALNAME_ from T_USERS t where t.id_=tu.id_ for xml path('')), 1, 1, '')
+		      FROM (SELECT BMTU.READ_USER READ_USER,BMTU.MSG_ID MSG_ID 
+		      FROM BASE_MESSAGE_TO_USER BMTU
+	          GROUP BY BMTU.MSG_ID,BMTU.READ_USER) BMM
+	          
+	          LEFT JOIN T_USERS TU ON TU.ID_ = BMM.READ_USER 
+	          where BMM.MSG_ID = BM.ID) REALNAME
+	          FROM BASE_MESSAGE BM
+	          WHERE 1=1 
+	          /~MSG_TYPE: AND BM.MSG_TYPE = '{MSG_TYPE}'~/
+		      /~FROM_USER: AND BM.FROMUSER = '{FROM_USER}'~/
+		      )ttt
+		      where 1=1
+		    <EXTRACTEND> order by SENDDATE desc<EXTRACTEND>
+		      /~realname: AND REALNAME like '%{realname}%'~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+	   <mysql>
+      <table_sql> 
+	        <![CDATA[
+	        select ttt.* from (
+			  SELECT BM.ID AS ID,
+	          BM.MSG_TYPE AS MSGTYPE,
+	          BM.MSG_TITLE AS MSGTITLE,
+	          BM.SUBJECT_ AS MSGTEXT,
+	          BM.TO_USER_TYPE AS USERTYPE,
+	          BM.FROMUSER AS FROMUSER,
+	          BM.SEND_DATE AS SENDDATE,
+	          (SELECT GROUP_CONCAT(BMTG.GOUP_ID) USERS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_user'
+	          GROUP BY 'msggroup_user') USERS,
+	          (SELECT GROUP_CONCAT(BMTG.GOUP_ID) GROUPSS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_group'
+	          GROUP BY 'msggroup_group') GROUPSS,
+	          (SELECT GROUP_CONCAT(BMTG.GOUP_ID) DEPTS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_dept'
+	          GROUP BY 'msggroup_dept') DEPTS,
+	          (SELECT GROUP_CONCAT(BMTG.GOUP_ID) ROLESS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_roles'
+	          GROUP BY 'msggroup_roles') ROLESS,
+	          (SELECT GROUP_CONCAT(BMTG.GOUP_ID) DISTRICTS FROM BASE_MESSAGE_TO_GROUP BMTG 
+	          WHERE BMTG.MSG_ID = BM.ID AND BMTG.MSG_GROUP = 'msggroup_district'
+	          GROUP BY 'msggroup_district') DISTRICTS,
+		      (SELECT GROUP_CONCAT(TU.REALNAME_) FROM (SELECT BMTU.READ_USER READ_USER,BMTU.MSG_ID MSG_ID 
+		      FROM BASE_MESSAGE_TO_USER BMTU
+	          GROUP BY BMTU.MSG_ID,BMTU.READ_USER) BMM
+	          
+	          LEFT JOIN T_USERS TU ON TU.ID_ = BMM.READ_USER 
+	          where BMM.MSG_ID = BM.ID LIMIT 20) REALNAME
+	          FROM BASE_MESSAGE BM
+	          WHERE 1=1 
+		      /~MSG_TYPE: AND BM.MSG_TYPE = '{MSG_TYPE}'~/
+		      /~FROM_USER: AND BM.FROMUSER = '{FROM_USER}'~/
+		      )ttt
+		      where 1=1
+		      /~realname: AND REALNAME like '%{realname}%'~/
+		      
+			 ]]> 
+	  </table_sql>
+	  </mysql>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

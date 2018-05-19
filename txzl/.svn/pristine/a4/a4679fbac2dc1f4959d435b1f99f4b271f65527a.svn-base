@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审风控经办
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			select vpd.provincename provincename,
+     extract(year from to_date(productiontime,'yyyy-mm-dd')) yearStr,
+     extract(month from to_date(productiontime,'yyyy-mm-dd')) monthStr,
+     case nvl(vpd.fansum,'0') when '0'
+       then  nvl(vpd.fansum,'0')
+         else to_char( round(nvl(vpd.projinstalledcapacity,'0')/vpd.fansum * 10,2))
+           end as singleCapacity,
+     vpd.fansum fansum,
+     vpd.projinstalledcapacity  projinstalledcapacity1,
+     --年等效满负荷小时数及P90/P75/P50小时数
+     --由系统导入概算，风电场设备及建安工程
+     pc.equip_amt/10000 equipamt1,
+     pc.grace grace,
+     CAST(nvl(pc.lease_term,'0')/12 AS NUMBER (5,2) ) leaseYear1,
+     pc.income_number incomeNum1,
+     tdd1.name_ regularSettlemethod1,
+      pc.equip_amt/10000 equipamt2,
+      vpd.projinstalledcapacity  projinstalledcapacity2,
+      nvl(vv1.year_rate1,0)/100 yearRate1,
+    nvl(vv2.year_rate2,0)/100 yearRate2,
+     CAST(nvl(pc.lease_term,'0')/12 AS NUMBER (5,2) ) leaseYear2,
+     pc.income_number incomeNum2,
+      tdd1.name_ regularSettlemethod2,
+      vpd.internetprice internetprice,
+      REPLACE(pc.start_date, '-','/') startdate,
+       nvl(pc.HAND_RATIO,0)/100 handratio,
+      tdd2.name_ basenumber,
+    allcounterfee.counterfee  counterfee,
+     nvl(pc.CAUTION_MONEY,0)/10000 cautionmoney,
+    nvl(pc.CAUTION_DEDUCTION_RATIO,0)/100 cautiondeductionratio,
+    pc.PERIOD_TYPE  periodtype
+      
+from proj_info pi 
+left join VI_PROJ_DEVELOPE_INFO vpd on vpd.projid = pi.develop_id
+left join proj_condition pc on pc.proj_id = pi.id
+left join (select * from (select psrb2.proj_id projid, psrb2.regular_settlemethod regularSettlemethod,
+           psrb2.year_rate year_rate1, row_number() over(partition by psrb2.proj_id order by psrb2.start_list) row_number
+           from proj_SPECIAL_RULES_BEAN psrb2) v1
+           where v1.row_number = 1
+           ) vv1 on vv1.projid = pi.id 
+ left join t_dicts_datas tdd1 on tdd1.code_ = vv1.regularSettlemethod    
+ left join t_dicts_datas tdd2 on tdd2.code_ = pc.HAND_MONEY          
+left join (select * from (select psrb2.proj_id projid, 
+           psrb2.year_rate year_rate2, row_number() over(partition by psrb2.proj_id order by psrb2.start_list) row_number
+           from proj_SPECIAL_RULES_BEAN psrb2) v2
+           where v2.row_number = 2
+           ) vv2 on vv2.projid = pi.id  
+            left join (select sum(nvl(pffp.plan_money,0))/10000 counterfee,pffp.proj_id projid from proj_fund_fund_plan pffp
+where pffp.fee_type = 'feetype1'
+group by pffp.proj_id
+) allcounterfee  on allcounterfee.projid = pi.id  
+left join (select sum(nvl(pffp.plan_money,0))/10000 rentalinterest,pffp.proj_id projid from proj_fund_fund_plan pffp
+where pffp.pay_type = 'feetype9'
+group by pffp.proj_id
+) allrentalinterest  on allrentalinterest.projid = pi.id
+
+where pi.id = '{projectid}'           
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

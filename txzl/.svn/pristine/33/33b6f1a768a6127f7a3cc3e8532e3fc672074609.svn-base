@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE_TO_USER
+  (ID, READ_STATUS, CREATE_DATE, MSG_ID, READ_USER, CREATOR_)
+  select sys_guid(),
+         '1',
+         to_char(sysdate, 'yyyy-mm-dd HH24:MI:SS'),
+         bm2.id,
+         ci.id,
+         'Administrator'
+    from BASE_MESSAGE bm2
+    left join GUARANTEE_INFO ii2
+      on bm2.subject_ like '%' || ii2.guarantee_id || '%'
+    left join contract_info cri
+      on ii2.contract_id = cri.id
+    left join cust_info ci
+      on cri.cust_id = ci.id
+   where bm2.id not in (select bmtu.msg_id from BASE_MESSAGE_TO_USER bmtu)
+     and bm2.msg_title = '保函到期提醒'
+      
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,8 @@
+<!--  柱图 1.指标名称 2.数值(3.J-js函数-参数) -->
+<?xml version="1.0" encoding="UTF-8"?>
+<chart bgColor='DFE8F6' unescapeLinks='0' showAboutMenuItem='0' showPrintMenuItem='0' showBorder='0' showExportDataMenuItem='1' exportDataMenuItemLabel="复制图表数据" exportDialogMessage='请等待...'  exportEnabled='1' exportAtClient='1' exportAction='download' exportFormats='JPG=保存图片'  exportFileName="${chart.chartTitle}" exportHandler='fcExporter_${chart.chartId}' ${chart.chart}>
+<#list list as bean>
+<set label='${bean[0]?trim}' value='${bean[1]}' <#if bean[2]?exists>link="${bean[2]}"</#if> />
+</#list>
+${chart.other}
+</chart>

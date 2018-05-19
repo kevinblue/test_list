@@ -1,0 +1,552 @@
+define(function(require, exports, module) {
+	var apTableBase = require("js/apcomponent/aptablebase/aptablebase.js");
+	require("css/apcomponent/aptable/{currentSkin}/aptable.css");
+	var locale = require("js/apcomponent/aptable/locale/{currentLocale}.js");
+	// var exportExcelLabel = locale.exportExcel;
+	var ApTable = function(config) {
+		var miniTable = new mini.DataGrid();
+		var lazyLoad= config.lazyLoad||false;
+	 
+		if (lazyLoad == true && (config.loadMode||"local") != 'ajax') {
+			miniTable.isinitData = 0;
+			config.data = [];
+		} else {
+			miniTable.isinitData = 1;
+		}
+
+		miniTable.getData=function(){
+			if(this.isinitData==0){
+				var curData=this.data.clone()||[];
+				
+				var values = '';
+	 			if (typeof(mini.get("id_json_"+this.id+"_str")) != 'undefined'){
+	 				values = mini.get("id_json_"+this.id+"_str").getValue()||"";
+	 			}else{
+	 				values = jQuery('#'+"id_json_"+this.id+"_str").val()||"";
+	 			}
+	 			if(values!=""){
+	 				var beforeValues=mini.decode(values);
+	 				for(var i=0;i<beforeValues.length;i++){
+	 					curData.push(beforeValues[i])
+	 				}
+	 			}
+	 			this.set({data:curData});
+				miniTable.isinitData=1;
+			}
+			return this.data.clone();
+		}
+		this.miniTable = miniTable;
+		this.miniTable.config = config;
+        this.miniTable.columns = config.columns;
+		// var me = this;
+		// extend mini functions
+		var params = jQuery.extend(true, {}, config.params);
+		params['xmlFileName'] = config.xmlFileName;
+		// init default config
+		// config.idField = config.idField || "id";
+		//var initParams = mini.clone(params)//初始化时的参数
+		config.pageSize = config.pageSize || 20;
+		config.virtualScroll = config.virtualScroll || false;
+		config.isRemoteStatistic = config.isRemoteStatistic || false;
+		config.showEmptyText = config.showEmptyText || '没有返回的数据';
+		config.dataField = "datas";
+		config.totalField = "total";
+		config.isClickLoad = config.isClickLoad || false;
+		config.pageIndexField = "pageIndex";
+		config.pageSizeField = "pageSize";
+		config.sortFieldField = "TableRemoteSortField";
+		config.sortOrderField = "TableRemoteSortDir";
+		config.showPager = config.showPager || false;
+		config.showToolbar = !(config.showToolbar === false || config.showToolbar === 'false');
+		config.loadingMsg = config.loadingMsg || locale['shadeInfo'];
+		config.editWindowId = config.editWindowId || (config.id + "_editFormPopupWindow");
+		config.editFormId = config.editFormId || (config.id + "_editFormPopupWindow_form");
+		config.titleId = config.titleId || ("id_panelContainer_" + config.id);
+		config.loadMode=config.loadMode||"local";
+		config.allowAlternating = !(config.allowAlternating === false || config.allowAlternating === 'false');
+		config.queryAreaContainerId = config.queryAreaContainerId || ("id_queryAreaContainerId_" + config.id);
+		var columns = config.columns;
+		for(var i = 0 ; i < columns.length;i++){
+			var column = columns[i];
+			column.headerAlign = column.headerAlign ||'center';
+			column.allowSort = !(column.allowSort === false || config.allowSort === 'false')
+			if(column.type == "float" || column.type == "double" || column.dataType == "currency"){
+				column.align = column.align ||'right';
+			}
+		}
+		var isLocal = false;
+		if (config.data) {
+			isLocal = true;
+			config.showPager = false;
+			config.sortMode = "client";
+			//判断流程多行table,是否页签点击后加载数据
+			if(config.isClickLoad){
+				config.data = [];
+			}
+		} else {
+			config.url = config.url || (window.globalWebRoot + '/table/getTableData.action');
+		}
+		// override this miniui's original methods
+		jQuery.extend(mini.DataGrid.prototype, {
+			getEditForm : function() {
+				try {
+					return new mini.Form("#" + this.config.editFormId);
+				} catch (e) {
+					return null;
+				}
+			},
+			setEditFormData : function(datas) {
+				var form = this.getEditForm();
+				if (datas && form) {
+					form.setData(datas, false, false);
+				}
+			},
+			getEditFormData : function() {
+				var form = this.getEditForm();
+				if (form) {
+					return form.getData();
+				} else {
+					return {};
+				}
+			},
+			setTitle : function(title) {
+				var panelTitle = mini.get(this.config.titleId);
+				if (panelTitle) {
+					panelTitle.setTitle(title);
+				}
+			},
+			setParam : function(name, value) {
+				this.setParams({
+					name : value
+				});
+			},
+			setParams : function(newParams) {
+				var currentParams = this._dataSource.loadParams || {};
+				for ( var param in newParams) {
+					currentParams[param] = newParams[param];
+				}
+			},
+			getParams : function() {
+				return this._dataSource.loadParams || {};
+			},
+			reload : function(success, error, complete) {
+				this.load(success, error, complete);
+			},
+			load : function(success, error, complete) {
+				this.accept();
+				miniTable._dataSource.loadParams["pageIndex"] = 0;
+				this._dataSource.reload(success, error, complete);
+			},
+			saveDataToInput:function(){
+				if( mini.get("id_json_"+this.id+"_str")){
+	  		    	  mini.get("id_json_"+this.id+"_str").setValue(mini.encode(this.getData()));
+	  		        }else if($("#id_json_"+this.id+"_str")){
+	  		    	  $("#id_json_"+this.id+"_str").val(mini.encode(this.getData()));
+	  		    }	  
+			}
+		});
+
+		var currentObj = mini.byId(config.renderTo || document.body);
+		var $renderToContainer = jQuery(currentObj).attr({}).css({});
+		var panelTitle = config.title;
+		var panelWidth = (config.width + "").indexOf("%") != -1 ? config.width : parseInt(config.width) + "px";
+		var panelHeight = (config.height + "").indexOf("%") != -1 ? config.height : parseInt(config.height) + "px";
+		
+		var $panelContainer = jQuery("<div class='aptable'></div>").addClass("mini-panel").attr({
+			id : config.titleId,
+			title : panelTitle,
+			iconCls : config.iconCls,
+			//showToolbar : config.showToolbar || false,
+			showToolbar : false,
+			showCloseButton : config.showCloseButton || false,
+			showFooter : config.showFooter || false,
+			showHeader : panelTitle ? true : false,
+			bodyStyle : config.bodyStyle || "padding:0px;"
+		}).css({
+			//width : parseInt(config.width) + "px",
+			//height : parseInt(config.height) + "px"
+			width: panelWidth,
+			height: panelHeight
+		});
+		$renderToContainer.append($panelContainer);
+		// fit id
+		var tableContainerId = "id_tableContainer_" + config.id;
+		// 初始化columns
+		var columnsConfig = config.columns;
+		var columnsMapping = apTableBase.getColumnsEditFormMapping(columnsConfig, config);
+
+		var queryAreaHtmlObj = apTableBase.getColumnsQueryAreaHtmlObj(columnsConfig, config, null, false);
+		var queryAreaItemHtmlArr = queryAreaHtmlObj["htmlArr"];
+		var queryAreaItemHtmlArrLen = queryAreaItemHtmlArr.length;
+		if (0 < queryAreaItemHtmlArrLen) {
+			var initQueryButtonClass = "expand-button";
+			var initQueryButtonTitle = "隐藏查询条件";
+			var hiddenQueryArea = config.hiddenQueryArea;
+			var fieldSetOtherClass = "";
+			var otherStyle = "";
+			if (hiddenQueryArea) {
+				initQueryButtonClass = "collapse-button";
+				initQueryButtonTitle = "显示查询条件";
+				fieldSetOtherClass = "fieldset-hidden";
+				otherStyle = " style='display:none;' ";
+			}
+			// query area
+			var queryAreaHtmlArr = [];
+
+			var queryAreaQueryToggleButtonId = config.queryAreaContainerId + "_toggleBtn";
+			queryAreaHtmlArr.push("<div id='" + config.queryAreaContainerId + "' class='aptable-queryarea-container'><div class='aptable-queryarea-table-container' " + otherStyle + "><table width='100%' cellspacing='0' style='border-collapse:collapse;'><tbody>");
+//<fieldset class='" + fieldSetOtherClass + "'><legend><a id='" + queryAreaQueryToggleButtonId + "' href='javascript:void(0);' class='" + initQueryButtonClass + "' title='" + initQueryButtonTitle + "'></a>查询条件</legend>
+			for ( var cc = 0; cc < queryAreaItemHtmlArrLen; cc++) {
+				queryAreaHtmlArr.push(queryAreaItemHtmlArr[cc]);
+			}
+			var queryAreaQueryConfirmButtonId = config.queryAreaContainerId + "_confirmBtn";
+			var queryAreaQueryClearButtonId = config.queryAreaContainerId + "_clearBtn";
+
+			var queryButtonNewLine = config.queryButtonNewLine;
+			if (queryButtonNewLine) {
+				queryAreaHtmlArr.push("</tr>");
+				queryAreaHtmlArr.push("<tr>");
+			}
+			var queryButtonColSpan = config["queryButtonColSpan"] || 1;
+			queryAreaHtmlArr.push("<td class='td-label' colspan='" + queryButtonColSpan + "' style='text-align:left;'><span id='" + queryAreaQueryConfirmButtonId + "'><a class='mini-button query-button' iconCls='icon-search'>"+locale['search']+"</a></span>");
+			queryAreaHtmlArr.push("&nbsp;&nbsp;<span id='" + queryAreaQueryClearButtonId + "'><a  class='mini-button query-button' iconCls='icon-remove' style='color:#FFA5A5;border: 1px solid #FFA5A5;'>"+locale['clear']+"</a></span></td>");
+			queryAreaHtmlArr.push("</tr>");
+
+			queryAreaHtmlArr.push("</tbody></table></div></div>");//</fieldset>
+
+			$panelContainer.append(jQuery(queryAreaHtmlArr.join("")));
+			mini.parse(mini.byId(config.queryAreaContainerId));
+			jQuery("#" + queryAreaQueryToggleButtonId).bind('click', function(e) {
+				e.stopPropagation();
+				apTableBase.fieldsetToggleClick(e, function() {
+					var miniTable = mini.get(tableContainerId);
+					miniTable.doLayout();
+				});
+			});
+			jQuery("#"+config.queryAreaContainerId).find('input').bind('keyup',function(e){
+				var event = window.event || e;
+				if(event && event.keyCode==13){
+					e.stopPropagation();
+					// 初始化queryarea参数
+					var queryAreaParams = apTableBase.getQueryAreaParams(config.id, false);
+					var miniTable = mini.get(config.id);
+					miniTable.setParams(queryAreaParams);
+					miniTable.reload();
+				}
+			});
+			jQuery("#" + queryAreaQueryConfirmButtonId).bind('click', function(e) {
+				if(!apTableBase.formValidate(new mini.Form(config.queryAreaContainerId))){
+					return;
+				}
+				e.stopPropagation();
+				// 初始化queryarea参数
+				var queryAreaParams = apTableBase.getQueryAreaParams(config.id, false);
+				var miniTable = mini.get(config.id);
+				miniTable.setParams(queryAreaParams);
+				miniTable.reload();
+			});
+			jQuery("#" + queryAreaQueryClearButtonId).bind('click', function(e) {
+				e.stopPropagation();
+				// 初始化queryarea参数
+				var queryAreaParams = apTableBase.getQueryAreaParams(config.id, true);
+				queryAreaParams.pageIndex = 0;
+				var miniTable = mini.get(config.id);
+				var queryAreaParams = jQuery.extend(queryAreaParams,config.initParams);
+				if(config.afterClickClearBtnCallBack){
+					if(!config.afterClickClearBtnCallBack(miniTable,queryAreaParams)){return;}
+				}
+				miniTable.setParams(queryAreaParams);
+				miniTable.reload();
+			});
+			// 初始化queryarea参数
+			var queryAreaParams = apTableBase.getQueryAreaParams(config.id, false);
+			for ( var qp in queryAreaParams) {
+				params[qp] = queryAreaParams[qp] == "" ? params[qp] : queryAreaParams[qp];
+			}
+			config.initParams = mini.clone(params);
+		}
+		// toolbar
+		var $toolbarContainer = null;
+		var toolbarDom = config.toolbarEl;
+		if (toolbarDom || config.tools) {
+			toolbarDom = mini.byId(toolbarDom);
+			$toolbarContainer = (!toolbarDom ? jQuery("<div></div>") : jQuery(toolbarDom)).addClass("mini-toolbar").attr({}).css({
+				display : 'block',
+				borderWidth : "0px",
+				borderBottomWidth : "0px"
+			});
+			if(config.showToolbar){
+				$panelContainer.append($toolbarContainer);
+			}
+		}
+		// 创建tools应用
+		var createToolItemByConfig = function(me, tool) {
+			var html = tool.html;
+			var $toolItemParent = jQuery("<span></span>");
+			$toolbarContainer.append($toolItemParent);
+			var handler = tool.handler || function() {
+			};
+			var clickHandler = (function(me, html, handler) {
+				return function(e) {
+					handler(me.miniTable, html);
+					e.stopPropagation();
+				};
+			})(me, html, handler);
+			$toolItemParent.bind("click", clickHandler);
+			var toolItemConfig = {};
+
+			// if(tool.id) {toolItemConfig["id"] = tool.id;}
+			if (tool.iconCls) {
+				toolItemConfig["iconCls"] = tool.iconCls;
+			}
+			if (tool.plain) {
+				toolItemConfig["plain"] = tool.plain;
+			}
+			if (tool.style){
+				toolItemConfig["style"] = tool.style;
+			}
+			
+			$toolItem = jQuery("<a href='javascript:void(0)'></a>").attr(toolItemConfig);
+			$toolItemParent.append($toolItem);
+			$toolItem.addClass("mini-button mini-button-plain").html(html);
+			var toolItemText = $toolItem.text();
+			var toolItemIdentifier = (config.id + "_" + toolItemText);
+			$toolItem.attr({
+				id : toolItemIdentifier
+			});
+			$toolItemParent[0].setAttribute("remainClickFunction", clickHandler);
+			$toolItemParent.attr({
+				toolItemIdentifier : toolItemIdentifier
+			});
+		};
+		var tools = config.tools || [];
+		for ( var index = 0; index < tools.length; index++) {
+			var tool = tools[index];
+			var $toolItem = null;
+			if (typeof (tool) == 'object') {
+				var html = tool.html;
+				var isHtml = tool.isHtml || false;
+				if (isHtml) {
+					$toolItem = jQuery(html);
+					$toolbarContainer.append($toolItem);
+					continue;
+				} else {
+					createToolItemByConfig(this, tool);
+					/*
+					 * var events = jQuery._data($toolItemParent[0])['events'];
+					 * if (events && events.click) { // jQuery 1.3.x
+					 * $.each(events.click, function(key, func) {
+					 * console.info(func); }); // jQuery 1.4.x+
+					 * $.each(events.click, function(key, handlerObject) {
+					 * console.info(key); console.info(handlerObject);
+					 * console.info(handlerObject.handler); }); }
+					 */
+				}
+			} else if (typeof (tool) == 'string') {
+				if ('globalQuery' == tool.trim()) {
+					var globalQueryTextId = "id_globalQueryInput_" + config.id;
+					var globalQueryParamName = config["globalQueryParamName"] || "globalQueryText";
+					var clickFuncStr = "javascript:{var miniTable = mini.get(\"" + config.id + "\");miniTable.setParams({" + globalQueryParamName + ":mini.get(\"" + globalQueryTextId + "\").getValue()});miniTable.reload();}";
+					$toolItem = jQuery("<input id='" + globalQueryTextId + "' class='mini-textbox' title='"+locale['PressQuery']+"' onenter='" + clickFuncStr + "'/>");
+					$toolbarContainer.append($toolItem);
+					$toolItem = jQuery("<a style='margin-left:5px;' class='mini-button' width='80px' title='"+locale['PressQuery']+"' onclick='" + clickFuncStr + "'>"+locale['globalQuery']+"</a>");
+					$toolbarContainer.append($toolItem);
+					this.miniTable.getGlobalQueryText = (function(id) {
+						return function() {
+							return mini.get(id).getValue();
+						};
+					})(globalQueryTextId);
+					continue;
+				}
+				var toolConfig = {
+					iconCls : "",
+					html : "",
+					isHtml : false,
+					plain : true
+				};
+				var isOperTool = true;
+				var toolContent = tool.trim();
+				
+				switch (toolContent) {
+				case 'add': {
+					toolConfig.handler = function(miniTable, html) {
+						var rowData = {};
+						if(config.operValidate){
+							if(!config.operValidate(miniTable, rowData, 'add')){return;}
+						}
+						apTableBase.tableAddOper(miniTable, columnsConfig, rowData, config);
+					};
+					break;
+				}
+				case 'edit': {
+					toolConfig.handler = function(miniTable, html) {
+						var selectedRowData = miniTable.getSelected();
+						if(config.operValidate){
+							if(!config.operValidate(miniTable, selectedRowData, 'edit')){return;}
+						}
+						apTableBase.tableEditOper(miniTable, columnsConfig, selectedRowData, config);
+					};
+					break;
+				}
+				case 'remove': {
+					toolConfig["style"] = "color:#FFA5A5;border: 1px solid #FFA5A5;";//定义删除图标样式  add by lichaojie
+					toolConfig.handler = function(miniTable, html) {
+						var selectedRowDatas = miniTable.getSelecteds();
+						if(config.operValidate){
+							if(!config.operValidate(miniTable, selectedRowDatas, 'remove')){return;}
+						}
+						apTableBase.tableRemoveOper(miniTable, columnsConfig, selectedRowDatas, config);
+						miniTable.saveDataToInput();
+					};
+					break;
+				}
+				case 'copy': {
+					toolConfig.handler = function(miniTable, html) {
+						var selectedRowDatas = miniTable.getSelecteds();
+						if(config.operValidate){
+							if(!config.operValidate(miniTable, selectedRowDatas, 'copy')){return;}
+						}
+						apTableBase.tableCopyOper(miniTable, columnsConfig, selectedRowDatas, config);
+					};
+					break;
+				}
+				case 'exportExcel': {
+					toolConfig.handler = function(miniTable, html) {
+						apTableBase.exportExcel(miniTable, columnsConfig, config);
+					};
+					break;
+				}
+				case 'importExcel': {
+					toolConfig.handler = function(miniTable, html) {
+						apTableBase.importExcel(miniTable, columnsConfig, config);
+					};
+					break;
+				}
+				default: {
+					// 添加分隔符
+					isOperTool = false;
+					$toolItem = jQuery("<span class='separator'></span>");
+					$toolbarContainer.append($toolItem);
+					break;
+				}
+				}
+				if (isOperTool) {
+					if('undefined' == typeof(config.maintenanceAction)){
+						toolConfig["html"] = locale[toolContent + "ButtonText"];
+						toolConfig["iconCls"] = "icon-" + toolContent;
+						}else{
+							toolConfig["html"] =config.maintenanceAction;
+							toolConfig["iconCls"] = "icon-" + toolContent;
+						}
+					
+					
+					createToolItemByConfig(this, toolConfig);
+				}
+			}
+		}
+		var $tableContainer = jQuery("<div></div>").addClass("mini-fit").attr({
+			id : tableContainerId
+		}).css({});
+		
+		$panelContainer.append($tableContainer);
+		$panelContainer.append("<div id='importExcel_" + config.id + "'></div>");
+		mini.parse($panelContainer[0]);
+		if(0 < queryAreaItemHtmlArrLen){
+			var queryToggleButtonText = locale['fold'];
+			if((config.hiddenQueryArea+"") == "true"){queryToggleButtonText=locale['unfold'];}
+			var queryToggleButtonText = '<a id="' + queryAreaQueryToggleButtonId + '" href="#"><span style="background:#FFFFFF;height:25px;line-height:25px;position:relative;'+
+			'top:-4px;margin-right:30px;width:60px;border-radius:4px;font-weight:bold;text-align:center;color:blue;">' + queryToggleButtonText + '</span></a>';
+			mini.get(config.titleId).setButtons([{ html: queryToggleButtonText}]);
+			$("#" + queryAreaQueryToggleButtonId).bind("click", function(e) {
+				e.stopPropagation();
+				apTableBase.fieldsetToggleClick(e, function() {
+					var miniTable = mini.get(tableContainerId);
+					miniTable.doLayout();
+				});
+			});
+		}
+		/*
+		 * var exportExcel = config.exportExcel||false; var $excelTool = null;
+		 * if(exportExcel){ $excelTool = jQuery("<span></span>").addClass("tools-export-excel").attr({title:exportExcelLabel}).css({});
+		 * jQuery(mini.get(config.titleId).getHeaderEl()).find("div.mini-panel-header-inner
+		 * div.mini-tools").append($excelTool); }
+		 */
+
+		// 初始化table
+		config["width"] = '100%';
+		config["height"] = '100%';
+		// 求合计
+		var summaryColumnNames = columnsMapping["summaryColumnNames"];
+		var summaryColumnNamesLen = summaryColumnNames.length;
+		showSummaryRow = (0 < summaryColumnNamesLen);
+		config["showSummaryRow"] = showSummaryRow;
+		var summaryColumnNameFieldMappings = columnsMapping["summaryColumnNameFieldMappings"];
+		var onDrawSummaryCellFunc = (function() {
+			return function(e) {
+				var datas = e.data;
+				var datasLen = datas.length;
+				var summaryFieldName = e.field;
+				var sumRowData = e.result.sumRowData;
+				var initOnDrawSummaryCellFunc = config["onDrawSummaryCell"];
+				if (initOnDrawSummaryCellFunc) {
+					initOnDrawSummaryCellFunc(e);
+				} else {
+					var summaryColumnName = summaryColumnNameFieldMappings[summaryFieldName];
+					if (summaryColumnName) {
+						if(config.isRemoteStatistic){
+							if(sumRowData){
+								e.cellStyle = "text-align:right;";
+								e.cellHtml = apTableBase.formatNumberThousand(sumRowData[summaryColumnName]);
+							}
+						}else{
+							if (0 < datasLen) {
+								// 计算合计
+								var sumValue = 0;
+								for ( var iir = 0; iir < datasLen; iir++) {
+									var rowData = datas[iir];
+									var t = parseFloat(rowData[summaryFieldName] ? (rowData[summaryFieldName] + "").replace(/,/g, "") : 0);
+									if (isNaN(t))
+										continue;
+									sumValue += t;
+								}
+								e.cellStyle = "text-align:right;";
+								e.cellHtml = apTableBase.formatNumberThousand(sumValue.toFixed(2));
+							}
+						}
+					} else {
+						e.cellHtml = "&nbsp;-&nbsp;";
+					}
+				}
+			};
+		})();
+		if(showSummaryRow){
+			params['summaryFields'] = summaryColumnNames.join(",");
+		}
+		config["onDrawSummaryCell"] = onDrawSummaryCellFunc;
+		miniTable.render(tableContainer);
+		miniTable.set(config);
+		miniTable._dataSource.loadParams = params;
+		var tableContainer = mini.byId(tableContainerId);
+		miniTable.render(tableContainer);
+		/*
+		 * var exportExcelHandler = (function(miniTable,columnsConfig,config){
+		 * return function(e){ e.stopPropagation();
+		 * apTableBase.exportExcel(miniTable,columnsConfig,config); };
+		 * })(this.miniTable,columnsConfig,config); if(exportExcel){
+		 * $excelTool.bind("click",exportExcelHandler); }
+		 */
+		// 必须调用重新渲染filter列
+		if (config.showFilterRow){miniTable._doUpdateFilterRow();}
+		//增加合并列，传入数组--margesCol:new Array("custclass","creator")
+		miniTable.on("load", function () {
+        	if(config.margesCol){miniTable.mergeColumns(config.margesCol);}
+        });
+		if ((true != config.lazyLoad) && !isLocal) {
+			miniTable.load();
+		}
+		if(config.completeCallBack)config.completeCallBack(miniTable);
+		//创建隐藏域用来保存多行的数据
+	};
+    
+	return ApTable;
+});

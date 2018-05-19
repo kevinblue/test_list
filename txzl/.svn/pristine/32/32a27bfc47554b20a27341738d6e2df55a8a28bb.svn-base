@@ -1,0 +1,29 @@
+
+#oracle驱动链接串
+driver=oracle.jdbc.driver.OracleDriver
+
+#oracle url
+url=jdbc:oracle:thin:@localhost:1522/orcl
+
+#数据库用户名
+user=txzl
+
+#数据库密码
+password=123
+
+#目前没用 别删
+serviceurl=
+
+#定时执行，在启动定时任务时，指定,在当天以后的第几天开始执行，如：0为当天，1为明天、2为后天。。。。。
+postpone=0
+
+#定时执行，时：比如9点、10点
+time=17
+
+#定时执行，分
+minute=10
+
+#定制执行，执行间隔，隔多长时间执行一次,单位：毫秒  1000为1秒
+interval=86400000
+
+

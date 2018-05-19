@@ -1,0 +1,244 @@
+package com.tenwa.leasing.serviceImpl.contract.contractChange;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.reckon.service.RentConditionDataOperator;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.AppStaticUtil;
+import com.tenwa.leasing.entity.contract.ContractEquip;
+import com.tenwa.leasing.entity.contract.ContractEquipTmp;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeEquip;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeEquipTmp;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeMethod;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeMethodTmp;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.proj.ContractNumberSetting;
+import com.tenwa.leasing.entity.proj.ContractNumberSettingTmp;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+import com.tenwa.leasing.service.contract.contractChange.ContractChangeService;
+import com.tenwa.leasing.service.contractcomm.ContractCommService;
+@Service(value = "contractChangeService")
+public class ContractChangeServiceImpl implements ContractChangeService {
+	@Resource(name = "tableService")
+	private TableService tableService;
+
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "RentConditionDataService")
+	private RentConditionDataOperator rentConditionData;
+	
+	@Resource(name = "contractCommService")
+	private ContractCommService contractCommService;
+	@Override
+	public void saveContractChangeInfo(Map<String, String> variablesMap) throws Exception {
+		
+		
+		//保存合同信息
+		ContractInfo contract=contractCommService.saveContractInfo(variablesMap, AppStaticUtil.CONTRACT_APPROVAL);
+		
+		//保存交易结构和租金计划，现金流，资金计划
+		this.contractCommService.saveContractRentCalculationBefore(contract, variablesMap);
+		if(null!=contract.getContractCondition()){
+			contract.setStartDate(contract.getContractCondition().getStartDate());
+			contract.setEndDate(contract.getContractCondition().getEndDate());
+		}
+		this.baseService.saveOrUpdateEntity(contract);
+		//保存变列信息
+		 this.contractCommService.saveContractChangeInfo(contract, variablesMap);
+		if(null!=contract.getContractCondition()){
+			contract.setStartDate(contract.getContractCondition().getStartDate());
+			contract.setEndDate(contract.getContractCondition().getEndDate());
+		}
+		this.baseService.saveOrUpdateEntity(contract);		
+		
+		// 5.合同各方出租房和承租方信息
+		this.contractCommService.saveContractSignatoryInfo(contract, variablesMap);
+		
+		// 合同贸易基础交易情况
+		this.contractCommService.saveConTradeTransaction(contract, variablesMap);
+		
+		// 5供应商(合同各方)
+		this.contractCommService.saveContractSupplierInfo(contract, variablesMap);
+		
+		//租金开票类型
+		this.contractCommService.saveContractInvoiceType(contract, variablesMap);
+		
+		//特别付款前提 
+		this.contractCommService.saveContractPremiseInfo(contract, variablesMap);
+		
+		//保存租金计划中的付款前提 
+		this.contractCommService.saveProjPaymentPremiseCondition(contract, variablesMap);
+		
+		//保存合同文本到contractdoclist
+		this.contractCommService.saveContractDocList("json_contract_word_str", contract, variablesMap);
+		
+		// 2.租赁物明细
+		this.saveContractEquip(contract,variablesMap);
+		// 4.抵押物信息
+		this.saveContractGuaranteeEquip(contract,variablesMap);
+		// 3.担保单位
+		this.saveContractGuaranteeMethod(contract,variablesMap);
+		// 4.合同编号设置
+		this.saveContractNumberSettingInfo(contract,variablesMap);
+	}
+	
+	
+	public void saveFactoringContractChangeInfo(Map<String, String> variablesMap) throws Exception {
+		
+		
+		//保存合同信息
+		ContractInfo contract=contractCommService.saveFactoringContractInfo(variablesMap, AppStaticUtil.CONTRACT_APPROVAL);
+		
+		//保存交易结构和租金计划，现金流，资金计划
+		this.contractCommService.saveContractRentCalculationBefore(contract, variablesMap);
+		if(null!=contract.getContractCondition()){
+			contract.setStartDate(contract.getContractCondition().getStartDate());
+			contract.setEndDate(contract.getContractCondition().getEndDate());
+		}
+		this.baseService.saveOrUpdateEntity(contract);
+		//保存变列信息
+		 this.contractCommService.saveContractChangeInfo(contract, variablesMap);
+		if(null!=contract.getContractCondition()){
+			contract.setStartDate(contract.getContractCondition().getStartDate());
+			contract.setEndDate(contract.getContractCondition().getEndDate());
+		}
+		this.baseService.saveOrUpdateEntity(contract);		
+		
+		// 5.合同各方出租房和承租方信息
+		this.contractCommService.saveContractSignatoryInfo(contract, variablesMap);
+		
+		// 合同贸易基础交易情况
+		this.contractCommService.saveConTradeTransaction(contract, variablesMap);
+		
+		// 5供应商(合同各方)
+		this.contractCommService.saveContractSupplierInfo(contract, variablesMap);
+		
+		//租金开票类型
+		this.contractCommService.saveContractInvoiceType(contract, variablesMap);
+		
+		//特别付款前提 
+		this.contractCommService.saveContractPremiseInfo(contract, variablesMap);
+		
+		//保存租金计划中的付款前提 
+		this.contractCommService.saveProjPaymentPremiseCondition(contract, variablesMap);
+		
+		//保存合同文本到contractdoclist
+		this.contractCommService.saveContractDocList("json_contract_word_str", contract, variablesMap);
+		
+		// 2.租赁物明细
+		this.saveContractEquip(contract,variablesMap);
+		// 4.抵押物信息
+		this.saveContractGuaranteeEquip(contract,variablesMap);
+		// 3.担保单位
+		this.saveContractGuaranteeMethod(contract,variablesMap);
+		// 4.合同编号设置
+		this.saveContractNumberSettingInfo(contract,variablesMap);
+	}
+	// 2.租赁物明细
+	public void saveContractEquip(ContractInfo contract,Map<String, String> variablesMap) throws Exception {
+		/*this.contractCommService.saveContractEquip(contract, variablesMap);*/
+		 Map<String,Object>propertiesMap=new HashMap<String,Object>();
+		 String docid= variablesMap.get("docid");
+		 /*String proj_id = variablesMap.get("proj_id");*/
+		 propertiesMap.put("docid", docid);
+		/*propertiesMap.put("contractId", contract);*/
+		List<ContractEquipTmp>  cetlist=this.tableService.findEntityByProperties(ContractEquipTmp.class, propertiesMap);
+		ContractEquip contractEquip = null;
+		for(ContractEquipTmp pet:cetlist){
+			ContractEquip oldid = pet.getOldId();
+			String savestatus = pet.getSaveStatus();
+			contractEquip = new ContractEquip();
+			contractEquip.setContractId(contract);
+			this.tableService.copyAndOverrideExistedValueFromObjectNoSet(pet, contractEquip);
+			if((oldid==null || oldid.equals(""))&&(savestatus==null||savestatus.equals("")) ){
+				 this.tableService.saveEntity(contractEquip);
+			}else if((oldid!=null)&&("删除".equals(savestatus))){
+				this.tableService.removeEntity(contractEquip);
+			}else if((oldid!=null)&&(!"删除".equals(savestatus))){
+				this.tableService.updateEntity(contractEquip);
+			}
+		 }
+	}
+	
+	// 3.担保单位
+	public void saveContractGuaranteeMethod(ContractInfo contract,Map<String, String> variablesMap) throws Exception {
+		/*this.contractCommService.saveContractGuaranteeMethod(contract, variablesMap);*/
+		Map<String,Object>propertiesMap=new HashMap<String,Object>();
+		String docid= variablesMap.get("docid");
+		/*propertiesMap.put("contractId",contract);*/
+		propertiesMap.put("docid", docid);
+		List<ContractGuaranteeMethodTmp>  cgmtlist=this.tableService.findEntityByProperties(ContractGuaranteeMethodTmp.class, propertiesMap);
+		ContractGuaranteeMethod contractGuaranteeMethod = null;
+		for(ContractGuaranteeMethodTmp cgmt:cgmtlist){
+			String savestatus = cgmt.getSaveStatus();
+			ContractGuaranteeMethod oldid = cgmt.getOldId();
+			contractGuaranteeMethod = new ContractGuaranteeMethod();
+			contractGuaranteeMethod.setContractId(contract);
+			this.tableService.copyAndOverrideExistedValueFromObjectNoSet(cgmt, contractGuaranteeMethod);
+			if((oldid==null || oldid.equals(""))&&(savestatus==null||savestatus.equals("")) ){
+				 this.tableService.saveEntity(contractGuaranteeMethod);
+			}else if((oldid!=null)&&("删除".equals(savestatus))){
+				this.tableService.removeEntity(contractGuaranteeMethod);
+			}else if((oldid!=null)&&(!"删除".equals(savestatus))){
+				this.tableService.updateEntity(contractGuaranteeMethod);
+			}
+		 }
+	}
+	
+	// 4.抵押物信息
+	public void saveContractGuaranteeEquip(ContractInfo contract,Map<String, String> variablesMap) throws Exception {
+		/*this.contractCommService.saveContractGuaranteeEquip(contract, variablesMap);*/
+		 Map<String,Object>propertiesMap=new HashMap<String,Object>();
+		  String docid= variablesMap.get("docid");
+			/*propertiesMap.put("contractId",contract);*/
+		  propertiesMap.put("docid", docid);
+		 List<ContractGuaranteeEquipTmp>  cgetlist=this.tableService.findEntityByProperties(ContractGuaranteeEquipTmp.class, propertiesMap);
+		ContractGuaranteeEquip contractGuaranteeEquip = null;
+		for(ContractGuaranteeEquipTmp cget:cgetlist){
+			String savestatus = cget.getSaveStatus();
+			ContractGuaranteeEquip oldid = cget.getOldId();
+			contractGuaranteeEquip = new ContractGuaranteeEquip();
+			contractGuaranteeEquip.setContractId(contract);
+			this.tableService.copyAndOverrideExistedValueFromObjectNoSet(cget, contractGuaranteeEquip);
+			if((oldid==null || oldid.equals(""))&&(savestatus==null||savestatus.equals("")) ){
+				 this.tableService.saveEntity(contractGuaranteeEquip);
+			}else if((oldid!=null)&&("删除".equals(savestatus))){
+				this.tableService.removeEntity(contractGuaranteeEquip);
+			}else if((oldid!=null)&&(!"删除".equals(savestatus))){
+				this.tableService.updateEntity(contractGuaranteeEquip);
+			}
+			
+			
+		 }
+	}
+	
+	//合同编号设置
+		public void saveContractNumberSettingInfo(ContractInfo contract,Map<String, String> variablesMap) throws Exception {
+			 Map<String,Object>propertiesMap=new HashMap<String,Object>();
+			 String docid= variablesMap.get("docid");
+			 propertiesMap.put("docid", docid);
+			List<ContractNumberSettingTmp>  cnstlist=this.tableService.findEntityByProperties(ContractNumberSettingTmp.class, propertiesMap);
+			ContractNumberSetting contractNumberSetting = null;
+			for(ContractNumberSettingTmp cnst:cnstlist){
+				String savestatus = cnst.getSaveStatus();
+				ContractNumberSetting oldid = cnst.getOldId();
+				contractNumberSetting = new ContractNumberSetting();
+				contractNumberSetting.setContractId(contract);
+				this.tableService.copyAndOverrideExistedValueFromObjectNoSet(cnst, contractNumberSetting);
+	         if((oldid==null || oldid.equals(""))&&(savestatus==null||savestatus.equals("")) ){
+				 this.tableService.saveEntity(contractNumberSetting);
+			}else if((oldid!=null)&&("删除".equals(savestatus))){
+				this.tableService.removeEntity(contractNumberSetting);
+			}else if((oldid!=null)&&(!"删除".equals(savestatus))){
+				this.tableService.updateEntity(contractNumberSetting);
+			}
+			}
+	     }
+}

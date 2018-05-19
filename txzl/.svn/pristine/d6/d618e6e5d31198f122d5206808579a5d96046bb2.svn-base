@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+       
+		   
+
+ -->
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+	     <table_sql>
+	       <![CDATA[
+	       	select      
+           texi.id ,
+            texi.contract_id    as contractid,
+            con.CONTRACT_NUMBER as contractidname,
+            con.CONTRACT_NUMBER as contractnumbername,
+            con.CONTRACT_NUMBER as contractnumber,
+            con.PROJECT_NAME    as projectname,
+            tu.realname_        as projmanage,
+            td.name_            as projdept,
+            texi.send_file_type as sendfiletype,
+            tdd1.name_ sendfiletypename,
+            texi.deliver_date   as deliverdate,
+            texi.deliver_number as delivernumber,
+            texi.express_company as expresscompany,
+            texi.RECIPIENT      as recipient,
+            texi.TELEPHONE      as telephone,
+            texi.sender         as sender,
+            tu1.realname_       as sendername,
+            texi.RECIPIENT_ADDRESS   	as recipientaddress,
+            texi.PHONE_SURE_GET_DELIVER as phonesuregetdeliver,
+            texi.EXPRESS_DELIVER_DATE	 as expressdeliverdate,
+            tdd.name_ 			as	expresscompanyname,
+            texi.remarks 		as remarks,
+           	texi.SENDUNIT	    as sendunit,
+           	texi.SIGN_PERSON    as signperson,
+            ci.cust_name        as custname
+            
+            from t_express_info texi
+            
+            left join CONTRACT_INFO con  on (texi.contract_id=con.id)
+            left join cust_info ci on ci.id=con.cust_id
+            left join t_users tu on con.proj_manage=tu.id_
+            left join t_depts td on con.proj_dept=td.id_ 
+            left join t_dicts_datas tdd on texi.express_company=tdd.id_
+            left join t_dicts_datas tdd1 on texi.send_file_type=tdd1.id_
+            left join t_users tu1 on tu1.id_ = texi.SENDER
+            where 1=1
+		 
+		      /~delivernumber:and texi.deliver_number like '%{delivernumber}%'~/ 
+		     /~contractidname: and con.CONTRACT_NUMBER like '%{contractidname}%'~/
+		     /~projectname: and con.PROJECT_NAME like '%{projectname}%'~/ 
+		     /~projdept: and td.name_ like '%{projdept}%'~/ 
+		     
+		     /~deliverdateStart: and texi.deliver_date >= '{deliverdateStart}' ~/
+             /~deliverdateEnd: and texi.deliver_date <= '{deliverdateEnd}' ~/
+              
+		     /~extendsql: <<extendsql>>~/
+			 ]]> 
+	     </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

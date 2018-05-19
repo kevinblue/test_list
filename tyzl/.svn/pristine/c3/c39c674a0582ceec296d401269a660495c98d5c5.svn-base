@@ -1,0 +1,94 @@
+html,body {
+	overflow: hidden;
+}
+
+#id_content_tabs tabs-header {
+	border-left: 0px;
+	border-right: 0px;
+}
+
+#id_content_tabs {
+	border: 1px solid #d3dbde;
+}
+
+#id_focusComponent {
+	text-indent: 20px;
+}
+
+.workflow-title {
+	margin-top: 2px;
+	display: none;
+	height: 25px;
+}
+
+#id_toggle_tabs_advise {
+	display: none;
+}
+
+#id_toggle_tabs_attachment {
+	display: none;
+}
+
+#id_toggle_tabs_advise .x-panel-table-div-title {
+	padding-left: 20px;
+	border: 0px;
+}
+
+#id_toggle_tabs_attachment .x-panel-table-div-title {
+	padding-left: 20px;
+	border: 0px;
+}
+
+#id_workflowAdviseContainer {
+	overflow: auto;
+}
+
+#id_toggle_tabs_advise .x-panel-table-div-title .btn-primary {
+	position: relative;
+	top: 1px;
+	margin-left: 100px;
+}
+
+#id_toggle_tabs_advise {
+	display: none;
+	padding: 0px;
+}
+
+.taskname,.taskactor {
+	background-color: #F4F4F4;
+	color: #555;
+	padding: 5px 10px;
+	font: normal 12px/200% "宋体", Arial;
+	border-bottom: dotted 1px #CCC;
+}
+
+.taskactor {
+	background-color: #FFF;
+}
+
+.taskname td {
+	width: 25%;
+	padding-right: 30px;
+}
+
+table.workflowTable {
+	border-collapse: collapse;
+	width: 100%;
+	text-align: center;
+	table-layout: fixed;
+	border: 1px solid #DDD;
+}
+
+table.workflowTable th {
+	border: 1px dotted #DDD;
+	table-layout: fixed;
+}
+
+table.workflowTable td {
+	border: 1px dotted #DDD;
+	table-layout: fixed;
+}
+
+.print-tabs-title-content {
+	display: none;
+}

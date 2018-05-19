@@ -1,0 +1,89 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+
+<script type="text/javascript">
+function importMiniTableCallBack(message,tableid){
+	 var info=eval("("+message+")");
+	 var tabledate=info.tabledate;
+	 if(""!=tabledate){
+	    var grid=mini.get(tableid);
+        grid.set({data:mini.decode(tabledate)});
+	 }
+     mini.get("id_minitableimport").hide();
+     mini.unmask(document.body);
+}
+jQuery(function(){
+	//风场基本信息
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		 new ApTable({
+				id: "wind_farm_data_list_year",
+				renderTo: "id_table_wind_farm_data_list",
+				width: globalClientWidth,
+				height: 420,
+				lazyLoad: false,
+				isClickLoad:false,
+				showPager: true,
+				multiSelect: false,
+				showToolbar: false,
+				xmlFileName : '/eleasing/workflow/proj/proj_credit/wind_farm_data_list.xml',
+				columns: [
+					{type:'indexcolumn'},
+					{field:'id',header:'id',visible: false},
+					{field:'projectname',align:'center',
+						header:'项目名称',
+						visible: true,
+						formEditorConfig:{
+							fieldVisible: true,
+						}
+					},
+					
+					{field:'custname',align:'center',
+						header:'承租人',
+						visible: true,
+						formEditorConfig:{
+							
+						}
+					},
+					
+					
+					{field:'place',align:'center',
+						header:'风电场位置',
+						visible: false,
+						formEditorConfig:{
+							fieldVisible: true,
+						}
+					},
+					
+					{field:'wfx',header:'风电场经度',align:'center',
+						  formEditorConfig:{
+							      required:true,
+							    labelWidth:100,
+							     maxLength:120,
+							       colspan:3,
+							         width:'100%'}},
+					{field:'wfy', header:'风电场纬度',align:'center',
+						  formEditorConfig:{
+							       newLine: true,
+							      required: true,
+							    labelWidth:100,
+							     maxLength:120,
+							       colspan: 3,
+							         width: '100%'}},
+					{field:'fantype', header:'风电场机型',align:'center'},
+					{field:'fansum', header:'机组数量',align:'center',
+						  formEditorConfig:{
+						              }},
+	              {field:'windtopographyname', header:'风电场地形',align:'center',
+					  formEditorConfig:{
+					              }},
+	              {field:'productiontime', header:'投产时间',align:'center',
+					  formEditorConfig:{
+					              }}
+        
+				]
+			});
+	});
+	
+});
+
+</script>
+<div id="id_table_wind_farm_data_list" style="width:100%;height:100%;"></div>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				     select ab.id,   
+					       ab.bill_type billtype,
+					       ab.bill_num billnum,
+					       ab.new_bill_num newbillnum,
+					       ab.old_bill_num oldbillnum,
+					       ab.issue_date issuedate,
+					       ab.due_date duedate,
+					       ab.acceptor_number acceptornumber,
+					       ab.acceptor_bank acceptorbank,
+					       ab.acceptor_name acceptorname,
+					       ab.face_amount faceamount,
+					       ab.bill_resource billresource,
+					       ab.buy_date buydate,
+					       ab.current_holder currentholder,
+					       ab.previous_holder previousholder,
+					       ab.remote_holder remoteholder,
+					       ab.buy_contract_num buycontractnum,
+					       ab.buy_notice_num buynoticenum,
+					       ab.buy_transit_days buytransitdays,
+					       ab.buy_discount_rate buydiscountrate,
+					       ab.buy_discount_interest buydiscountinterest,
+					       ab.memo,
+					       ab.creator_,
+					       ab.create_date,
+					       ab.modificator_,
+					       ab.modify_date,
+					       ab.PAYEE_NAME Payeename,   --收款人全称
+					       ab.DRAWEE_NAME Draweename,  --出款人全称
+					           fileaddress,
+                 FILENAME,
+                 CREATEDATE,
+                 fileid,
+                 REALNAME
+					  from ACCEPTANCE_BILL ab
+            left join (select
+            A.file_key as filekey,
+            wm_concat( A.file_address) as fileaddress,
+            wm_concat( A.FILE_NAME )   AS FILENAME,
+            wm_concat( A.CREATE_DATE)  AS CREATEDATE,
+            wm_concat(A.id)            as fileid,
+            wm_concat(U.REALNAME_  )   AS REALNAME
+         from base_file A
+         LEFT JOIN T_USERS U ON A.CREATOR_ = U.ID_
+         where A.file_key is not null
+         and A.invalid_ ='是'
+         and a.model_name = '承兑汇票信息附件'
+         group by A.file_key
+          ) v  on v.filekey = ab.id
+               where 1=1
+                       /~billtype: AND ab.bill_type like '%{billtype}%' ~/
+                       /~billresource: AND ab.bill_resource like '%{billresource}%' ~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

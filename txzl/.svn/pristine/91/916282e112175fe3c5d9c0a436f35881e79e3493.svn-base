@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	    select ci.ID as id,
+		       faict.ID as faictid, --调息临时表ID
+		       faict.DOC_ID as docid, --流水號
+		       cust.id as custid, --客户id
+		       ci.proj_id as projid, --项目id
+		       ci.project_name||'['||ci.contract_number||']' as projectname, --项目名称
+		       ci.CONTRACT_ID as contractid, --合同号
+		       ci.CONTRACT_NUMBER as contractnumber, --业务合同号
+		       cust.cust_name as custname, --客户名
+		       cc.EQUIP_AMT as equipamt, --设备款
+		       cc.FIRST_PAYMENT as firstpayment, --首付款
+		       cc.INCOME_NUMBER as incomenumber, --还租次数
+		       nvl(dicts1.name_ ,'不等距') incomenumberyear, --付租类型
+		       dicts2.name_ as periodtype, --付租方式
+		       cc.START_DATE as startdate, --起租日期
+		       cc.YEAR_RATE as yearrate, --利率
+		       cc.IRR as irr, --内部收益率
+		       faict.RATE_ORIGINAL as rateoriginal, --调息前利率
+		       faict.RATE_ADJUST as rateadjust, --调息后利率
+		       faict.old_irr as oldirr, --调息前内部收益率
+		       faict.new_irr as newirr, --调息后内部收益率
+		       cc.rate_float_type, --利率浮动类型
+		       dicts3.name_ as ratefloattypename,
+		       cc.adjust_style, --调息时机
+		       dicts4.name_ as adjuststylename
+		
+		  from FUND_ADJUST_INTEREST_C_TEMP faict
+		  left join contract_info ci on faict.CONTRACT_ID = ci.id
+		  left join CONTRACT_CONDITION cc on ci.id = cc.contract_id
+		  left join CUST_INFO cust on ci.cust_id = cust.id
+		  left join t_dicts_datas dicts1 on (cc.INCOME_NUMBER_YEAR = dicts1.id_)
+		  left join t_dicts_datas dicts2 on (cc.PERIOD_TYPE = dicts2.id_)
+		  left join t_dicts_datas dicts3 on (cc.rate_float_type = dicts3.id_)
+		  left join t_dicts_datas dicts4 on (cc.adjust_style = dicts4.id_)
+   		where  faict.adjust_id ='{adjustid}' and faict.doc_id='{docid}'
+   		/~contractid: and ci.contract_id like '%{contractid}%'~/
+		/~contractnumber: and ci.contract_number like '%{contractnumber}%'~/
+		/~custname: and cust.cust_name like '%{custname}%'~/
+		/~equipamt: and cc.EQUIP_AMT = '{equipamt}'~/
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"  
+	xmlns:ehcache="http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring"
+	xmlns:util="http://www.springframework.org/schema/util"
+	
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-2.5.xsd
+		http://www.springframework.org/schema/jee 
+		http://www.springframework.org/schema/jee/spring-jee-2.5.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-2.5.xsd 
+		http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring     
+        http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring/ehcache-spring-1.1.xsd
+        http://www.springframework.org/schema/util 
+        http://www.springframework.org/schema/util/spring-util-3.0.xsd
+     ">
+     
+	<util:properties id="jedisProperties" location="classpath:redis.properties"/>
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">  
+        <property name="maxIdle" value="#{jedisProperties['redis.maxIdle']}" />  
+        <property name="maxActive" value="#{jedisProperties['redis.maxActive']}"/>  
+        <property name="maxWait" value="#{jedisProperties['redis.maxWait']}" />  
+        <property name="testOnBorrow" value="#{jedisProperties['redis.testOnBorrow']}" />  
+        <property name="testOnReturn" value="#{jedisProperties['redis.testOnReturn']}" />  
+    </bean>  
+    
+    <bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"  
+        p:host-name="#{jedisProperties['redis.host']}"
+        p:port="#{jedisProperties['redis.port']}"
+        p:password="#{jedisProperties['redis.password']}"
+        p:pool-config-ref="poolConfig"/>  
+      
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">  
+        <property name="connectionFactory"   ref="connectionFactory" />  
+    </bean>    
+    
+   
+     <bean id="jedisPool" class="redis.clients.jedis.JedisPool"  scope="singleton">
+        <constructor-arg index="0" ref="poolConfig" />
+        <constructor-arg index="1" value="#{jedisProperties['redis.host']}" />
+        <constructor-arg index="2" value="#{jedisProperties['redis.port']}" />
+        <constructor-arg index="3" value="#{jedisProperties['redis.timeout']}" />
+        <constructor-arg index="4" value="#{jedisProperties['redis.password']}" />
+    </bean>
+    
+</beans>

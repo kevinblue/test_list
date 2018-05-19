@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[   
+				select bft.id as id,
+				       TEMPLATE_SHOW_NAME templateshowname,
+                       TEMPLATE_NAME templatename,
+				       td.name_  oneclassifyname,
+				       td1.name_ twoclassifyname,
+				       td2.name_ threeclassifyname,
+				       td3.name_ fourclassifyname,
+				       td4.name_ fiveclassifyname,
+				       td5.name_ sixclassifyname,
+				       td.code_  oneclassify,
+				       td1.code_ twoclassify,
+				       td2.code_ threeclassify,
+				       td3.code_ fourclassify,
+				       td4.code_ fiveclassify,
+				       td5.code_ sixclassify,
+				       --TEMPLATE_Index templateindex, 
+				       status_ status,
+				       TEMPLATE_NO templateno,
+				       TEMPLATE_PATH templatePath
+				      
+                       from BASE_FILE_TEMPLATE bft
+                       left join t_dicts_datas td on
+                       td.code_=bft.ONE_CLASSIFY
+                       left join t_dicts_datas td1 on
+                       td1.code_=bft.TWO_CLASSIFY
+                       left join t_dicts_datas td2 on
+                       td2.code_=bft.THREE_CLASSIFY
+                       left join t_dicts_datas td3 on
+                       td3.code_=bft.FOUR_CLASSIFY
+                       left join t_dicts_datas td4 on
+                       td4.code_=bft.FIVE_CLASSIFY 
+                       left join t_dicts_datas td5 on
+                       td5.code_=bft.SIX_CLASSIFY 
+                       where 1=1 
+                       /~id: and bft.id = '{id}' ~/
+                       /~oneclassifyname: and td.name_ like '%{oneclassifyname}%' ~/
+                       /~twoclassifyname: and td1.name_ like '%{twoclassifyname}%' ~/
+                       /~threeclassifyname: and td2.name_ like '%{threeclassifyname}%' ~/
+                       /~fiveclassify: and  td4.name_ like '%{fiveclassify}%' ~/
+                       /~templatename: and TEMPLATE_NAME like '%{templatename}%' ~/
+                       /~templateno: and TEMPLATE_NO like '%{templateno}%' ~/                   
+                        <EXTRACTEND>order by templateno desc<EXTRACTEND>
+                       
+				 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

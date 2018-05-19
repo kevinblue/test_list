@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+			 select * from(  select info.id,
+                 custinfo.cust_name custname,
+                 info.cust_id custid,
+                 info.contract_id contractid,
+                 info.contract_status contractstatus,
+                 status.status_name contractstatusname,
+                 dun.dun,
+                 info.proj_dept projdept,
+                 DEPT.NAME_ projdeptname,
+                 cust_info.province_,
+                 D1.NAME provincename,
+                 case
+                   when person.id_card_no is not null and company.org_code is not null then
+                    person.id_card_no || '/'
+                   else
+                    person.id_card_no
+                 end || company.org_code idcardorcode,
+                 info.proj_manage projmanage,
+                 USER1.Realname_ projmanagename,
+                 nvl(need_rent.rents, 0.00) - nvl(has_rent.payrent, 0.00) overrent,
+                 nvl(interests.interest, 0.00) -
+                 nvl(overinterests.overinterest, 0.00) overinterest,
+                 con.nominal_price nominalprice,
+                 con.income_number incomenumber,
+                 next_info.liaison_way liaisonway,
+                 D2.Name_ liaisonwayname,
+                 con.start_date_ startdate,
+                 case
+                   when to_char(nvl(corpusplan.corpus, 0.00) -
+                                nvl(corpusincome.corpus, 0.00)) is not null and
+                        to_char(residuerentplan.residuenum) is not null then
+                    to_char(nvl(corpusplan.corpus, 0.00) -
+                            nvl(corpusincome.corpus, 0.00)) || '/'
+                   else
+                    to_char(nvl(corpusplan.corpus, 0.00) -
+                            nvl(corpusincome.corpus, 0.00))
+                 end || to_char(residuerentplan.residuenum) corpusorresiduenum,
+                 
+                 next_info.nextliaison_date nextliaisondate,
+                 case
+                   when hire.hire_rent is not null and hire.hire_date is not null then
+                    hire.hire_rent || '/'
+                   else
+                    to_char(hire.hire_rent)
+                 end || hire.hire_date rentordate,
+                 (select max(dunning.liaison_date) from dunning_record dunning) liaisondate,
+                 next_info.pay_date paydate,
+                 next_info.pay_money paymoney,
+                 ASSUROR.assurors,
+                 ASSUROR.assurorsnum,
+                 cust_info.mail_add mailadd,
+                 MM.overduedate  overduedate,--逾期天数
+               --  KK.overduetypename,
+                case  
+                when KK.overduetypename is not null then KK.overduetypename
+               when MM.overduedate is null then '正常类'
+               when MM.overduedate<=0 then '正常类'
+               when MM.overduedate<=15 and MM.overduedate>0 then '关注类'
+                when MM.overduedate>15 and MM.overduedate<=45 then '次级类'
+                 when MM.overduedate>45 then '可疑类' 
+                 
+                  END   overduetypename
+                 
+            from contract_info info 
+           left join (
+                  select sum(c4) overduedate, contractid from  (  select  cp.contract_id contractid,
+trunc(to_date(substr(ci.hire_date,0,10),'yyyy-mm-dd')-to_date(cp.plan_date,'yyyy-mm-dd')) c4
+from contract_fund_rent_plan cp 
+left join  contract_fund_rent_income ci
+on ci.contract_id=cp.contract_id and ci.PLAN_LIST=cp.rent_list
+--where ci.hire_date > cp.plan_date
+) group by contractid
+
+           ) MM ON info.id=MM.contractid
+           left join 
+          (  select dictsdatas.name_ overduetypename,adjust.contract_id contractid from
+          contract_risk_adjust adjust
+          left join T_DICTS_DATAS dictsdatas on dictsdatas.id_=adjust.adjust_rank
+          where adjust.is_use=1 ) KK
+          on KK.contractid=info.id
+            left join base_contract_status status 
+            on status.status_code=info.contract_status
+            left join cust_info custinfo
+              on custinfo.id = info.cust_id
+
+            left join cust_info_company company
+              on company.cust_id = info.cust_id
+            left join cust_info_person person
+              on person.cust_id = info.cust_id
+            left join proj_info proj
+              on proj.proj_id = info.proj_id
+            left join contract_dun dun
+              on dun.contract_id = info.id
+            left join (select cust_id, province_, mail_add, phone_
+                         from cust_info_person
+                       union
+                       select cust_id, province_, MAILA_DDRESS mail_add, MOBLIE mobile_number
+                         from cust_info_company) cust_info
+              on cust_info.cust_id = info.cust_id
+            LEFT JOIN T_DISTRICT D1
+              ON (cust_info.PROVINCE_ = D1.ID)
+              LEFT JOIN T_USERS USER1 ON info.proj_manage =USER1.ID_
+              LEFT JOIN  T_DEPTS DEPT ON info.proj_dept =DEPT.ID_ 
+            left join cust_info_dealer dealer
+              on dealer.cust_id = info.cust_id
+            left join (select contract_id, COUNT(*) all_rent_list
+                         from contract_fund_rent_plan
+                        group by contract_id) fun
+              on fun.contract_id = info.id
+            left join contract_condition con
+              on con.contract_id = info.id
+            left join (select *
+                         from dunning_record re
+                        where rownum = 1
+                        order by re.create_date desc) next_info
+              on next_info.cust_id = info.cust_id
+            LEFT JOIN T_DICTS_DATAS D2
+              ON next_info.liaison_way = D2.ID_
+            left join (select contract_id,
+                              (sum(rent) + sum(penalty)) hire_rent,
+                              MAX(hire_date) hire_date
+                         from contract_fund_rent_income
+                        where hire_date =
+                              (select MAX(hire_date) from contract_fund_rent_income)
+                        group by contract_id) hire
+              on hire.contract_id = info.id
+            --left join contract_equip equip
+             -- on equip.contract_id = info.id
+            left join (select sum(rent) rents, rentplan.contract_id
+                         from contract_fund_rent_plan rentplan
+                        where PLAN_DATE <= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentplan.contract_id) need_rent
+              on need_rent.contract_id = info.id
+            left join (select rentincome.contract_id,
+                              nvl(sum(rent), 0.00) + nvl(sum(RENT_ADJUST), 0.00) as payrent
+                         from contract_fund_rent_income rentincome
+                        where hire_date <= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentincome.contract_id) has_rent
+              on has_rent.contract_id = info.id
+            left join ( select method.contract_id, wm_concat(tab1.cust_name) assurors,wm_concat(tab1.mobile_number) assurorsnum
+                         from CONTRACT_GUARANTEE_METHOD method
+                       left join 
+                      (select cust_id, MOBILE_NUMBER mobile_number,cust_name from cust_info cin left join (select cust_id,mobile_number
+                         from cust_info_person
+                       union
+                       select cust_id, MOBLIE mobile_number
+                         from cust_info_company
+                         union 
+                         select cust_id,mobile_number from  cust_info_dealer) custphone on cin.id=custphone.cust_id
+                         ) tab1 
+                         on method.assuror=tab1.cust_id
+                         
+                          group by method.contract_id) ASSUROR
+              on ASSUROR.contract_id = info.id
+            left join (select fundrent.contract_id, sum(fundrent.interest) interest
+                         from contract_fund_rent_plan fundrent
+                        where fundrent.plan_date <= to_char(sysdate, 'yyyy/mm/dd')
+                        group by fundrent.contract_id) interests
+              on interests.contract_id = info.id
+            left join (select fundrentincome.contract_id,
+                              nvl(sum(fundrentincome.interest), 0.00) +
+                              nvl(sum(fundrentincome.interest_adjust), 00) as overinterest
+                         from contract_fund_rent_income fundrentincome
+                        where fundrentincome.hire_date <=
+                              to_char(sysdate, 'yyyy/mm/dd')
+                        group by fundrentincome.contract_id) overinterests
+              on overinterests.contract_id = info.id
+            left join (select rentplan.contract_id, sum(rentplan.corpus) corpus
+                         from contract_fund_rent_plan rentplan
+                        where rentplan.plan_date <= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentplan.contract_id) corpusplan
+              on corpusplan.contract_id = info.id
+            left join (select rentincome.contract_id, sum(rentincome.corpus) corpus
+                         from contract_fund_rent_income rentincome
+                        where rentincome.hire_date <= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentincome.contract_id) corpusincome
+              on corpusincome.contract_id = info.id
+            left join (select count(rentplan.id) residuenum,
+                              sum(rentplan.rent) rent,
+                              rentplan.contract_id
+                         from contract_fund_rent_plan rentplan
+                        where PLAN_DATE >= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentplan.contract_id) residuerentplan
+              on residuerentplan.contract_id = info.id
+            left join (select count(rentincome.id) residuenum,
+                              sum(rentincome.rent) rent,
+                              rentincome.contract_id
+                         from contract_fund_rent_income rentincome
+                        where hire_DATE >= to_char(sysdate, 'yyyy/mm/dd')
+                        group by rentincome.contract_id) residuerentincome
+              on residuerentincome.contract_id = info.id
+            WHERE 1=1  
+             
+            and info.contract_status > 30 and info.contract_status < 100
+              -- and MM.overduedate>200 AND MM.overduedate<300
+              /~overduedateStart: AND MM.overduedate>= {overduedateStart}~/
+              /~overduedateEnd: AND MM.overduedate<= {overduedateEnd}~/
+             /~startdateEnd: AND con.start_date_ <= '{startdateEnd}'~/
+             /~paydateStart: AND next_info.pay_date >= '{paydateStart}'~/
+             /~paydateEnd: AND next_info.pay_date<= '{paydateEnd}'~/
+					 /~CUST_ID: AND info.CUST_ID LIKE '%{CUST_ID}%'~/
+					 /~contract_id: AND info.CONTRACT_ID LIKE '%{contract_id}%'~/
+					/~custname: AND custinfo.CUST_NAME LIKE '%{custname}%'~/
+					) TTT  where 1=1
+					 /~overduetypename: AND TTT.overduetypename   LIKE '{overduetypename}%'~/
+					/~equipcountStart: AND TTT.equipcount >= '{equipcountStart}'~/
+                    /~equipcountEnd: AND TTT.equipcount<= '{equipcountEnd}'~/
+                    /~overrentStart: AND TTT.overrent >= {overrentStart}~/
+                    /~overrentEnd: AND TTT.overrent<= {overrentEnd}~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

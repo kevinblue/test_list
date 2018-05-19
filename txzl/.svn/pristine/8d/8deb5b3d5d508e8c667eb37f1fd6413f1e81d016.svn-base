@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE
+  (ID,
+   MSG_TITLE,
+   SUBJECT_,
+   SEND_DATE,
+   CREATE_DATE,
+   MSG_TYPE,
+   FROMUSER,
+   CREATOR_)
+ select sys_guid(),
+       '不良资产报送提醒',
+       '合同号为' || ff.contract_number || '的' || ff.project_name || '现在可以发起不良资产报送流程了',
+       to_char(SYSTIMESTAMP, 'yyyy-mm-dd'),
+       to_char(SYSTIMESTAMP, 'yyyy-mm-dd hh:mm:ss'),
+       'msgtype.1',
+       'Administrator',
+       'Administrator'
+  from (select   frp.id,
+                 ci.contract_number,
+                 ci.project_name,
+                 frp.PLANDATE,
+                 frp.OVERMONEY                            
+            from vi_contract_fund_fund_plan frp
+            join contract_info ci
+              on ci.id = frp.contractid
+           where frp.OVERMONEY>0
+           and to_date(frp.PLANDATE,'yyyy-MM-dd') + 90 < sysdate
+          union all
+          select frp.id,
+                 ci.contract_number,
+                 ci.project_name,
+                 frp.PLANDATE,
+                 frp.CURRENTOVERAGE      
+            from vi_contract_fund_rent_plan frp
+            join contract_info ci
+              on ci.id = frp.contractid
+            where frp.CURRENTOVERAGE>0
+            and to_date(frp.PLANDATE,'yyyy-MM-dd') + 90 < sysdate ) ff
+   and not exists
+           (select 1 from BASE_MESSAGE b
+                   where instr(to_char(b.subject_),
+                       '不良资产报送提醒' ,
+                       '合同号为' || ff.contract_number || '的' || ff.project_name || '现在可以发起不良资产报送流程了') > 0)
+		
+
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        
+									
+						 select
+						cfc.id ,
+						cfc.doc_id  as docid,
+						ci.proj_id as projid,-- 项目编号
+						ci.project_name as projectname,--项目名称
+						cf.cust_name as custname,--承租人名称
+						vic.custsource,
+						vic.rawvalue_custsource,
+						ci.cust_id,
+						cfc.contractfivedate_business as fivedate,--最近一次资产质量分类日期
+						cfc.contractfive_business,--最近一次资产质量分类结果
+						D1.Name_ as fivename,
+						case 
+			              when vic.custsource='cust_source.01' and (cfc.contractfive_business='normal_class'or cfc.contractfive_business='about_class')
+			              then to_char(add_months(to_date(cfc.contractfivedate_business,'yyyy-mm-dd'),12),'yyyy-mm-dd')
+			              when vic.custsource <> 'cust_source.01' and (cfc.contractfive_business='normal_class'or cfc.contractfive_business='about_class')
+			              then to_char(add_months(to_date(cfc.contractfivedate_business,'yyyy-mm-dd'),3),'yyyy-mm-dd')
+			              when cfc.contractfive_business in ('sub_class','loss_class','danger_class')
+			              then  to_char(add_months(to_date(cfc.contractfivedate_business,'yyyy-mm-dd'),1),'yyyy-mm-dd')
+			              else  null end  nextfivedate,  -- 下一次资产质量分类日期                   
+						cd.clean_lease_money as cleanmoney, --融资金额  
+						NVL(a1.corpusoverage,0) as corpusoverage,   --已收回本金
+						case 
+			               when   cd.clean_lease_money is null  then '0'
+			               when cd.clean_lease_money <> 0 then round(a1.corpusoverage/cd.clean_lease_money*100,2) || '%'
+			               else null end hasrate,--已收回本金比例
+						NVL(a1.corpus,0) as corpus,       --融资余额，        
+						NVL(cfc.pledge_sumprice,0) as pledge_sumprice,--质押股权总价
+						NVL(cfc.pledge_ratio,0) as pledge_ratio,--质押股权比例
+						NVL(cfc.pledge_ratingvalue,0) as pledge_ratingvalue,--股权质押评估值
+						NVL(cfc.electric_ratingvalue,0) as electric_ratingvalue,--电费质押评估值
+						NVL(cfc.equip_ratingvalue,0) as equip_ratingvalue ,--设备抵押评估值
+						NVL(cfc.other_pledge_ratingvalue,0) as other_pledge_ratingvalue,--其他抵质押物评估值
+						NVL(cfc.pledge_ratingvalue,0)+NVL(cfc.electric_ratingvalue,0)+NVL(cfc.equip_ratingvalue,0)+NVL（cfc.other_pledge_ratingvalue，0）  as pledgeratingsumvalue, --抵/质押物评估值总额
+						NVL(cd.base_rate,0) as base_rate,--最新基准利率
+						NVL(cd.year_rate,0) as yearrate, ---最新租赁利率
+						round(NVL(a1.corpus,0)*(1+NVL(cd.year_rate,0))/(NVL(cfc.pledge_ratingvalue,0)+NVL(cfc.electric_ratingvalue,0)+NVL(cfc.equip_ratingvalue,0)+NVL（cfc.other_pledge_ratingvalue，0）),2)  as pledgerate ---抵/质押率
+						from CONTRACT_FIVE_CATEGORY cfc
+						left join contract_info ci on  cfc.contract_id= ci.id
+						left join vi_cust_info_company  vic on ci.cust_id=vic.id
+						left join contract_condition cd on ci.id=cd.contract_id 
+						left join 
+						(select sum(vi.CURCORPUSINCOME) as corpus,
+						       sum(vi.CURCORPUSOVERAGE) as corpusoverage,
+						       vi.CONTRACTID
+						  from vi_contract_fund_rent_plan vi
+						 group by vi.CONTRACTID) a1 on a1.CONTRACTID=cfc.contract_id
+						left join t_dicts_datas D1 on  D1.id_ = cfc.contractfive_business
+						left join cust_info cf on  cf.id  =ci.cust_id
+					    where 1=1
+					      and cfc.contractfivedate_business>='{startdate}'
+					      and cfc.contractfivedate_business<='{enddate}'
+					    
+						 			
+ 			
+ 				
+
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

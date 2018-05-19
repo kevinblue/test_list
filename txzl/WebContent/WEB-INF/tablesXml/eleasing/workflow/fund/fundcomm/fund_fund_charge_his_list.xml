@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+资金实收、实付名细表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			select 
+				vi.FEETYPENAME,
+				vi.PAYMENTID,
+				vi.planmoney,
+				max(vi.devicename1) devicename1,
+				   wm_concat( case when vi.plan_paymentid is null  then
+                          vi.FACTMONEY||''
+                          else
+                             '第'||vi.plan_paymentid||'笔—'||vi.FACTMONEY
+                          end ) FACTMONEY,
+				  vi.planmoney-sum(vi.FACTMONEY)  overmoney,
+				 wm_concat(
+									  case 
+					 when  vi.ROLL_BACK = '0' then '否'
+					 else '是'
+					   end
+				 ) ROLL_BACK,
+				 wm_concat(vi.ebanknumber) ebanknumber,
+				 wm_concat(vi.settlemethodname) settlemethodname,
+				 wm_concat(vi.penalty) penalty,
+				wm_concat(vi.factdate) factdate,
+				wm_concat(vi.feeadjust) feeadjust,
+				wm_concat(vi.otherbank) otherbank,
+				wm_concat(vi.clientname) clientname,
+				wm_concat(vi.clientaccnumber) clientaccnumber,
+				wm_concat(vi.accountbank) accountbank,
+				wm_concat(vi.account) account,
+				wm_concat(vi.accnumber) accnumber,
+				wm_concat(vi.factobject) factobject,
+				wm_concat(vi.accountingdate) accountingdate,
+				wm_concat(vi.ffcmemo) ffcmemo
+				 from VI_CONTRACT_FUND_FUND_CHARGE vi
+				        where 1=1 
+                /~contractid:and vi.contractid='{contractid}'~/
+				/~feetype:and vi.feetype='{feetype}'~/
+				/~paytype:and vi.paytype='{paytype}'~/
+				/~feetypes:and vi.feetype in(<<feetypes>>)~/
+				 group by vi.FEETYPE ,vi.FEETYPENAME,
+                 vi.PAYMENTID,vi.planmoney
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <isPrepared>false</isPrepared>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<chart-root  xmlns="http://www.tracywindy.org/chart" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/chart http://www.tracywindy.org/chart/chart-1.0.xsd">
+  <chart  PYAxisName="单位：万元" SYAxisName="单位：％" rotateYAxisName="1"   thousandSeparator="," centerYaxisName="0"  showValues="0" rotateLabels="0" slantLabels="0"   baseFontsize="12"  formatNumberScale="0"  decimals="2" useRoundEdges="1"  showLegend="0" palette="4">
+    <data>
+     <alldb>
+	      <sql> <![CDATA[
+	             (
+		             select '实际数值' as serials,'2011年1月' as indicators,200 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年2月' as indicators,300 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年3月' as indicators,100 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年4月' as indicators,600 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年5月' as indicators,800 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年6月' as indicators,700 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年7月' as indicators,400 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年8月' as indicators,200 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年9月' as indicators,800 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年10月' as indicators,900 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年11月' as indicators,660 as value,'false' as isLine from dual
+			           union   all
+			           select '实际数值' as serials,'2011年12月' as indicators,350 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年1月' as indicators,240 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年2月' as indicators,320 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年3月' as indicators,80 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年4月' as indicators,500 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年5月' as indicators,850 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年6月' as indicators,730 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年7月' as indicators,320 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年8月' as indicators,430 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年9月' as indicators,500 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年10月' as indicators,400 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年11月' as indicators,700 as value,'false' as isLine from dual
+			           union   all
+			           select '计划数值' as serials,'2011年12月' as indicators,200 as value,'false' as isLine from dual
+		          )
+		          union all
+		          select 
+		             '完成情况'   as  serials,
+		             indicators   as  indicators,
+		             round(realValue/planValue*100,2) as value,
+		             'true' as isLine
+		          from( 
+				              select 
+				              indicators,
+				              sum(decode(serials,'实际数值',value,0)) as realValue,
+				              sum(decode(serials,'计划数值',value,0)) as planValue
+			              from(
+				           select '实际数值' as serials,'2011年1月' as indicators,200 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年2月' as indicators,300 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年3月' as indicators,100 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年4月' as indicators,600 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年5月' as indicators,800 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年6月' as indicators,700 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年7月' as indicators,400 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年8月' as indicators,200 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年9月' as indicators,800 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年10月' as indicators,900 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年11月' as indicators,660 as value,'false' as isLine from dual
+				           union   all
+				           select '实际数值' as serials,'2011年12月' as indicators,350 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年1月' as indicators,240 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年2月' as indicators,320 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年3月' as indicators,80 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年4月' as indicators,500 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年5月' as indicators,850 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年6月' as indicators,730 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年7月' as indicators,320 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年8月' as indicators,430 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年9月' as indicators,500 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年10月' as indicators,400 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年11月' as indicators,700 as value,'false' as isLine from dual
+				           union   all
+				           select '计划数值' as serials,'2011年12月' as indicators,200 as value,'false' as isLine from dual
+			           )tt
+			           group by tt.indicators
+			       )
+			 ]]> </sql>
+		 </alldb>
+      <flt>Dynamic_Column_Line-DualY.flt</flt>
+      <dataSource>dataSource</dataSource>
+    </data>
+  </chart>
+</chart-root>

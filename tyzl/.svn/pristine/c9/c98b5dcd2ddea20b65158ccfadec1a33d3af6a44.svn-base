@@ -1,0 +1,16 @@
+<!--1、数值 2、目标数值3、link(J-js函数名-参数)-->
+<?xml version="1.0" encoding="UTF-8"?>
+<#list list as bean>
+    <chart <#if bean[1]?exists>upperLimit="${bean[1]?number+10}"</#if> bgColor='DFE8F6' unescapeLinks='0' showAboutMenuItem='0' showPrintMenuItem='0' showBorder='0' showExportDataMenuItem='1' exportDataMenuItemLabel="复制图表数据" exportDialogMessage='请等待...'  exportEnabled='1' exportAtClient='1' exportAction='download' exportFormats='JPG=保存图片'  exportFileName="${chart.chartTitle}" exportHandler='fcExporter_${chart.chartId}' ${chart.chart}>
+			<value <#if bean[2]?exists>link="${bean[2]}"</#if>>${bean[0]}</value>
+			<#if bean[1]?exists>
+			    <target>${bean[1]}</target>
+				<colorRange>
+					<color minValue="0" maxValue="50" color="A6A6A6"/>
+					<color minValue="50" maxValue="75" color="CCCCCC"/>
+					<color minValue="75" maxValue="${bean[1]?number+5}" color="E1E1E1"/>
+				</colorRange>
+		</#if>
+	${chart.other}
+	</chart>
+</#list> 

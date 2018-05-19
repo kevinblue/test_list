@@ -1,0 +1,493 @@
+package com.tenwa.leasing.serviceImpl.Proj.proComm;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.annotation.Resource;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
+
+import com.reckon.entity.proj.ProjPaymentPremiseCondition;
+import com.reckon.service.RentConditionDataOperator;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.AppStaticUtil;
+import com.tenwa.kernal.utils.SecurityUtil;
+import com.tenwa.kernal.utils.StringUtil;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.factoring.ChangeReasonType;
+import com.tenwa.leasing.entity.factoring.FactoringChangeExplain;
+import com.tenwa.leasing.entity.other.CreditReportInfo;
+import com.tenwa.leasing.entity.proj.ProjCreditWorkFlowInfo;
+import com.tenwa.leasing.entity.proj.ProjDevelopInfo;
+import com.tenwa.leasing.entity.proj.ProjEquip;
+import com.tenwa.leasing.entity.proj.ProjGuaranteeEquip;
+import com.tenwa.leasing.entity.proj.ProjGuaranteeMethod;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+import com.tenwa.leasing.entity.proj.ProjLimitInfo;
+import com.tenwa.leasing.entity.proj.ProjMeetingInfo;
+import com.tenwa.leasing.entity.proj.ProjPremiseCondition;
+import com.tenwa.leasing.entity.proj.invoice.ProjInvoiceType;
+import com.tenwa.leasing.entity.trade.TradeBasedTransactions;
+import com.tenwa.leasing.service.Proj.proComm.ProCommService;
+
+/**   
+*    
+* 项目名称：tls5.1   
+* 类名称：ProCommServiceImpl   
+* 类描述：   项目层公共数据保存
+* 创建人：rovine   
+* 创建时间：2014年11月19日 下午6:25:11   
+* @version        
+*/
+@Service(value = "proCommService")
+public class ProCommServiceImpl implements ProCommService {
+
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "proCommService")
+	private ProCommService proCommService;
+	
+	@Resource(name = "RentConditionDataService")
+	private RentConditionDataOperator rentConditionData;
+	
+	@Override
+	public void loadPorjCustInfo(ProjInfo pinfo,Map<String, String> variablesMap) throws Exception {
+		CustInfo cinfo=pinfo.getCustInfo();
+		if(cinfo!=null){
+			variablesMap.put("proj_info.custname",cinfo.getCustName());
+			variablesMap.put("proj_info.custid",cinfo.getId());
+			variablesMap.put("proj_info.custInfo",cinfo.getId());
+			variablesMap.put("proj_info.custnumber",cinfo.getCustNumber());
+			variablesMap.put("proj_info.custclass",cinfo.getCustClass().getId());	
+		}
+		//获得当前登录人部门路径
+		String user_proj_route = proCommService.getDeptLujingChange(pinfo.getDeptroute());
+		JSONArray jsonarray2=new JSONArray(user_proj_route);
+		for(int i=0;i<jsonarray2.length();i++){
+			JSONObject jsonobject2=jsonarray2.getJSONObject(i);
+			variablesMap.put("proj_info.deptroute", jsonobject2.getString("id"));
+			variablesMap.put("rawValue_proj_info.deptroute", jsonobject2.getString("name"));
+		}
+	}
+
+
+	
+	@Override
+	public ProjInfo saveProjInfo(Map<String, String> variablesMap, Integer ProStatus)throws Exception {
+		String isagree = variablesMap.get("processedResult");
+
+		String proj_id = variablesMap.get("proj_info.projid");
+		Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();
+		queryMainObjectMap.put("projId", proj_id);
+	    if("JbpmCommonAdvise_agree".equals(isagree)){//同意立项
+	    	variablesMap.put("proj_info.projstatus", String.valueOf(ProStatus));
+		}else{
+			variablesMap.put("proj_info.projstatus", String.valueOf(AppStaticUtil.PROJ_APPROVAL_2));//立项否决
+		}
+		ProjInfo projInfo = (ProjInfo)this.tableService.updateMainEntity(ProjInfo.class, queryMainObjectMap, variablesMap,null, "proj_info");
+		//String sql ="update contract_info set contract_status=102 where contract_status=15 and proj_id =?";
+		//this.tableService.updateBySql(sql, projInfo.getId());
+		this.tableService.saveOrUpdateEntity(projInfo);
+		return projInfo;
+	}
+	@Override
+	public ProjInfo saveProjInfoStop(Map<String, String> variablesMap, Integer ProStatus)throws Exception {
+		
+		
+		String proj_id = variablesMap.get("proj_info.projid");
+		Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();
+		queryMainObjectMap.put("projId", proj_id);
+		variablesMap.put("proj_info.projstatus", String.valueOf(ProStatus));
+		ProjInfo projInfo = (ProjInfo)this.tableService.updateMainEntity(ProjInfo.class, queryMainObjectMap, variablesMap,null, "proj_info");
+		String sql ="update contract_info set contract_status=102 where  proj_id =?";
+		this.tableService.updateBySql(sql, projInfo.getId());
+		this.tableService.saveOrUpdateEntity(projInfo);
+		return projInfo;
+	}
+
+	@Override
+	public ProjInfo loadProjInfo(Map<String, String> variablesMap) throws Exception {
+		String proj_id = variablesMap.get("proj_id");
+		ProjInfo projInfo = this.tableService.findEntityByID(ProjInfo.class, proj_id);
+		variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(projInfo,null, "proj_info"));
+		this.loadPorjCustInfo(projInfo, variablesMap);
+		return projInfo;
+	}
+	
+	
+	@Override
+	public void loadRentCalculationParam(String projid,String custname,String custid,String flowunid,Map<String, String> variablesMap)throws Exception {
+		variablesMap.put("framework_condition.projid", projid);
+		variablesMap.put("framework_condition.contractid", "");
+		variablesMap.put("framework_condition.process", "proj_process");
+		variablesMap.put("framework_condition.custname", custname);
+		variablesMap.put("framework_condition.custid", custid);
+		variablesMap.put("framework_condition.docid", flowunid);
+		variablesMap.put("framework_condition.onhireid", "");
+		
+	}
+
+	@Override
+	public void loadProjRentCalculation(ProjInfo projinfo,	Map<String, String> variablesMap) throws Exception {
+		this.rentConditionData.LoadProjectContionAndRentAndFundToMap(projinfo, variablesMap, "", "json_fund_rent_plan_str", "json_fund_cash_flow_str", "json_finance_rent_plan_str", "json_finance_cash_flow_str", "json_fund_fund_charge_str","json_fund_put_config_str","json_special_regular_str","json_grace_plan_str");	
+	}
+	@Override
+	public void saveProjRentCalculation(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		this.rentConditionData.saveProjectContionAndRentAndFundToDatabase(projinfo, variablesMap, "", "json_fund_rent_plan_str", "json_fund_cash_flow_str", "json_finance_rent_plan_str", "json_finance_cash_flow_str", "json_fund_fund_charge_str","json_fund_put_config_str","json_special_regular_str","json_grace_plan_str");
+	}
+	
+	
+	@Override
+	public void saveProjEquipment(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		// 租赁物明细
+		String jsonEquipsString = variablesMap.get("json_proj_equip_str");//proj_info.projEquips
+		// 租赁物明细
+		this.tableService.updateOneToManyCollections(projinfo, "projEquips", ProjEquip.class, "projInfo", jsonEquipsString,null);
+	}
+	
+	@Override
+	public void saveProjInvoice(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		// 租赁物明细/发票信息
+		String jsonInvoiceString = variablesMap.get("json_proj_invoice_str");//proj_info.projEquips
+		// 租赁物明细
+		this.tableService.updateOneToManyCollections(projinfo, "projEquips", ProjEquip.class, "projInfo", jsonInvoiceString,null);
+	}
+	
+	
+	
+	@Override
+	public void saveProjLimitInfo(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		String limitid = variablesMap.get("proj_info.limitid");//proj_info.projEquips
+		if(null != limitid && !limitid.equals("")){
+			ProjInfo limitinfo = this.tableService.findEntityByID(ProjInfo.class, limitid);
+			ProjLimitInfo info = new ProjLimitInfo();
+			info.setProjInfo(projinfo);
+			info.setLimitInfo(limitinfo);
+			this.tableService.saveOrUpdateEntity(info);
+		}
+	}
+
+	@Override
+	public void saveProjGuaranteeEquipment(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		// 抵押人信息
+		String jsonGuarString = variablesMap.get("json_proj_guaranty_detail_str");//proj_info.projEquips
+		this.tableService.updateOneToManyCollections(projinfo, "projGuaranteeEquips", ProjGuaranteeEquip.class, "projInfo", jsonGuarString,null);
+	}
+
+	@Override
+	public void saveProjGuaranteeMethod(ProjInfo projinfo,	Map<String, String> variablesMap) throws Exception {
+		//担保人信息
+		String jsonAssString = variablesMap.get("json_proj_guarantee_detail_str");//proj_info.projEquips
+		//担保人信息
+		this.tableService.updateOneToManyCollections(projinfo, "projGuaranteeMethods", ProjGuaranteeMethod.class, "projInfo", jsonAssString,null);
+	}
+
+	@Override
+	public void loadProjEquipment(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projinfo.getId());
+		variablesMap.put("json_proj_equip_str", this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_common/proj_equip.xml", queryMainObjectMap).toString());
+	}
+   
+	@Override
+	public void loadProjInvoicement(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projinfo.getId());
+		variablesMap.put("json_proj_invoice_str", this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_common/proj_equip.xml", queryMainObjectMap).toString());
+	}
+	
+	
+	@Override
+	public void loadProjGuaranteeEquipment(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projinfo.getId());
+		variablesMap.put("json_proj_guaranty_detail_str", this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_common/proj_guarantee_equip.xml", queryMainObjectMap).toString());
+		
+	}
+
+	@Override
+	public void loadProjGuaranteeMethod(ProjInfo projinfo,	Map<String, String> variablesMap) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projinfo.getId());
+		variablesMap.put("json_proj_guarantee_detail_str", this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_common/proj_guarantee_method.xml", queryMainObjectMap).toString());
+	}
+
+	@Override
+	public void loadProjInvoice(ProjInfo projinfo,	Map<String, String> variablesMap) throws Exception {
+		ProjInvoiceType	projInvoiceType=projinfo.getProjInvoiceType();
+		if(null!=projInvoiceType){
+			variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(projInvoiceType,null, "proj_invoice_type"));
+		}
+		
+	}
+
+	@Override
+	public void savProjInvoice(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		this.tableService.updateOneToOneEntity(projinfo, "projInvoiceType", "projId", variablesMap,null, "proj_invoice_type");
+	}
+
+
+
+	@Override
+	public void saveProjMeeting(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		ProjMeetingInfo meeting = new ProjMeetingInfo();
+		meeting = this.tableService.copyAndOverrideExistedValueFromStringMap(variablesMap, meeting, null, "proj_meeting");
+		meeting.setProjId(projinfo);
+		meeting.setDocId(variablesMap.get("docId"));
+		this.tableService.saveEntity(meeting);
+		
+	}
+
+
+
+	@Override
+	public void saveProjReport(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+				ProjCreditWorkFlowInfo creditInfo = new ProjCreditWorkFlowInfo();
+				JSONObject reportInfo = new JSONObject();
+				for(Entry<String, String> entry : variablesMap.entrySet()){
+					if(entry.getKey().startsWith("proj_report")){
+						reportInfo.put(entry.getKey(), entry.getValue());
+					}
+					if(entry.getKey().startsWith("rawValue_proj_report")){
+						reportInfo.put(entry.getKey(), entry.getValue());
+					}
+				}
+				creditInfo.setCreditReportJson(reportInfo.toString());
+				creditInfo.setProjId(projinfo);
+				creditInfo.setCreditGradeJson(variablesMap.get("json_credit_grade_str"));
+				creditInfo.setDocListJson(variablesMap.get("json_document_list_str"));
+				creditInfo.setDocId(variablesMap.get("docId"));
+				this.tableService.saveEntity(creditInfo);
+		
+	}
+	
+/*
+ * {
+		"import_type" : "尽职调查报告-医院",
+		"sheets_data" : [{
+				"sheet_name" : "项目评估报告V2",
+				"sheet_code" : "项目评估报告V2",
+				"cell_data" : [{
+						"name" : "资产负债率",
+						"value" : "",
+						"code" : "debt_ratio"
+					}]
+		}]
+	}			
+ */
+	@Override
+	public void saveCreditReport(ProjInfo projinfo,Map<String, String> variablesMap) throws Exception {
+		//存储maps
+		Map<String,String> maps = new HashMap<String, String>();
+		//页面填写部分json
+		String creditReportJson = variablesMap.get("json_proj_credit_report_str");
+		if(null!=creditReportJson &&  !"[]".equals(creditReportJson) && creditReportJson.length()>2){
+			JSONArray jsonAry = new JSONArray(creditReportJson);
+			JSONObject jsonObj = jsonAry.getJSONObject(0);
+			Iterator iterKeys = jsonObj.keys();
+			while(iterKeys.hasNext()){
+				String key = iterKeys.next().toString().trim();
+				String value = StringUtil.nullToString(jsonObj.opt(key)).trim();
+				maps.put(key, value);
+			}	
+		}
+		CreditReportInfo reportInfo = new CreditReportInfo();
+		reportInfo.setProjId(projinfo);
+		String reportjson = variablesMap.get("json_due_report_file_str");//信审尽职调查报告
+		if(null!=reportjson && !"[]".equals(reportjson) && reportjson.length()>2){
+			JSONArray SheetArray = new JSONObject(reportjson).getJSONArray("sheets_data");//.getJSONObject(0).getJSONArray("cell_data");
+			for(int i=0;i<SheetArray.length();i++){
+				//每个sheets_data
+				//内层 cell_datas json array数组
+				JSONArray cellArray = SheetArray.getJSONObject(i).getJSONArray("cell_data");
+				for(int j=0;j<cellArray.length();j++){
+					JSONObject cellobj = cellArray.getJSONObject(j);
+					maps.put(cellobj.optString("code"), cellobj.optString("value"));
+				}
+			}
+			if(null!=maps && !maps.isEmpty()){
+				this.tableService.copyAndOverrideExistedValueFromStringMap(maps, reportInfo, null, "");
+				this.tableService.saveOrUpdateEntity(reportInfo);
+			}
+		}
+	}
+	//特别付款前提
+	@Override
+	public void saveProjPremiseInfo(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception {
+		String json_proj_premise_str = variablesMap.get("json_proj_premise_str");
+		if(json_proj_premise_str!=null&&json_proj_premise_str.length()>0){
+			this.tableService.updateOneToManyCollections(projInfo, "projPremiseConditions", ProjPremiseCondition.class, "projId", json_proj_premise_str,null);
+		}
+	}
+
+
+
+	@Override
+	public String getUsersDept() throws Exception {
+		 User user = (User)SecurityUtil.getPrincipal();
+		 Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		 queryMainObjectMap.put("user_id", user.getId());	 
+		 String name = this.tableService.getJsonArrayData("/eleasing/workflow/proj/proj_common/department_dept.xml", queryMainObjectMap).toString();
+		 return name;
+	}
+
+
+
+	@Override
+	public String getDeptLujing()
+			throws Exception {
+		 User user = (User)SecurityUtil.getPrincipal();
+		 Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		 queryMainObjectMap.put("user_id", user.getId());
+		 String userdept=this.tableService.getJsonArrayData("/eleasing/workflow/proj/proj_common/department_lujing.xml", queryMainObjectMap).toString();
+		 return userdept;
+	}
+	
+	@Override
+	public String getDeptLujingChange(String id)
+			throws Exception {
+		 Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		 queryMainObjectMap.put("id",id);
+		 String userdept=this.tableService.getJsonArrayData("/eleasing/workflow/proj/proj_common/department_lujingchange.xml", queryMainObjectMap).toString();
+		 return userdept;
+	}
+
+
+
+	@Override
+	public ProjDevelopInfo loadProjDevelopInfo(Map<String, String> variablesMap)
+			throws Exception {
+		String proj_id = variablesMap.get("proj_id");
+		ProjDevelopInfo projInfo = this.tableService.findEntityByID(ProjDevelopInfo.class, proj_id);
+		variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(projInfo,null, "proj_info"));
+		variablesMap.put("proj_info.projsource", projInfo.getProjSource()==null ? "" :projInfo.getProjSource().getId());
+		variablesMap.put("rawValue_proj_info.projsource", projInfo.getProjSource()==null ? "" :projInfo.getProjSource().getName());
+		variablesMap.put("proj_info.developid", proj_id);
+		variablesMap.put("proj_info.projectname", projInfo.getProjName()+"项目");
+		variablesMap.put("proj_info.projdeveloptype", projInfo.getType()+"");
+		return projInfo;
+	}
+
+
+
+	@Override
+	public void saveProjChangeExplain(ProjInfo factoring,
+			Map<String, String> variablesMap) throws Exception{
+		 this.tableService.updateOneToOneEntity(factoring,"factoringChangeExplain", "projId",variablesMap , null, "factoring_change_explain");
+                                                                                                    
+	}
+
+
+
+	@Override
+	public void loadProjChangeExplain(ProjInfo projInfo,
+			Map<String, String> variablesMap) throws Exception{
+		//获取多个变更原因类型
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projInfo.getId());
+		JSONArray jsonArray=this.tableService.getJsonArrayData("eleasing/workflow/factoring/factoring_common/change_reason_type.xml",queryMainObjectMap);
+		if(jsonArray!=null){
+			variablesMap.put("json_change_reason_type_str",jsonArray.toString());
+		}
+		//获取单个变更说明
+		FactoringChangeExplain fcp=projInfo.getFactoringchangeexplain();
+		if(fcp!=null){
+			String newApprovalNo=fcp.getNewApprovalNo();
+			//String newExamineAgency=fcp.getNewExamineAgency();
+			//已有字符串时的处理。(已经发起过复议流程！)"^(.)+(GB[0-9]{2})$"
+			if(newApprovalNo!=""||newApprovalNo!=null){
+				if(newApprovalNo.matches("^(.)+(-BG[0-9]{1,})$")){	////解析数字（支持BG01和BG1两种书写方式）
+					String topstr=newApprovalNo.substring(0,newApprovalNo.lastIndexOf("G")+1);//不用更改的字符串部分
+					String bottomstr=newApprovalNo.substring(newApprovalNo.lastIndexOf("G")+1);//数字部分
+//					if(bottomstr.length()==1){//BG1类型,直接+1
+//						newApprovalNo=topstr+(Integer.parseInt(bottomstr)+1);
+//					}else if(bottomstr.length()==2){//BG01类型
+//						String lastnum=newApprovalNo.substring(newApprovalNo.length()-1);//最后一位数字
+//						String lastsecondnum=newApprovalNo.substring(newApprovalNo.length()-2,newApprovalNo.length()-1);//倒数第二位数字
+//						if(lastnum=="9"){
+//							newApprovalNo=topstr+(Integer.parseInt(lastsecondnum)+1)+"0";
+//						}else{//最后一位不是9，可以直接+1
+//							newApprovalNo=newApprovalNo.substring(0, newApprovalNo.length()-1)+(Integer.parseInt(lastnum)+1);
+//						}
+//					}else{//数字三位数以上
+//						newApprovalNo=topstr+(Integer.parseInt(bottomstr)+1);
+//					}
+					NumberFormat f=new DecimalFormat("00");
+					int num=Integer.parseInt(bottomstr)+1;
+					newApprovalNo=topstr+f.format(num);
+					
+					/*//数字加1拼接到GB后面
+					if(num<9){
+						newApprovalNo=newApprovalNo.substring(0, newApprovalNo.lastIndexOf("G")-5)+"-BG0"+(++num)+"";
+					}else{
+						newApprovalNo=newApprovalNo.substring(0, newApprovalNo.length()-5)+"-BG"+(++num)+"";
+					}*/
+				}else if(newApprovalNo!=null||newApprovalNo!=""){
+					newApprovalNo+="-BG01";
+				}
+		}
+			
+			variablesMap.put("factoring_change_explain.oldapprovalno",fcp.getNewApprovalNo());
+			variablesMap.put("factoring_change_explain.newapprovalno",newApprovalNo);
+			variablesMap.put("factoring_change_explain.oldexamineagency",fcp.getNewExamineAgency());
+			variablesMap.put("factoring_change_explain.newexamineagency","");
+		}
+	}
+
+
+
+	@Override
+	public void saveChangeReasonType(ProjInfo projinfo,
+			Map<String, String> variablesMap) throws Exception {
+		// 变更原因类型
+		String changeReasonTypeStr = variablesMap.get("json_change_reason_type_str");//proj_info.projEquips
+		this.tableService.updateOneToManyCollections(projinfo, "changeReasonType", ChangeReasonType.class, "projId", changeReasonTypeStr,null);
+		
+	}
+
+
+
+	@Override
+	public void saveProjPaymentPremiseCondition(ProjInfo projinfo,
+			Map<String, String> variablesMap) throws Exception {
+		// 付款前提条件
+		String jsonpaymentpremisecondition = variablesMap.get("json_payment_premise_condition_str");
+	    this.tableService.updateOneToManyCollections(projinfo, "projPayments", ProjPaymentPremiseCondition.class, "projId", jsonpaymentpremisecondition,null);		
+	}
+
+
+
+	@Override
+	public void loadProjPaymentPremiseCondition(ProjInfo projInfo,
+			Map<String, String> variablesMap) throws Exception {
+		Map<String,String> queryMainObjectMap = new HashMap<String,String>();
+		queryMainObjectMap.put("proj_id", projInfo.getId());
+		variablesMap.put("json_payment_premise_condition_str", this.tableService.getJsonArrayData("eleasing/workflow/proj/proj_common/payment_premise_condition.xml", queryMainObjectMap).toString());
+	}
+
+	@Override
+	public void saveTradeBasedTransactions(ProjInfo projinfo,
+			Map<String, String> variablesMap) throws Exception {
+		this.tableService.updateOneToOneEntity(projinfo, "tradeBasedTransactions", "projId", variablesMap,null, "trade_based_transactions");
+		
+	}
+
+
+
+	@Override
+	public void loadTradeBasedTransactions(ProjInfo projinfo,
+			Map<String, String> variablesMap) throws Exception {
+		TradeBasedTransactions	tradeBasedTransactions=projinfo.getTradeBasedTransactions();
+		if(null!=tradeBasedTransactions){
+			variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(tradeBasedTransactions,null, "trade_based_transactions"));
+		}
+		
+	}
+}

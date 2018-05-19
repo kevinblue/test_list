@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 选择客户的银行-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+	     <table_sql>
+	       <![CDATA[
+			select c.id id,
+			       c.filing_sn filingsn,
+			       b.id||t2.id_ fileid,
+			       case when b.id  is not null then
+			         'basefile'
+			         else
+			           ''
+			           end
+			        || case when t2.id_ is not null then
+			         'attachmentinfodetail'
+			         else
+			           ''
+			           end   as   flagtable,
+			       case 
+			         when b.id is not null then
+			           b.file_name
+			         when t2.id_ is not null then
+			           t2.chinese_file_name_
+			         else
+			           ''
+			           end as downfilename,
+			       c.filing_name filingname,
+			       c.filling_number fillingnumber,
+			       c.container_number containernumber,
+			       nvl(c.filing_status, ' 未归档') filingstatus,
+			       c.comein_date comeindate,
+			       c.filing_date filingdate,
+			       c.page page,
+			       c.note_ note,
+			       c.contract_id contractid,
+			       c.filling_type fillingtype,
+			       t.name_ fillingtypename,
+			       c.filling_user fillinguser,
+			       tu.realname_ fillingusername
+			  from CONTRACT_FILING c
+			  left join base_file b on b.id=c.filing_sn
+			  left join t_attachment_info_detail t2 on t2.id_=c.filing_sn
+			  left join t_dicts_datas t
+			    on t.id_ = c.filling_type
+			  left join t_users tu
+			    on tu.id_ = c.filling_user
+			  left join contract_number_setting cn
+			    on cn.id = c.filing_sn
+			 where 1 = 1 
+			and c.create_date not like '2017-03-01%'
+          	
+      		/~conid:AND c.contract_id like '%{conid}%'~/
+      		/~extendsql: <<extendsql>>~/
+			 ]]> 
+	     </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

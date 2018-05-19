@@ -1,0 +1,108 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>上报</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id : 'table_id1',
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : '上报',
+				iconCls : 'icon-node',
+				multiSelect : false,
+				hiddenQueryArea : true,//是否将查询区域折叠起来
+				queryButtonColSpan : 2,
+				queryButtonNewLine:false,
+				remoteOper:true,
+				addRemoteOperUrl:getRootPath()+"/acl/addMessageAppear.acl",
+				editRemoteOperUrl:getRootPath()+"/acl/updateMessageAppear.acl",
+				showPager:true,
+				xmlFileName : '/eleasing/jsp/base/messageInfo.xml',
+				tools : ['add', '-', 'edit'],
+				beforeShowWindowCallBack:function(miniTable,miniForm,opertype){
+					if("add"==opertype){
+						mini.getbyName("fromuser").setValue('<mini:user/>');
+					}
+					if("edit"==opertype){
+						
+					}
+				},
+
+				columns : [ 
+				    {type : 'indexcolumn'},
+					{type : 'checkcolumn'},  
+					{header:'编号',field:'id',visible : false},
+		            {header:'主题',field:'msgtitle',
+						formEditorConfig:{
+							colspan: 3,
+							width: 332,
+		            		required : true
+						}
+		            },
+		            {header:'正文内容',field:'msgtext',
+		            	formEditorConfig:{
+		            		colspan: 3,
+		            		height:100,
+							width: 332,
+							type: 'textarea',
+		            		required : true,//是否必填
+							newLine: true
+						}
+		            },
+		            /* {field: 'readuser', header: '接收人',visible: false, 
+		            	formEditorConfig:{
+							fieldVisible: false,
+							fillFromFieldName : 'realname',
+							fillProperty : 'name'
+						}
+		            }, */
+						
+		            {header:'接收人',field:'readuser',
+		            	renderer: function(e){
+		            		return e.record.realname;
+		            	},
+		            	formEditorConfig:{
+		            		required : true,//是否必填
+							newLine: true,
+							type : 'combobox',
+							textField: 'value',
+							valueField: 'name',
+							allowInput: true,
+							fieldVisible: true,
+							params: {
+								xmlFileName: '/eleasing/jsp/base/t_user_info.xml'
+							}
+						}
+		            },
+		            {header:'上报人',field:'fromuser',visible: false,
+						formEditorConfig:{
+		            		required : true,
+		            		fieldVisible: true,
+		            		readOnly:true,
+		            		newLine: true
+						}
+		            },
+		            {header:'上报时间',field:'senddate',
+						formEditorConfig:{
+							type : 'date',
+							required : true,//是否必填
+							defaultValue : mini.formatDate(new Date(), "yyyy-MM-dd"),
+							format : 'yyyy-MM-dd'
+						}
+		            }
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body></body>
+</html>

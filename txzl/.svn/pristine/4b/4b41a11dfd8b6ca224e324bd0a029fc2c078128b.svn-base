@@ -1,0 +1,766 @@
+package com.reckon.controller;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.map.SerializationConfig.Feature;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import com.reckon.bean.ConditionBean;
+import com.reckon.bean.KnowingRentBean;
+import com.reckon.bean.RentPlan;
+import com.reckon.calculation.utils.Scale;
+import com.reckon.commons.helper.IRRCalculateUtil;
+import com.reckon.dao.impl.IrrDetailsDAOImpl;
+import com.reckon.entity.contract.reckon.condition.ContractCondition;
+import com.reckon.entity.contract.reckon.fund.ContractFundRentPlanTemp;
+import com.reckon.entity.interest.FundStandardInterest;
+import com.reckon.rentcalc.service.RentCalcKonwingRentService;
+import com.reckon.service.RentCalculateService;
+import com.tenwa.business.controller.BaseController;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.service.TableService;
+import com.tenwa.exception.BusinessException;
+import com.tenwa.kernal.utils.JacksonUtil;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.file.BaseFile;
+import com.tenwa.leasing.utils.LeasingException;
+
+/**
+ * 
+ * @author sea
+ * @date 2014-09-30 下午14:01:13
+ * @info 租金测算模型的实现类 该类的主要功能为接收前台参数做相应的测算.
+ * @Copyright TENWA
+ */
+@Controller(value = "rentCalculateController")
+@RequestMapping(value = "/**/leasing")
+public class RentCalculateController extends BaseController {
+	/**
+	 * LOG4J日志
+	 */
+	private static Logger log = Logger.getLogger(RentCalculateController.class);
+	 
+	@Resource(name = "rentCalculateService")
+	private RentCalculateService rentCalculateService;
+
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	/**
+	 * 已知租金法租金测算模型
+	 */
+	@Resource(name = "rentCalcKonwingRentService")
+	private RentCalcKonwingRentService rentCalcKonwingRentService;
+	
+	
+	/**
+	 * 起租及起租前所触发的租金测算入口
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/rentCalculate.action")
+	@ResponseBody
+	public String rentCalculate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapByAjax(request,null,true);// 把请求数据转成map
+		log.info("modelData:"+modelData);
+		
+		/**
+		 * TODO:
+		 * 注意【流程类型】process的值有两种：
+		 * 1.所有项目层的租金测算请求提交时，该值默认是：proj_process
+		 * 2.所有合同层的租金测算请求提交时，该值默认是：contract_process
+		 * 注意【动作类型】reckontype的值有五种种：
+		 * 1.condition 立项、信审
+		 * 2.onhire
+		 * 3.onhire_more
+		 * 4.paln
+		 * 5.adjust
+		 * 
+		 */
+		
+		//租金推算方法:按年利率计算租金rent、按租金计算年利率rate、已知租借规则测算knowing_rent
+			String rentOrRate = modelData.get("rentorrate") ;
+			log.info("rentOrRate:"+rentOrRate);
+			//测试数据----------------------------------------------END！！！
+			
+			String process = modelData.get("process");
+			log.info("process:"+process);
+			String ajaxCallBackScript = "";
+			Map<String, Object> returnMap = new HashMap<String, Object>();
+			try {
+				//根据指定的租金计算需要的年利率
+				RentCalculateControllerHelper.calculateYearRateFromRent(modelData);
+				//如果是已知年利率情况下做租金测算则需要前端‘年利率’的值不为空
+				returnMap = this.rentCalculateService.doCalculateRentPlanOld(modelData, null);
+				if(null == returnMap.get("rentcalculaters")){
+					returnMap.put("rentcalculaters", "yes");
+				}
+			}  catch (Exception e) {
+				e.printStackTrace();
+				ajaxCallBackScript = e.getMessage();
+				returnMap = new HashMap<String, Object>();
+				returnMap.put("rentcalculaters", "no");
+				if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+					ajaxCallBackScript = "测算已经出错,但是没有捕获到错误消息!";
+				}
+				returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+			}
+			
+			if (returnMap == null || returnMap.size() == 0) {
+				returnMap = new HashMap<String, Object>();
+				returnMap.put("rentcalculaters", "no");
+				returnMap.put("rentcalculatemsg", "测算失败!没有获取测算结果!");
+			}
+			String jsonResult = "";
+			ObjectMapper mapper = new ObjectMapper();
+			//mapper.configure(Feature.WRITE_NULL_PROPERTIES, true);// 不写空字符
+			try {
+				//将map中的key全部小写
+				Map<String, Object> returnLowerMap = new HashMap<String, Object>();
+				for(String key : returnMap.keySet()){
+					returnLowerMap.put(key.toLowerCase(), returnMap.get(key));
+				}
+				jsonResult = mapper.writeValueAsString(returnLowerMap);
+				//jsonResult =  changeJsonKeyToLower(jsonResult);
+			} catch (Exception e) {
+				e.printStackTrace();
+				returnMap = new HashMap<String, Object>();
+				returnMap.put("rentcalculaters", "no");
+				returnMap.put("rentcalculatemsg", "测算失败!构建JSON返回结果出错!");
+				jsonResult = mapper.writeValueAsString(returnMap);
+			}
+			log.info("sea返回");
+			log.info("jsonResult:"+jsonResult);
+			return jsonResult;
+	}
+	
+	
+	
+	/**
+	 * 租金计划变更的action
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("deprecation")
+	@RequestMapping(value = "/adjustCalculateOld.action")
+	@ResponseBody
+	public String adjustCalculateOld(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapByAjax(request);// 把请求数据转成map
+		log.info("变更传入的MAP集合:"+modelData);
+		String ajaxCallBackScript = "";
+		Map<String, Object> returnMap = new HashMap<String, Object>();
+		try {
+			returnMap = this.rentCalculateService.adjustCalculate(modelData);
+		} catch (LeasingException e) {
+			e.printStackTrace();
+			ajaxCallBackScript = "捕获到异常:" + e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "发现异常但未抛出!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		} catch (Exception e) {
+			e.printStackTrace();
+			ajaxCallBackScript = e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "测算已经出错,但是没有捕获到错误消息!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		}
+		
+		if(!returnMap.containsKey("rentcalculaters")){
+			returnMap.put("rentcalculaters", "yes");
+			if (returnMap.get("rentcalculatemsg") == null) {
+				returnMap.put("rentcalculatemsg", "租金计划变更测算成功!");
+			}
+		}
+		String jsonResult = "";
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationConfig.Feature.WRITE_NULL_MAP_VALUES, false);// 不写空字符
+		try {
+			log.info("returnMap:"+returnMap);
+			jsonResult = mapper.writeValueAsString(returnMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			returnMap.put("rentcalculatemsg", "测算失败!构建JSON返回结果出错!");
+			jsonResult = mapper.writeValueAsString(returnMap);
+		}
+		log.info("jsonResult:"+jsonResult);
+		return jsonResult.toLowerCase();
+	}
+
+	/**
+	 * 租金计划修改的action
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("deprecation")
+	@RequestMapping(value = "/updateCalculateOld.action")
+	@ResponseBody
+	public String updateCalculateOld(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapByAjax(request);// 把请求数据转成map
+		String ajaxCallBackScript = "";
+		Map<String, Object> returnMap = new HashMap<String, Object>();
+		try {
+			Map<String, Object> rentPlan = new HashMap<String, Object>();
+			rentPlan = this.rentCalculateService.updateCalculateOld(modelData);
+			if (rentPlan != null && rentPlan.size() > 0) {
+				returnMap.putAll(rentPlan);
+			}
+		} catch (LeasingException e) {
+			e.printStackTrace();
+			ajaxCallBackScript = "捕获到异常:" + e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "发现异常但未抛出!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		} catch (Exception e) {
+			e.printStackTrace();
+			ajaxCallBackScript = e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "测算已经出错,但是没有捕获到错误消息!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		}
+		if (returnMap == null || returnMap.size() == 0) {
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			returnMap.put("rentcalculatemsg", "测算失败!没有获取测算结果!");
+		} else {
+			if (returnMap.get("rentcalculatemsg") == null) {
+				returnMap.put("rentcalculaters", "yes");
+				returnMap.put("rentcalculatemsg", "租金计划变更测算成功!");
+			}
+		}
+		
+		String jsonResult = "";
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(Feature.WRITE_NULL_PROPERTIES, false);// 不写空字符
+		try {
+			jsonResult = mapper.writeValueAsString(returnMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			returnMap.put("rentcalculatemsg", "测算失败!构建JSON返回结果出错!");
+			jsonResult = mapper.writeValueAsString(returnMap);
+		}
+		return jsonResult.toLowerCase();
+	}
+
+
+	/**
+	 * 
+	 * <p>租金计划变更:撤销调整。</p>
+	 * <p>操作步骤：。</p>
+	 * <pre>
+	 * 1.将租金测算相关的所有数据从正式表移往临时表中
+	 * 2.查询临时表数据构建返回的JSON（注意：第一步如果正式表没数据，移的是空数据入临时表，则第二步会报错！）。
+	 * </pre>
+	 * @author sea
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("deprecation")
+	@RequestMapping(value = "/resetAdjust.action")
+	@ResponseBody
+	public String resetAdjust(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapByAjax(request);// 把请求数据转成map
+		String ajaxCallBackScript = "";
+		Map<String, Object> returnMap = new HashMap<String, Object>();
+		try {
+			Map<String, Object> rentPlan = new HashMap<String, Object>();
+			rentPlan = this.rentCalculateService.resetConditionData(modelData.get("fund_rent_adjust.contractid"), modelData.get("fund_rent_adjust.docid"));
+			if (rentPlan != null && rentPlan.size() > 0) {
+				returnMap.putAll(rentPlan);
+			}
+		} catch (LeasingException e) {
+			e.printStackTrace();
+			ajaxCallBackScript = "捕获到异常:" + e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "发现异常但未抛出!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		} catch (Exception e) {
+			e.printStackTrace();
+			ajaxCallBackScript = e.getMessage();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			if (ajaxCallBackScript == null || ajaxCallBackScript.equals("")) {
+				ajaxCallBackScript = "测算已经出错,但是没有捕获到错误消息!";
+			}
+			returnMap.put("rentcalculatemsg", ajaxCallBackScript.replaceAll("'", " ").replaceAll("\"", " "));
+		}
+		if (returnMap == null || returnMap.size() == 0) {
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			returnMap.put("rentcalculatemsg", "测算失败!没有获取测算结果!");
+		} else {
+			if (returnMap.get("rentcalculatemsg") == null) {
+				returnMap.put("rentcalculatemsg", "撤销成功!");
+			}
+		}
+		String jsonResult = "";
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(Feature.WRITE_NULL_PROPERTIES, false);// 不写空字符
+		String rentJsonStr =  "";
+		try {
+			//租金计划的json单独处理
+			rentJsonStr =  (String) returnMap.get("fundrentplan"); 
+			log.info("租金计划临时最终JSON串:"+rentJsonStr);
+			returnMap.remove("fundrentplan");
+			
+			jsonResult = mapper.writeValueAsString(returnMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			returnMap = new HashMap<String, Object>();
+			returnMap.put("rentcalculaters", "no");
+			returnMap.put("rentcalculatemsg", "测算失败!构建JSON返回结果出错!");
+			jsonResult = mapper.writeValueAsString(returnMap);
+		}
+		
+		jsonResult = "{"+rentJsonStr+","+jsonResult.substring(1, jsonResult.length()-1)+"}";
+		log.info("jsonResult:"+jsonResult);
+		
+		return jsonResult.toLowerCase();
+	}
+
+
+	/**
+	 * 合同中途终止的action
+	 * <p>合同终止输入‘约定终止日’后所做的一些查询及租金折现操作。</P>
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/contractMidwayEnd.action")
+	@ResponseBody
+	public String contractMidwayEnd(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		return "";
+	}
+	
+	/*
+	 * 已知租金法action
+	 */
+	@RequestMapping(value = "/knowRentCalculate.action")
+	@ResponseBody
+	public String knowRentCalculate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		String periodType = request.getParameter("periodType"); //付租方式
+		log.info("periodType:"+periodType);
+		String incomeNumber = request.getParameter("endRentList"); //年还租次数
+		log.info("incomeNumber:"+incomeNumber);
+		String leaseAmt = request.getParameter("leaseAmt"); // 起租本金/融资额
+		log.info("leaseAmt:"+leaseAmt);
+		String incomeNumberYear = request.getParameter("incomeNumberYear"); //付租类型
+		log.info("incomeNumberYear:"+incomeNumberYear);
+		
+		String tempAttr = request.getParameter("tempAttr"); // 已知租金法多行值
+		//AJAX已经转码一次，这里只需要解码一次
+		tempAttr = URLDecoder.decode(tempAttr, "UTF-8"); //解码获值
+		
+		ObjectMapper jsonMapper = new ObjectMapper();
+		Map[] newSetMaps = jsonMapper.readValue(tempAttr, Map[].class);
+		RentPlan temp = new ContractFundRentPlanTemp();//随便找个实现类即可，目的只是为了暂存一下数据而已
+		
+		for (int j = 0; j < newSetMaps.length; j++) {
+			Map<String, String> map = newSetMaps[j];
+			String rentAdjust = map.get("rentadjust");
+		}
+		
+		//
+		log.info("tempAttr:"+tempAttr);
+		//获取固定格式的对象
+		List<KnowingRentBean> kniwnRentBeans = this.rentCalculateService.getList(tempAttr);
+		
+		//方式2：json转换成list集合 
+		ObjectMapper mapper = JacksonUtil.newObjectMapper();
+		List<String> list = mapper.readValue(tempAttr, List.class);
+		
+		 /*
+		 参数1：periodType 付租方式  期初 数字 1 字符串 period_type_1  #分割线#  期末 数字0 字符串 period_type_0
+		  参数2：leaseAmt 起租本金/融资额
+		  参数3：incomeNumberYear 年还租次数
+		  */ 
+		 ConditionBean cb = new ConditionBean();
+		 cb.setPeriodType(periodType);
+		 cb.setCleanLeaseMoney(leaseAmt);
+		 cb.setIncomeNumberYear(incomeNumberYear);
+		 
+		 //计算年利率
+		 String rate = rentCalcKonwingRentService.getYearRate(cb, kniwnRentBeans);
+		 log.info("rate:"+rate);
+		 return rate;
+	}
+	
+	/**
+	 * 商务条件报价查询
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/selectContractCondition.action")
+	public String selectContractCondition(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		String contractid = modelData.get("contractid").toString();
+		String adjusttype = modelData.get("adjusttype");
+		if(modelData.get("adjusttype") != null){
+			adjusttype = modelData.get("adjusttype").toString();
+		}
+		request.setAttribute("isWhere", "true");
+		if (contractid != null && !contractid.isEmpty()) {
+			request.setAttribute("isRs", "true");
+			ContractInfo cinfo = this.tableService.findEntityByID(ContractInfo.class, contractid);
+			if (cinfo != null && !cinfo.getContractId().isEmpty()) {
+				//request.setAttribute("business_type", cinfo.getBusinessType().getCode());// 设置业务类型
+																							// 决定显示那个jsp页面
+				// 查询数据
+				Map<String, String> variablesMap = new HashMap<String, String>();// 存入租金测算的数据
+				if (cinfo.getContractCondition() != null) {
+					variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(cinfo.getContractCondition(), null, ""));
+				}
+				
+				variablesMap.put("contractid", cinfo.getContractId());
+				variablesMap.put("process", "cont_ready_process");
+				variablesMap.put("custname", cinfo.getCustId().getCustName());
+				variablesMap.put("custid", cinfo.getCustId().getId());
+				Map<String, String> queryMainObjectMap = new HashMap<String, String>();
+				queryMainObjectMap.put("contract_id", contractid);
+				// 租金计划
+				String json_fund_rent_plan_str;
+				if("onhire".equals(adjusttype)){
+					json_fund_rent_plan_str = this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_fund_rent_plan.xml", queryMainObjectMap).toString();
+				}else{
+					//***租金计划表更换标记***
+					json_fund_rent_plan_str = this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_fund_rent_plan_before.xml", queryMainObjectMap).toString();
+				}
+				variablesMap.put("json_fund_rent_plan_str", json_fund_rent_plan_str);
+				if (!cinfo.getContractCashDetails().isEmpty()) {// 合同现金流
+					String json_fund_cash_flow_str = this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_planchange/contract_fund_cash_flow.xml", queryMainObjectMap).toString();
+					variablesMap.put("json_fund_cash_flow_str", json_fund_cash_flow_str);
+				}
+				if (!cinfo.getFundFundChargePlans().isEmpty()) {
+					queryMainObjectMap.put("feetypeout", "feetype10");
+					String json_fund_charge_plan_str = this.tableService.getJsonArrayData("eleasing/workflow/contract/fund_fund_charge_plan.xml", queryMainObjectMap).toString();
+					variablesMap.put("json_fund_fund_charge_str", json_fund_charge_plan_str);
+				}
+				//分段测算配置
+				if(!cinfo.getContractSpecialRulesBeans().isEmpty()){
+					String json_special_regular_str= this.tableService.getJsonArrayData("eleasing/workflow/rent/regulating_breathing/special_regular2.xml",queryMainObjectMap).toString();
+					variablesMap.put("json_special_regular_str",json_special_regular_str);
+				}
+				// 投放计划
+				if (!cinfo.getFundFundChargePlans().isEmpty()) {
+					queryMainObjectMap.remove("feetypeout");
+					queryMainObjectMap.put("feetypein", "feetype10");
+					variablesMap.put("json_fund_put_config_str", this.tableService.getJsonArrayData("eleasing/workflow/contract/fund_fund_charge_plan.xml",queryMainObjectMap).toString());
+				}
+				//付款前提条件
+				String json_contract_premise_str = this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_comm/contract_premise.xml", queryMainObjectMap).toString();
+				variablesMap.put("json_payment_premise_condition_str", json_contract_premise_str);
+				
+//				 把数据切入到request中
+				for (String key : variablesMap.keySet()) {
+					request.setAttribute(key, variablesMap.get(key));
+				}
+			} else {
+				request.setAttribute("isRs", "false");
+			}
+		} else {
+			request.setAttribute("isWhere", "false");
+		}
+		return "solutions/workflow/forms/reckon/rent_readonly/condition_read.jsp";
+		
+	}
+	
+	@RequestMapping(value = "/updateFundFundPlan.action")
+	@ResponseBody
+	public String updateFundFundPlan(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		Map<String, Object> result  = new HashMap<String, Object>();
+		ObjectMapper om = new ObjectMapper();
+		try{
+			result =  this.rentCalculateService.updateFundFundPlan(modelData);
+			result.put("updateInfo", "成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			result.put("updateInfo", "失败");
+		}
+		String returnStr = om.writeValueAsString(result);
+		return returnStr.toLowerCase();
+	}
+	/**
+	 * 更新现金流和收入折现
+	 * 财务收入折现流程
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/updateCashDetailAndIncomeDiscount.action")
+	@ResponseBody
+	public String updateCashDetailAndIncomeDiscount(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		Map<String, Object> result  = new HashMap<String, Object>();
+		ObjectMapper om = new ObjectMapper();
+		try{
+			result =  this.rentCalculateService.updateFundFundPlanForFinance(modelData);
+			result.put("updateInfo", "成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			result.put("updateInfo", "失败");
+		}
+		String returnStr = om.writeValueAsString(result);
+		return returnStr.toLowerCase();
+	}
+	
+	@RequestMapping(value = "/updateFundPutPlan.action")
+	@ResponseBody
+	public String updateFundPutPlan(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		Map<String, Object> result  = new HashMap<String, Object>();
+		ObjectMapper om = new ObjectMapper();
+		try{
+			result =  this.rentCalculateService.updateFundPutPlan(modelData);
+			result.put("updateInfo", "成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			result.put("updateInfo", "失败");
+		}
+		String returnStr = om.writeValueAsString(result);
+		return returnStr.toLowerCase();
+	}
+	
+	@RequestMapping(value = "/getCustConditionInfo.action")
+	@ResponseBody
+	public String getCustConditionInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		ObjectMapper om = new ObjectMapper();
+		String returnStr = "";
+		try{
+			Map<String, Object> returnInfoMap = this.rentCalculateService.getCustConditionInfo(modelData);
+			returnStr = om.writeValueAsString(returnInfoMap);
+			returnInfoMap.put("flag", "yes");
+		}catch(Exception e){
+			e.printStackTrace();
+			returnStr = "{flag:\"no\"}";
+		}
+		return returnStr.toLowerCase();
+	}
+	
+	/*@RequestMapping(value = "/deleteCustConditionInfo.action")
+	@ResponseBody
+	public String deleteCustConditionInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+
+		String id = modelData.get("ids");
+		String[] ids = id.split(",");
+		String returnStr = "";
+		try{
+			List<CustCondition> conditions =  this.tableService.findResultsByNamedParamHSQL("from CustCondition where id in (:ids)", new String[]{"ids"}, new Object[]{ids});
+			for(CustCondition condition : conditions){
+				condition.setEnabled(false);
+				this.tableService.updateEntity(condition);
+			}
+			returnStr = "{flag:\"yes\"}";
+		}catch(Exception e){
+			e.printStackTrace();
+			returnStr = "{flag:\"no\"}";
+		}
+		return returnStr.toLowerCase();
+	}*/
+	
+	/**
+	 *  保理测算
+	 */
+	@RequestMapping(value = "/facRentCalculate.action")
+	@ResponseBody
+	public String facRentCalculate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		ObjectMapper om = new ObjectMapper();
+		String returnStr = "";
+		Map<String, Object> returnInfoMap = new HashMap<String, Object>();
+		try{
+			returnInfoMap = this.rentCalculateService.doFacCalculateRentPlan(modelData);
+			//returnStr = om.writeValueAsString(returnInfoMap);
+		}catch(Exception e){
+			returnInfoMap.put("rentcalculaters", "no");
+			e.printStackTrace();
+		}
+		Map<String, Object> returnLowerMap = new HashMap<String, Object>();
+		String jsonResult ="";
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			//将map中的key全部小写
+			for(String key : returnInfoMap.keySet()){
+				returnLowerMap.put(key.toLowerCase(), returnInfoMap.get(key));
+			}
+			if(!returnLowerMap.containsKey("rentcalculaters")){
+				returnLowerMap.put("rentcalculaters", "yes");
+			}
+			jsonResult = mapper.writeValueAsString(returnLowerMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			Map<String, Object> returnLowerMap1 = new HashMap<String, Object>();
+			returnLowerMap1.put("rentcalculaters", "no");
+			jsonResult = mapper.writeValueAsString(returnLowerMap1);
+		}
+		return jsonResult.toLowerCase();
+	}
+	@RequestMapping(value = "/IrrRentCalculate.action")
+	@ResponseBody
+	public String IrrRentCalculate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		String uploadSuccessCallbackFunction = modelData.get("_success");
+		String uploadFailtureCallbackFunction = modelData.get("_failture");
+		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+		MultipartFile multipartFile = multipartRequest.getFile("tableImportExcel");
+		BaseFile bf=this.tableService.saveUpFiletoService(multipartFile, modelData);
+		this.tableService.addlogFileOper(bf, "上传");
+		String suffix =  multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf(".")+1);
+		String callBackScript = "";
+		if(!suffix.equals("xls") && !suffix.equals("xlsx")&& !suffix.equals("xlsm")){
+			callBackScript = "<script type='text/javascript'>" + uploadFailtureCallbackFunction + "('文件格式不正确,请先下载模版在进行导入！');</script>";
+		}else{
+			InputStream source = multipartFile.getInputStream();
+			try{
+				//商务报价参数数据格式化
+				String conditionitem =  modelData.get("conditionitem");
+				JSONObject conditionJson = new JSONObject(conditionitem);
+				Map<String, String> conditionMap = new HashMap<String, String>();
+				for(Iterator<String> ite = conditionJson.keys() ; ite.hasNext();){
+					String key = ite.next();
+					conditionMap.put(key, conditionJson.getString(key));
+				}
+				//传递Excel的格式
+				String excelType = "VERSION2003";
+				if(suffix.equals("xlsx")||suffix.equals("xlsm")){
+					excelType = "VERSION2007";
+				}
+				conditionMap.put("excelType", excelType);
+				Map<String, Object> resultMap = this.rentCalculateService.calculateRentByIrr(conditionMap, source);
+				ObjectMapper mapper = new ObjectMapper();
+				String resultInfo =  mapper.writeValueAsString(resultMap).toLowerCase();
+				callBackScript = "<script type='text/javascript'>" + uploadSuccessCallbackFunction + "('"+resultInfo+"');</script>";
+			}catch(NumberFormatException e){
+				e.printStackTrace();
+				callBackScript = "<script type='text/javascript'>" + uploadFailtureCallbackFunction + "('上传的租金计划中，金额格式不正确，请检查后重新上传！');</script>";
+			}catch(BusinessException e){
+				callBackScript = "<script type='text/javascript'>" + uploadFailtureCallbackFunction + "('"+e.getMessage()+"');</script>";
+			}catch (Exception e) {
+				e.printStackTrace();
+				callBackScript = "<script type='text/javascript'>" + uploadFailtureCallbackFunction + "('服务器繁忙，请稍后进行上传！！');</script>";
+			}
+		}
+		
+		this.ajaxReturn(response, callBackScript); 
+		return null;
+	}
+	
+	@RequestMapping(value = "/getBaseRate.action")
+	@ResponseBody
+	public String getBaseRate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);// 把请求数据转成map
+		String leaseamtdate = modelData.get("leaseamtdate");
+		Integer leasetermday = Integer.parseInt(modelData.get("leasetermday"));
+		int range = leasetermday/(30*6+1);
+		String hql = "from FundStandardInterest i where i.startDate<? order by i.startDate desc";
+		List<FundStandardInterest> interests = this.tableService.findResultsByHSQL(hql, leaseamtdate);
+		BigDecimal baseRate = BigDecimal.ZERO;
+		if(interests.size() > 0){
+			FundStandardInterest stand = interests.get(0);
+			switch (range) {
+			case 0://半年
+				baseRate = stand.getBaseRateHalf();
+				break;
+			case 1://半年-1年
+				baseRate = stand.getBaseRateOne();
+				break;
+			case 2://1年-1年半
+			case 3://1年半-2年
+			case 4://2年-2年半
+			case 5://2年半-3年	
+				baseRate = stand.getBaseRateThree();	
+				break;
+			case 6://3年-3年半	
+			case 7://3年半-4年
+			case 8://4年半-5年
+				baseRate = stand.getBaseRateFive();	
+				break;
+			default://5年以上
+				baseRate = stand.getBaseRateAbovefive();
+				break;
+			}
+		}
+		//从数据字典中查询保理资金成本(年)上浮利率,该数据可在数据字典中维护
+		String floatingRadio = this.tableService.findEntityByID(DictionaryData.class, "factorFundRadio").getEnName();
+		String json = "{baseRate:"+baseRate.toString()+",floatingRadio:"+floatingRadio+"}";
+		this.ajaxReturn(response, json); 
+		return null;
+	}
+	/**
+	 * by ykl
+	 * @param request
+	 * @param response
+	 * @return 测算实时的IRR
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/currentIRRCalculate.action")
+	@ResponseBody
+	public String getCurrentIRR(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, String> modelData = QueryUtil.getRequestParameterMapNoAjax(request);
+		String contractid = modelData.get("contractid");
+		ContractInfo info = this.tableService.findEntityByID(ContractInfo.class, contractid);
+		ContractCondition condition = info.getContractCondition();
+		IrrDetailsDAOImpl idd = new IrrDetailsDAOImpl();
+		List<BigDecimal> returnlist = idd.getCurrentCashList(contractid,condition);
+		BigDecimal perIrr = IRRCalculateUtil.getIRR(returnlist);
+		BigDecimal irr = perIrr.multiply(new BigDecimal(1200)).setScale(Scale.GENERAL_RATE,BigDecimal.ROUND_HALF_UP);
+		String json = "{irr:"+irr.toString()+"}";
+		this.ajaxReturn(response, json); 
+		return null;
+	}
+}

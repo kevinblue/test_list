@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+资金计划表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 				select  
+ 				 	cns.id ids,
+ 				    ci.id   contractids,
+ 				    cnsfp.fund_plan_id  fundplanid,
+ 				    cnsfp.id           purfundplanid,
+					ci.project_name    projectname,
+					ci.contract_number contractnum,
+					cns.contract_number contractnumbersetnum,
+					 cns.contract_name  contractnumbersetname,
+					cns.contract_money  contractmoney,					
+					round((cns.contract_money-conovermoney.factmoney),2) overcontractmoney,
+					round((cns.contract_money-conovermoney.planmpney),2) plancontractmoney,
+					 cns.create_date   createdate,
+					vi.*
+					from contract_info  ci 
+					left join contract_number_setting  cns on cns.contract_id=ci.id
+					left join t_contract_num_set_fund_plan cnsfp on cnsfp.purchase_contract_id=cns.id
+					left join vi_contract_fund_fund_plan vi on vi.ID=cnsfp.fund_plan_id 
+					left  join (
+					select 
+					overplanmoney.purchaseid,
+					 nvl(sum(overplanmoney.planmpney),0) planmpney,
+         			 nvl(sum(overplanmoney.factmoney),0) factmoney
+					
+					from(
+						select 
+			            cns.id purchaseid,
+			             vcfp.PLANMONEY planmpney,
+                  		vcfp.FACTMONEY factmoney
+			              
+			            from   contract_number_setting  cns 
+			            left join t_contract_num_set_fund_plan  tcs on cns.id=tcs.purchase_contract_id
+			            left join  vi_contract_fund_fund_plan vcfp on tcs.fund_plan_id=vcfp.ID
+					)overplanmoney
+						group  by overplanmoney.purchaseid
+                    )conovermoney  on conovermoney.purchaseid=cns.id
+					where 1=1 and  cns.contract_type = 'CONTRACT_TYPE.02'
+				
+
+         	     /~projectname:and ci.project_name like '%{projectname}%'~/
+         	     /~contractnum:and ci.contract_number like '%{contractnum}%'~/
+         	     /~contractnumbersetnum:and cns.contract_number like '%{contractnumbersetnum}%'~/
+         	     /~contractnumbersetname:and cns.contract_name like '%{contractnumbersetname}%'~/         	     
+         	      /~contractnumber:and vi.contractnumber like '%{contractnumber}%'~/
+                /~contractid:and vi.contractid='<<contractid>>'~/
+				/~feetype:and vi.feetype='<<feetype>>'~/
+				/~paytype:and vi.paytype='<<paytype>>'~/
+				/~isnoequip:and vi.feetype<>'feetype10'~/
+				/~feetypes:and vi.feetype in(<<feetypes>>)~/
+				/~notin:and vi.feetype not in (<<notin>>)~/
+				/~ismaymoney:<<ismaymoney>>~/
+				<<orderbyclause>>
+				<EXTRACTEND>order by createdate desc<EXTRACTEND> 
+				 
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

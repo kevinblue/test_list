@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select 
+					loan_contract_id loancontractid,
+					loan_unit 		 loanunit,
+					'人民币' 		 currency,
+					now_rate 		 nowrate,
+        			nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0) surpluscorpus,
+        			trunc((nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0))*(to_date({enddate},'yyyy-mm-dd')-to_date({startdate},'yyyy-mm-dd'))/360*now_rate,2)			 interest,
+        			{startdate}				 startdate,
+        			{enddate}				 enddate
+        
+          from loan_account loan
+        left join (select loan_id,sum(corpus) alreadycorpus,sum(interest) alreadyinterest  from LOAN_RENT_INCOME group by loan_id) income on loan.id=income.loan_id
+        left join (select loan_id,sum(corpus) plancorpus,sum(interest) planinterest from loan_rent_plan group by loan_id) rent on loan.id=rent.loan_id
+			 where 1=1 
+                /~loanunit: and loan.loan_unit like '%{loanunit}%'~/
+                /~loancontractid: and loan.loan_contract_id like '%{loancontractid}%'~/
+				/~surpluscorpusMin: and nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0)>={surpluscorpusMin}~/
+				/~surpluscorpusMax: and nvl(rent.plancorpus,0)-nvl(income.alreadycorpus,0)<={surpluscorpusMax}~/
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

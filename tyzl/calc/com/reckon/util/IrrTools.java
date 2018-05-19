@@ -1,0 +1,944 @@
+package com.reckon.util;
+
+import java.math.BigDecimal;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import com.reckon.bean.CashConfigBean;
+import com.reckon.bean.CashDetailsBean;
+import com.reckon.bean.ConditionBean;
+import com.reckon.bean.FundRentPlanBean;
+import com.reckon.bean.TabCalBean;
+import com.reckon.commons.helper.Scale;
+import com.reckon.entity.contract.reckon.cash.ContractCashDetailTemp;
+import com.reckon.entity.proj.ProjCashDetailTemp;
+import com.reckon.util.tools.DateTools;
+import com.reckon.util.tools.NumTools;
+import com.tenwa.leasing.entity.cust.quot.CustCashDetail;
+import com.tenwa.leasing.utils.LeasingException;
+import com.tenwa.leasing.utils.Tools;
+
+/**
+ * 
+ * @author SHIHONGFEI
+ * @version 1.0
+ * @copyright (C) TENWA 2011
+ * @date 2011-2-17
+ * @desc ( 现金流处理)
+ */
+public class IrrTools {
+	static Logger logger = Logger.getLogger(IrrTools.class);
+
+	/**
+	 * 
+	 * ( 根据配置信息构建现金流执行语句,如有其它现金流信息的可在此构建时修改)
+	 * 
+	 * @param cfgb_list
+	 * @param tcb
+	 * @return
+	 */
+	public static Map getCfgCashSqlByCfgAndTb(List<CashConfigBean> cfgb_list, TabCalBean tcb) {
+        Map sqlMap=new HashMap();
+        List paramValue=new ArrayList();
+        List paramType=new ArrayList();
+		String sql = " ";
+		for (CashConfigBean ccfb : cfgb_list) {
+			paramValue.add(tcb.getContOrProjCValue());
+			paramType.add(Types.VARCHAR);
+			paramValue.add(tcb.getDocId());
+			paramType.add(Types.VARCHAR);
+			sql += " select  " + (ccfb.getFee_name().equals("") ? "'0'" : ccfb.getFee_name()) + " as feeName,'" + ccfb.getFee_name_des() + "' as feeNameDes,'" + ccfb.getInOrOut() + "' as inOrout," + ccfb.getOccu_date() + " as sdate,'" + tcb.getContOrProjCValue() + "' as cOrp";
+			sql += " from " + tcb.getCondition_tb() + " where " + tcb.getContOrProjCName() + "=? and doc_id=?";
+			sql += " union ";
+		}
+		// 如果是合并起租 要加上之前的剩余本金最为现金流的组成部分
+		if (tcb.getIs_merger().equals("是")) {
+			sql += "";
+		}
+		if (sql.indexOf("union") > -1) {
+			sql = sql.substring(0, sql.length() - 6);
+		}
+		sql = "select * from (" + sql + ") rrss where case when feeName is null then 0 else feeName end  <>0";
+		sql += " order by sdate asc";
+		logger.info("现金流配置信息读取sql:" + sql);
+		sqlMap.put("sql", sql);
+		sqlMap.put("value", paramValue);
+		sqlMap.put("type", paramType);
+		return sqlMap;
+	}
+
+	/**
+	 * 
+	 * ( 得到去除重复的时间集合，返回一个含有一个时间，对应他的现金集合的下标的键值对 ,如按天则substring(0, 7)需处理)
+	 * 
+	 * @param ccfbList
+	 * @return
+	 */
+	public static Hashtable<String, String> remoRepDate(List<CashDetailsBean> ccfbList, int dtlen) {
+		Hashtable<String, String> htDate = new Hashtable<String, String>();
+		String str = "";
+		for (int i = 0; i < ccfbList.size(); i++) {
+
+			CashDetailsBean ccfb = ccfbList.get(i);
+			if (!htDate.containsKey(ccfb.getPlanDate().substring(0, dtlen))) {
+				htDate.put(ccfb.getPlanDate().toString().substring(0, dtlen), String.valueOf(i));
+			} else {
+				str = (String) htDate.get(ccfb.getPlanDate().toString().substring(0, dtlen));
+				str = str + "," + String.valueOf(i);
+				htDate.put(ccfb.getPlanDate().toString().substring(0, dtlen), str);
+			}
+		}
+		return htDate;
+
+	}
+
+	/**
+	 * 
+	 * ( 根据时间得到新的现金流集合 )
+	 * 
+	 * @param ht_date 现金流对应日期
+	 * @param cdbList 现金流集合
+	 * @return
+	 */
+	public static List<CashDetailsBean> getNetCashByDate(Hashtable<String, String> ht_date, List<CashDetailsBean> cdbList) {
+		List<CashDetailsBean> listNew = new ArrayList<CashDetailsBean>();
+
+		Object[] obj = ht_date.keySet().toArray();
+		Arrays.sort(obj); // 按键值排序
+
+		for (int i = 0; i < obj.length; i++) {
+			// logger.debug("=key=" + obj[i].toString());
+			// logger.debug("=value=" + ht_date.get(obj[i].toString()));
+
+			String[] strArray = ht_date.get(obj[i].toString()).toString().split(",");
+
+			// 总金额,得到同一时间的总金额d
+			// 构建新的现金流明细
+			CashDetailsBean cdb = new CashDetailsBean();
+
+			String quot_id = "";// 报价编号
+			String contract_id = ""; // 合同号
+			String plan_date = obj[i].toString();// 日期
+			
+			String fund_in = "0"; // 流入量
+			String fund_in_details = ""; // 流入量清单
+			
+			String fund_out = "0"; // 流出量
+			String fund_out_details = ""; // 流出量清单
+
+			String net_flow = "0"; // 净流量
+
+			for (int j = 0; j < strArray.length; j++) {
+
+				// cdbList
+				CashDetailsBean cdbOld = cdbList.get(Integer.parseInt(strArray[j].toString()));
+				contract_id = cdbOld.getContractId();
+
+				fund_in = new BigDecimal(fund_in).add(new BigDecimal(cdbOld.getFundIn())).toString();
+				fund_in_details = fund_in_details + cdbOld.getFundInDetails();
+
+				fund_out = new BigDecimal(fund_out).add(new BigDecimal(cdbOld.getFundOut())).toString();
+				fund_out_details = fund_out_details + cdbOld.getFundOutDetails();
+
+				net_flow = new BigDecimal(fund_in).subtract(new BigDecimal(fund_out)).toString();
+
+				quot_id = cdbOld.getQuotId();
+
+			}
+			cdb.setContractId(contract_id);
+			cdb.setPlanDate(plan_date);
+			cdb.setFundIn(fund_in);
+			cdb.setFundInDetails(fund_in_details);
+
+			cdb.setFundOut(fund_out);
+			cdb.setFundOutDetails(fund_out_details);
+			cdb.setNetFlow(net_flow);
+			cdb.setQuotId(quot_id);
+
+			listNew.add(cdb);
+
+		}
+		// 返回新的现金流明细
+		return listNew;
+
+	}
+
+	/**
+	 * 根据租金现金流，偿还间隔，租金间隔，年还款次数测算irr
+	 * 
+	 * @param l_inflow_pour所有现金流入流出
+	 * @param chjg偿还间隔
+	 * @param zjjg租金间隔
+	 * @param nhkcs年还款次数
+	 * @return
+	 */
+	public static String getIRR(List<String> l_inflow_pour, String chjg, String zjjg, String nhkcs) {
+		chjg = chjg.equals("") ? "0" : chjg;
+		zjjg = zjjg.equals("") ? "0" : zjjg;
+		nhkcs = nhkcs.equals("") ? "0" : nhkcs;
+		// 参数说明：l_inflow_pour=所有现金流入流出（流入为正，流出为负），chjg=偿还间隔，
+		// zjjg=租金间隔,nhkcs=年还款次数
+		// BigDecimal year_number = new BigDecimal("3");//偿还间隔
+		BigDecimal year_number = new BigDecimal(chjg);// 偿还间隔
+		// BigDecimal rent_interval = new BigDecimal("3");//每期租金间隔
+		BigDecimal rent_interval = new BigDecimal(zjjg);// 每期租金间隔
+		BigDecimal tmp = new BigDecimal("1");
+		BigDecimal irr = new BigDecimal("0");
+		BigDecimal tmp1 = new BigDecimal("0");
+		BigDecimal tmp2 = new BigDecimal("1");
+		BigDecimal bigdec_1 = new BigDecimal("1");
+		BigDecimal bigdec_2 = new BigDecimal("2");
+		int j = 0;
+		try {
+			while (tmp.abs().compareTo(new BigDecimal("0.000001")) == 1 && j < 100) {
+
+				// logger.debug(NUM+"|"+j+"|tmp:"+tmp+":IRR_MIN:"+tmp1+"IRR:"+irr+"IRR_MAX:"+tmp2);
+				tmp = new BigDecimal(l_inflow_pour.get(0).toString());
+				for (int i = 1; i < l_inflow_pour.size(); i++) {
+
+					tmp = tmp.add(new BigDecimal(l_inflow_pour.get(i).toString()).divide(new BigDecimal(Math.pow(irr.add(bigdec_1).doubleValue(), i)), 20, BigDecimal.ROUND_HALF_UP));
+				}
+				if (tmp.doubleValue() > 0) {
+					tmp1 = irr;
+					irr = irr.add(tmp2).divide(bigdec_2, 20, BigDecimal.ROUND_HALF_UP);
+				}
+				if (tmp.doubleValue() < 0) {
+					tmp2 = irr;
+					irr = irr.add(tmp1).divide(bigdec_2, 20, BigDecimal.ROUND_HALF_UP);
+				}
+				j++;
+			}
+			irr = irr.multiply(year_number).divide(rent_interval, 20, BigDecimal.ROUND_HALF_UP);
+			// irr = irr.multiply(new BigDecimal("4"));
+
+			// 2012-3-9 添加IRR递归计算
+			// if (NUM < NUM_MAX) {// 在允许迭代次数之内
+			// // 如果计算出来的IRR和本次预设的IRR最大值一样
+			// // 则认为真实IRR比本次默认IRR大 可以通过把区间设置为上次IRR最小值和上次默认IRR值为区间再次计算
+			// // 相反如果和最小值一样则把区间设置为默认值到最大值
+			// BigDecimal temp_irr = new BigDecimal("2");
+			// boolean dg = false;
+			// if (irr.compareTo(IRR_MAX) == 0) {
+			// NUM++;
+			// IRR_MAX = IRR_MAX.divide(temp_irr, 20,
+			// BigDecimal.ROUND_HALF_UP);
+			// dg = true;
+			// }
+			// if (irr.compareTo(IRR_MIN) == 0) {
+			// NUM++;
+			// IRR_MIN = IRR_MAX.divide(temp_irr, 20,
+			// BigDecimal.ROUND_HALF_UP);
+			// dg = true;
+			// }
+			// if (dg) {
+			// irr = new BigDecimal(getIRR(l_inflow_pour, chjg, zjjg,
+			// nhkcs));
+			// //logger.debug(NUM+":" + irr);
+			// return irr.toString();
+			// }
+			// }
+			irr = irr.multiply(new BigDecimal(nhkcs)).multiply(new BigDecimal(100)).setScale(Scale.GENERAL_RATE, BigDecimal.ROUND_HALF_UP);
+			return irr.toString().equals("") ? "0" : irr.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "0";
+	}
+
+	/**
+	 * XIRR计算公式 参数1 l_inflow_pour 是对于的现金流,参数2l_date 是对于的现金流时间 这个需要一一对于. <br>
+	 * 这个算法对于的是EXECL中的XIRR算法.可以用于精确到日的 日IRR计算
+	 * 
+	 * @param l_inflow_pour
+	 *            现金流List
+	 * @param l_date
+	 *            对应的日期List
+	 * @return
+	 */
+	public static String getXIRR(List<String> l_inflow_pour, List<String> l_date) {
+		BigDecimal tmp = new BigDecimal("1");
+		BigDecimal irr = new BigDecimal("0.5");
+		BigDecimal tmp1 = new BigDecimal("0");
+		BigDecimal tmp2 = new BigDecimal("1");
+		BigDecimal bigdec_1 = new BigDecimal("1");
+		BigDecimal bigdec_2 = new BigDecimal("2");
+		int j = 0;
+		try {
+			while (tmp.abs().doubleValue() > 0.0000000001 && j < 200) {
+				tmp = new BigDecimal(l_inflow_pour.get(0).toString());
+				String date0 = l_date.get(0).toString();
+				for (int i = 1; i < l_inflow_pour.size(); i++) {
+					Long quot = DateTools.getDateDiff(l_date.get(i).toString(), date0);
+					BigDecimal rate2 = new BigDecimal(quot / 365.0);
+					tmp = tmp.add(new BigDecimal(l_inflow_pour.get(i).toString()).divide(new BigDecimal(Math.pow(irr.add(bigdec_1).doubleValue(), rate2.doubleValue())), 20, BigDecimal.ROUND_HALF_UP));
+				}
+				if (tmp.doubleValue() > 0) {
+					tmp1 = irr;
+					irr = irr.add(tmp2).divide(bigdec_2, 20, BigDecimal.ROUND_HALF_UP);
+				}
+				if (tmp.doubleValue() < 0) {
+					tmp2 = irr;
+					irr = irr.add(tmp1).divide(bigdec_2, 20, BigDecimal.ROUND_HALF_UP);
+				}
+				j++;
+			}
+			return irr.toString().equals("") ? "0" : irr.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "0";
+	}
+
+	/**
+	 * 
+	 * ( 得到保证金抵扣现金流明细)
+	 * 
+	 * @param rent_list
+	 * @param caut_money
+	 * @return
+	 */
+	public static List<CashDetailsBean> getRentDetailsByDeduct(List<CashDetailsBean> cdbList, String caut_money) {
+		double d_total = 0;
+		double dcaut = Double.parseDouble(caut_money);
+		String int_s = "";// 用于记录下标的
+		if (Double.parseDouble(caut_money) > 0) {
+			// 得到可以抵扣的列表的下标值
+			int_s = getIdsByDeduct(cdbList, caut_money, d_total, int_s);
+			String[] i_array = int_s.split(",");// 保存可以抵扣的租金下标
+			for (int j = 0; j < i_array.length; j++) {
+				CashDetailsBean cdb = cdbList.get(Integer.parseInt(i_array[j]));
+				double temp_rent = Double.parseDouble(cdb.getFundIn());// 用于保存的租金
+				if (Double.parseDouble(cdb.getFundIn()) < dcaut && !"补0".equals(cdb.getFundInDetails()) ) { // 如果租金小于保证金抵扣金额
+
+					// 现金流明细处理
+					cdb.setFundOut(cdb.getFundIn());
+					cdb.setFundOutDetails(cdb.getFundOutDetails() + "保证金抵扣：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(cdb.getFundIn(), 2))) + "；");
+					cdb.setNetFlow("0");
+					// 重新设置该元素的值
+					cdbList.set(Integer.parseInt(i_array[j]), cdb);
+
+				} else {
+					if (dcaut > 0 && !"补0".equals(cdb.getFundInDetails()) ) {//保证金可抵扣金额大于0
+						// 现金流明细处理
+						cdb.setFundOut(String.valueOf(dcaut));
+						cdb.setFundOutDetails(cdb.getFundOutDetails() + "保证金抵扣：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(String.valueOf(dcaut), 2))) + "；");
+						cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getFundIn()) - dcaut));
+						// 重新设置该元素的值
+						cdbList.set(Integer.parseInt(i_array[j]), cdb);
+					}
+				}
+				dcaut = dcaut - temp_rent;// 修改保证金抵扣的值
+			}
+		}
+		return cdbList;
+	}
+
+	/**
+	 * 
+	 * 保证金抵扣金额小于保证金金额 最后要做一笔流出 为保证金金额减去保证金抵扣金额)
+	 * 
+	 * @param cdbList
+	 *            现金流
+	 * @param caution_money
+	 *            保证金
+	 * @param caution_deduction_money
+	 *            保证金抵扣金额
+	 * @return 返回处理完成的现金流
+	 */
+	public static List<CashDetailsBean> getRentDetailsByDeductOut(List<CashDetailsBean> cdbList, String caution_money, String caution_deduction_money) {
+		double caution = Double.parseDouble(NumTools.getZeroStr(caution_money));
+		double caution_deduction = Double.parseDouble(NumTools.getZeroStr(caution_deduction_money));
+		double loss_money = caution - caution_deduction;
+		if (loss_money > 0) {// 保证金金额大于保证金抵扣金额才进入此段
+			// 得到最后一期现金流明细对象
+			CashDetailsBean cdb = cdbList.get(cdbList.size() - 1);
+			// 更新流入，净流量值
+			// if (caution_deduction > 0) {// 保证金抵扣金额大于0时
+			// 现金流明细处理
+			cdb.setFundOut(String.valueOf((Double.parseDouble(cdb.getFundOut()) + loss_money)));
+			cdb.setFundOutDetails(cdb.getFundOutDetails() + "保证金退还：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(String.valueOf(loss_money), 2))) + "；");
+			cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getFundIn()) - Double.parseDouble(cdb.getFundOut())));
+			// 重新设置此元素的值
+			cdbList.set(cdbList.size() - 1, cdb);
+		}
+		return cdbList;
+	}
+
+	/**
+	 * 
+	 * ( 得到预收租金抵扣现金流明细)
+	 * 
+	 * @param rent_list
+	 * @param rentbefore_money
+	 * @return
+	 * @throws LeasingException
+	 */
+	public static List<CashDetailsBean> getRentDetailsByDeductBeforeRent(List<CashDetailsBean> cdbList, String rentbefore_money) throws LeasingException {
+		double d_total = 0;
+		double dcaut = Double.parseDouble(rentbefore_money);
+		String int_s = "";// 用于记录下标的
+		if (Double.parseDouble(rentbefore_money) > 0) {
+			// 得到可以抵扣的列表的下标值
+			int_s = getIdsByDeduct(cdbList, rentbefore_money, d_total, int_s);
+			if (int_s == null || int_s.equals("") || int_s.length() < 1) {
+				throw new LeasingException("预收租金抵扣超出正常范围!");
+			}
+			String[] i_array = int_s.split(",");// 保存可以抵扣的租金下标
+			for (int j = 0; j < i_array.length; j++) {
+				CashDetailsBean cdb = cdbList.get(Integer.parseInt(i_array[j]));
+				double temp_rent = Double.parseDouble(cdb.getFundIn());// 用于保存的租金
+
+				if (Double.parseDouble(cdb.getFundIn()) < dcaut) {
+					// 现金流明细处理
+					cdb.setFundOut(cdb.getFundIn());
+					cdb.setFundOutDetails(cdb.getFundOutDetails() + "预收租金抵扣：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(cdb.getFundIn(), 2))) + "；");
+					cdb.setNetFlow("0");
+					// 重新设置该元素的值
+					cdbList.set(Integer.parseInt(i_array[j]), cdb);
+
+				} else {
+					// 现金流明细处理
+					if (dcaut > 0) {
+						cdb.setFundOut(String.valueOf(dcaut));
+						cdb.setFundOutDetails(cdb.getFundOutDetails() + "预收租金抵扣：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(String.valueOf(dcaut), 2))) + "；");
+						cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getFundIn()) - dcaut));
+						// 重新设置该元素的值
+						cdbList.set(Integer.parseInt(i_array[j]), cdb);
+					}
+				}
+				dcaut = dcaut - temp_rent;// 修改预收租金抵扣的值
+			}
+		}
+		return cdbList;
+	}
+
+	/**
+	 * 
+	 * 预收租金抵扣金额小于预收租金金额 最后要做一笔流出 为预收租金金额减去预收租金抵扣金额)
+	 * 
+	 * @param cdbList
+	 *            现金流
+	 * @param Column_8
+	 *            预收租金
+	 * @param Column_10
+	 *            预收租金抵扣金额
+	 * @return 返回处理完成的现金流
+	 */
+	public static List<CashDetailsBean> getRentDetailsByDeductBeforeRentOut(List<CashDetailsBean> cdbList, String Column_8, String Column_10) {
+		double Before_rent = Double.parseDouble(NumTools.getZeroStr(Column_8));
+		double Before_rent_deduction = Double.parseDouble(NumTools.getZeroStr(Column_10));
+		double loss_money = Before_rent - Before_rent_deduction;
+		if (loss_money > 0) {// 预收租金金额大于预收租金抵扣金额进入
+			// 得到最后一期现金流明细对象
+			CashDetailsBean cdb = cdbList.get(cdbList.size() - 1);
+			// 更新流入，净流量值
+			// 现金流明细处理
+			cdb.setFundOut(String.valueOf((Double.parseDouble(cdb.getFundOut()) + loss_money)));
+			cdb.setFundOutDetails(cdb.getFundOutDetails() + "预收租金退还：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(String.valueOf(loss_money), 2))) + "；");
+			cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getFundIn()) - Double.parseDouble(cdb.getFundOut())));
+			// 重新设置此元素的值
+			cdbList.set(cdbList.size() - 1, cdb);
+		}
+		return cdbList;
+	}
+
+	/**
+	 * 
+	 * ( 得到可以保证金抵扣的租金下标值)
+	 * 
+	 * @param cdbList
+	 * @param caut_money
+	 * @param d_total
+	 * @param int_s
+	 * @return
+	 */
+	public static String getIdsByDeduct(List<CashDetailsBean> cdbList, String caut_money, double d_total, String int_s) {
+		for (int i = cdbList.size() - 1; i >= 0; i--) {
+			CashDetailsBean cdb = cdbList.get(i);
+			d_total = d_total + Double.parseDouble(cdb.getNetFlow().toString());
+			if (d_total > 0) {
+				int_s += i + ",";
+			}
+			logger.debug(d_total + "...");
+			if (d_total > Double.parseDouble(caut_money)) {
+				break;
+			}
+		}
+		int_s = int_s.indexOf(",") > -1 ? int_s.substring(0, int_s.length() - 1) : int_s;// 得到可以抵扣的租金的下标
+		logger.debug(int_s + "==");
+		return int_s;
+	}
+	
+
+	/**
+	 * 
+	 * ( 对最后一项现金流明细进行整理,如有变更的可以重写此方法)
+	 * 其他情况
+	 * @param cdbList
+	 * @param equip_end_value 期末余值
+	 * @param nominal_price  期末购买权
+	 * @param  income_number_year 付租类型
+	 * @return
+	 */
+	public static List<CashDetailsBean> getCashDetailsByEndValue(List<CashDetailsBean> cdbList, String equip_end_value, String nominal_price,ConditionBean cb) {
+		// 得到最后一期现金流明细对象
+		CashDetailsBean cdb = cdbList.get(cdbList.size() - 1);
+		String planDate = cdb.getPlanDate(); // 日期 (只有年月)
+		String income_number_year = cb.getIncomeNumberYear();
+		int onhire_id = cdb.getOnhire_id();
+		
+		//起租类型  注意: 期初 数字 1 字符串 period_type_1  #分割线#  期末 数字0 字符串 period_type_0
+		String periodType = cb.getPeriodType();
+		
+		// 更新流入，净流量值   期末余值
+		if ( null != equip_end_value && !"".equals(equip_end_value) && Double.parseDouble(equip_end_value) > Double.parseDouble("0.00") ) {// 期末残值大于0时
+			//‘期末余值’期末情况下的统一处理方式:直接加在最后一期现金流数据中
+			if("period_type_0".equals(periodType) || "0".equals(periodType) ){// 期末
+				cdb.setFundIn(String.valueOf(Double.parseDouble(cdb.getFundIn()) + Double.parseDouble(equip_end_value)));
+				cdb.setFundInDetails(cdb.getFundInDetails() + "；期末余值：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(equip_end_value, 2))));
+				cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getNetFlow()) + Double.parseDouble(equip_end_value)));
+			}
+		}
+		
+		//期末购买权在月付双月付情况下在下方单独处理
+		if (null != nominal_price && !"".equals(nominal_price) && Double.parseDouble(nominal_price) > Double.parseDouble("0.00") &&  !"income_1".equals(income_number_year)  && !"income_2".equals(income_number_year) && !"6".equals(income_number_year) && !"12".equals(income_number_year)  || ( "period_type_0".equals(periodType) || "0".equals(periodType)   ) ) {// 期末购买权【原名称:名义货价】大于0时
+			cdb.setFundIn(String.valueOf(Double.parseDouble(cdb.getFundIn()) + Double.parseDouble(nominal_price)));
+			cdb.setFundInDetails(cdb.getFundInDetails() + "；期末购买权：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(nominal_price, 2))) + "；");
+			cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getNetFlow()) + Double.parseDouble(nominal_price)));
+		}
+		
+		// 重新设置此元素的值
+		cdbList.set(cdbList.size() - 1, cdb);
+		
+		// 处理特殊的保证金抵扣 保证金抵扣金额小于保证金金额 最后要做一笔流出 为保证金金额减去保证金抵扣金额
+		cdbList = IrrTools.getRentDetailsByDeductOut(cdbList, cb.getCautionMoney(), cb.getCautionDeductionMoney());
+		
+		List<CashDetailsBean> new_cdbList = new ArrayList<CashDetailsBean>();
+		for (CashDetailsBean obj : cdbList) {
+			new_cdbList.add(obj);
+		}
+		
+		
+		//TODO:sea 期末购买权在月付情况下：最后一期日期加一月作为单独的一行数据,其它情况下：最后一期的日期 
+		//2014-06-11  期末余值新的处理逻辑:【符合】‘期末购买权月付/双月付情况’这个前提下， 期初情况的‘期末余值’与‘期末购买权’一致放在新增的一期一起作为最后一期现金流的数据
+		if(null != nominal_price && !"".equals(nominal_price) && Double.parseDouble(nominal_price) > Double.parseDouble("0.00") &&  !Tools.isNullOrEmpty(planDate) && ( "income_1".equals(income_number_year) || "12".equals(income_number_year) || "income_2".equals(income_number_year) || "6".equals(income_number_year) ) && ("period_type_1".equals(periodType) || "1".equals(periodType)) ){//月付/双月付情况下
+			//重新取一次值
+			CashDetailsBean new_cdb = new CashDetailsBean();//cdbList.get(cdbList.size() - 1);
+			planDate = planDate+"-01";//构建成完整的日期格式
+			//2014-01-01 日期加1个月 
+			planDate = DateTools.getDateAdd(planDate, 1, "mm");
+			new_cdb.setPlanDate(planDate.substring(0, 7)+"-01");
+			new_cdb.setFundOut("0");
+			new_cdb.setFundOutDetails("");
+			
+			new_cdb.setFundIn(String.valueOf(Double.parseDouble(nominal_price) + Double.parseDouble(equip_end_value)));
+			new_cdb.setFundInDetails("期末购买权：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(nominal_price, 2)))  + "；期末余值：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(equip_end_value, 2))));
+			new_cdb.setNetFlow( String.valueOf( Double.parseDouble(nominal_price) + Double.parseDouble(equip_end_value) ) );
+			
+			new_cdb.setOnhire_id( onhire_id + 1 );//现金流按固定格式补0情况下，所以这里月付情况下，直接最后一次变量加1做为最终的期末购买权排序依据
+			new_cdbList.add(new_cdb);
+		}else{
+			
+			//TODO:2014-06-11  期末余值新的处理逻辑:【不符合】‘期末购买权月付情况’这个前提下， 期初情况的‘期末余值’与‘期末购买权’一致放在新增的一期一起作为最后一期现金流的数据
+			//TODO:这里存在少处理不是月付情况，例如：季付情况下，‘期末余值’是不是不能直接最后一期加一个月，是加一个租赁间隔，是加一个季度三个月，中间需要补两个0
+			if( !Tools.isNullOrEmpty(planDate) &&  null != equip_end_value && !"".equals(equip_end_value) && Double.parseDouble(equip_end_value) > Double.parseDouble("0.00") && ("period_type_1".equals(periodType) || "1".equals(periodType)) ){// 期初
+				//重新取一次值
+				CashDetailsBean new_cdb = new CashDetailsBean();//cdbList.get(cdbList.size() - 1);
+				planDate = planDate+"-01";//构建成完整的日期格式
+				//2014-01-01 日期加1个月 
+				planDate = DateTools.getDateAdd(planDate, 1, "mm");
+				new_cdb.setPlanDate(planDate.substring(0, 7)+"-01");
+				new_cdb.setFundOut("0");
+				new_cdb.setFundOutDetails("");
+				new_cdb.setFundIn(String.valueOf( Double.parseDouble(equip_end_value)));
+				new_cdb.setFundInDetails("期末余值：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(equip_end_value, 2))));
+				new_cdb.setNetFlow( String.valueOf( Double.parseDouble(equip_end_value) ) );
+				new_cdb.setOnhire_id( onhire_id + 1 );//现金流按固定格式补0情况下，所以这里月付情况下，直接最后一次变量加1做为最终的期末购买权排序依据
+				new_cdbList.add(new_cdb);
+			}
+			
+		}
+		
+		return new_cdbList;
+
+	}
+	
+	/**
+	 * <p>对最后一项现金流明细进行整理,针对项目类型为‘VP业务’情况下，期末购买权不计算入最后一期现金流中。</p>
+	 * @author sea
+	 * @param cdbList 现金流合集
+	 * @param equip_end_value 期末残值
+	 * @param nominal_price 期末购买权
+	  * @return
+	 */
+	public static List<CashDetailsBean> getCashDetailsByEndValueCompanyProjType(List<CashDetailsBean> cdbList, String equip_end_value, String nominal_price,ConditionBean cb) {
+		// 得到最后一期现金流明细对象
+		CashDetailsBean cdb = cdbList.get(cdbList.size() - 1);
+		// 更新流入，净流量值
+		if (null != equip_end_value && !"".equals(equip_end_value) && Double.parseDouble(equip_end_value) > 0) {// 期末残值大于0时
+			cdb.setFundIn(String.valueOf(Double.parseDouble(cdb.getFundIn()) + Double.parseDouble(equip_end_value)));
+			
+			cdb.setFundInDetails(cdb.getFundInDetails() + "；期末余值：" + NumTools.formatNumberDouble(Double.parseDouble(NumTools.formatNumberDoubleScale(equip_end_value, 2))));
+			
+			cdb.setNetFlow(String.valueOf(Double.parseDouble(cdb.getNetFlow()) + Double.parseDouble(equip_end_value)));
+		}
+		
+		if (null != nominal_price && !"".equals(nominal_price) && Double.parseDouble(nominal_price) > 0) {// 期末购买权【原名称:名义货价】大于0时
+			cdb.setFundIn(String.valueOf(Double.parseDouble(cdb.getFundIn()) + Double.parseDouble(nominal_price)));
+			//项目类型为‘VP业务’情况下，期末购买权不算入流入中
+			cdb.setFundInDetails( cdb.getFundInDetails() );
+			cdb.setNetFlow( cdb.getNetFlow() );
+		}
+		
+		// 重新设置此元素的值
+		cdbList.set(cdbList.size() - 1, cdb);
+		
+		// 2011-10-26
+		// 处理特殊的保证金抵扣 保证金抵扣金额小于保证金金额 最后要做一笔流出 为保证金金额减去保证金抵扣金额
+		cdbList = IrrTools.getRentDetailsByDeductOut(cdbList, cb.getCautionMoney(), cb.getCautionDeductionMoney());
+		
+		return cdbList;
+		
+	}
+	/**
+	 * 
+	 * ( 现金流明细构建)
+	 * 按月计算IRR
+	 * @param cdbList
+	 * @return
+	 */
+	public static String getIrr(List<CashDetailsBean> cdbList) {
+		// 得到租金列表
+		List<String> rent_list = getRentListByCashDetails(cdbList);
+		/* 
+		 * 后三个参数为固定按月计算
+		 * @param chjg  固定值1
+		 * @param zjjg  固定值1
+		 * @param nhkcs 固定值12
+		 */
+		// 调用计算irr的公式
+		return IrrTools.getIRR(rent_list, "1","1","12");
+
+	}
+	/**
+	 * 
+	 * @Title: getIrr
+	 * @author zhangc
+	 * @Description: 根据现金流算irr
+	 * @param cashlist
+	 * @param flag 用来标记是合同层还是项目层 1、项目层 2、合同层
+	 * @return
+	 * @return String
+	 * @throws
+	 */
+	public static String getIrr(List cashlist,String process){
+		// 得到租金列表
+		List<String> rent_list = getRentListByCashDetails(cashlist,process);
+		// 调用计算irr的公式
+		return IrrTools.getIRR(rent_list, "1","1","12");
+	}
+	
+	/**
+	 * 
+	 * @Title: getIrr
+	 * @author zhangc
+	 * @Description: 根据现金流算irr
+	 * @param cashlist
+	 * @param flag 用来标记是合同层还是项目层 1、项目层 2、合同层
+	 * @return
+	 * @return String
+	 * @throws
+	 */
+	public static String getIrr(List cashlist,String process,ConditionBean cb){
+		// 得到租金列表
+		List<String> rent_list = getRentListByCashDetails(cashlist,process);
+		// 调用计算irr的公式
+		String incomenumber=cb.getIncomeNumberYear().replace("income_", "");
+		return IrrTools.getIRR(rent_list, incomenumber,incomenumber,String.valueOf(12 / Integer.parseInt(incomenumber)));
+	}
+	/**
+	 * 
+	 * ( 现金流明细构建)
+	 * 
+	 * @param cdbList
+	 * @param cb
+	 * @return
+	 */
+	public static String getIrr(List<CashDetailsBean> cdbList, ConditionBean cb) {
+
+		// 得到租金列表
+		List<String> rent_list = getRentListByCashDetails(cdbList);
+		// 调用计算irr的公式
+		return IrrTools.getIRR(rent_list, String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), cb.getIncomeNumberYear());
+
+	}
+
+	/**
+	 * 
+	 * ( 现金流明细构建)
+	 * 
+	 * @param cdbList
+	 * @param cb
+	 * @return
+	 */
+	public static String getIrrByPreMonth(List<CashDetailsBean> cdbList, ConditionBean cb) {
+
+		// 得到租金列表
+		List<String> rent_list = getRentListByCashDetails(cdbList);
+		// 调用计算irr的公式
+		return IrrTools.getIRR(rent_list, String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), cb.getIncomeNumberYear());
+
+	}
+
+	/**
+	 * 
+	 * ( 根据现金流明细得到新的租金列表，用于算irr值)
+	 * 
+	 * @param cdbList
+	 */
+	private static List<String> getRentListByCashDetails(List<CashDetailsBean> cdbList) {
+		List<String> rent_list = new ArrayList<String>();
+		for (CashDetailsBean cdb : cdbList) {
+			rent_list.add(cdb.getNetFlow());
+		}
+		return rent_list;
+	}
+	
+	private static List<String> getRentListByCashDetails(List cdbList,String process) {
+		List<String> rent_list = new ArrayList<String>();
+		for (Object cdb : cdbList) {
+			if(process.equals("proj_process")){
+				rent_list.add(((ProjCashDetailTemp)cdb).getNetFlow().toString());
+			}else if(process.equals("quoted_price")){
+				rent_list.add(((CustCashDetail)cdb).getNetFlow().toString());
+			}else{
+				rent_list.add(((ContractCashDetailTemp)cdb).getNetFlow().toString());
+			}
+		}
+		return rent_list;
+	}
+
+	/**
+	 * 
+	 * ( 算出均息法下的均息法租金列表的irr,并把其当做年利率传递做第二次正常租金测算)
+	 * 
+	 * @param cb
+	 *            交易结构bean
+	 * @param frpb
+	 *            租金集合bean
+	 * @return
+	 */
+	public static String getIRRByEvenInterest(ConditionBean cb, FundRentPlanBean frpb) {
+		String irr = "";
+		List<String> l_inflow_pour = new ArrayList<String>();// 现金流
+		List<String> rent_list = frpb.getRentList();
+		// 2011-11-14 均息法有宽限期的时候 宽限期累的租金不能加入现金流计算
+		int grace = cb.getGrace();
+		grace = grace > 0 ? grace : 0;
+		// 构建第一笔负金额
+		//"reckon".equals(cb.getReckonType()) ? cb.getCleanLeaseMoney() :
+		String leasing_money =  cb.getCleanLeaseMoney();
+		//起租类型  注意: 期初 数字 1 字符串 period_type_1  #分割线#  期末 数字0 字符串 period_type_0
+		if (cb.getPeriodType().equals("1")) {// 期初就加上第一笔金额
+			// 2012-09-22 这里构建第一笔现金流的时候要用财务本金构建.因为在租金计划变更的时候计算现金流时的IRR中其实为财务本金
+			l_inflow_pour.add(new BigDecimal("-" + leasing_money).add(new BigDecimal(rent_list.get(grace).toString()).setScale(RentTools.getAccuracy(), BigDecimal.ROUND_HALF_UP)).toString());
+			//rent_list.remove(0);
+			grace ++;
+		} else {
+			l_inflow_pour.add("-" + leasing_money);
+		}
+		
+		for (int i = grace; i < rent_list.size(); i++) {
+			l_inflow_pour.add(rent_list.get(i).toString());
+		}
+		if(cb.getEquipEndValue() != null && new BigDecimal(cb.getEquipEndValue()).compareTo(BigDecimal.ZERO)>0){
+			if (cb.getPeriodType().equals("1")) {// 期初
+				l_inflow_pour.add(cb.getEquipEndValue());
+			} else {
+				l_inflow_pour.set(l_inflow_pour.size()-1, new BigDecimal(l_inflow_pour.get(l_inflow_pour.size()-1)).add(new BigDecimal(cb.getEquipEndValue())).toString());
+			}
+		}
+		
+		irr = IrrTools.getIRR(l_inflow_pour, String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), String.valueOf(12 / Integer.parseInt(cb.getIncomeNumberYear())), cb.getIncomeNumberYear());
+		irr = Double.parseDouble(irr) + "";
+		return irr;
+	}
+
+	/**
+	 * 
+	 * (根据现金流获得对应的年利率)
+	 * 
+	 * @param alCash
+	 *            现金流 用HashMap key为net_flow 存的每期的值
+	 * @param income_number_year
+	 *            年还款次数
+	 * @return 返回年利率 保留六位小数 例如 8.123456% 则返回 8.123456
+	 */
+	public static String getRateByFlow(List<Map<String, String>> alCash, String income_number_year) {
+		// 根据现金流获取年利率
+		List<String> alirr = new ArrayList<String>();
+		logger.info("现金流输出开始:");
+		for (int i = 0; i < alCash.size(); i++) {
+			Map<String, String> hm = alCash.get(i);
+			alirr.add(new BigDecimal((String) hm.get("net_flow")).toString());
+			logger.info((String)hm.get("net_flow"));
+		}
+		logger.info("现金流输出结束！");
+		return NumTools.formatNumberDoubleScale(Double.parseDouble(getIRR(alirr, "1", "1", income_number_year)) * 100 + "", 6);
+	}
+	
+	/**
+	 * <p>根据原始现金流集合按固定模式补0构建成独特格式的现金流。</p>
+	 * @author sea
+	 * @param ccfbList 未做任何处理的原始现金流集合
+	 * @return
+	 */
+	public static List<CashDetailsBean> getNetCashByFixedZero(List<CashDetailsBean> ccfbList,ConditionBean cb,int size){
+		//计算补0个数
+		int num = getCountZero(cb);
+		logger.info("num:"+num);
+		
+		// 返回现金流明细对象
+		List<CashDetailsBean> list = new ArrayList<CashDetailsBean>();
+		List<CashDetailsBean> cashList = new ArrayList<CashDetailsBean>();
+		// 期初（期末）支付 注意: 期初 数字 1 字符串 period_type_1  #分割线#  期末 数字0 字符串 period_type_0
+		String periodType = cb.getPeriodType(); 
+		if (ccfbList != null && ccfbList.size() > 0 && ccfbList.size() > size) {//现金流的长度如果小于2条，该方法不适用，特别是期初情况下，理论上现金流只存在一行数据了
+			
+			//第0期现金流集合
+			CashDetailsBean objFirst = new CashDetailsBean();
+			objFirst = ccfbList.get(0);//默认第0期的值等于原始现金流的第0期
+			
+			double firstIn = 0.00; 
+			double firstOut = 0.00; 
+			String firstFundInDetails = "";
+			String firstFundOutDetails = "";
+			for (int i = 0; i < size; i++) {
+				CashDetailsBean oneObj = ccfbList.get(i);
+				//第i期流入流出
+				firstIn = firstIn + NumberUtils.parseDouble( NumberUtils.nullToZero( oneObj.getFundIn() ) ); 
+				firstOut = firstOut + NumberUtils.parseDouble( NumberUtils.nullToZero( oneObj.getFundOut() ) ); 
+				firstFundInDetails = firstFundInDetails +oneObj.getFundInDetails();
+				firstFundOutDetails = firstFundOutDetails+oneObj.getFundOutDetails();
+			}
+				
+			//期初前收情况下:做合并处理
+			if("1".equals(periodType) || "period_type_1".equals(periodType)){
+				//封装新的第0期
+				CashDetailsBean firstRentObj = ccfbList.get(size);//取出第一期租金与第0期合并
+				double firstRent = NumberUtils.parseDouble( NumberUtils.nullToZero( firstRentObj.getFundIn() ) );
+				objFirst.setFundIn( NumberUtils.doubleToString( firstIn + firstRent) );
+				objFirst.setFundInDetails(firstFundInDetails+"1期"+firstRentObj.getFundInDetails());
+				objFirst.setFundOut( NumberUtils.doubleToString( firstOut ) );
+				objFirst.setFundOutDetails(firstFundOutDetails+firstRentObj.getFundOutDetails());
+				objFirst.setNetFlow(NumberUtils.doubleToString( firstIn + firstRent - firstOut ) );
+				objFirst.setOnhire_id(1000);
+				cashList.add(objFirst);
+				
+				//封装后续所有现金流
+				int key = 2;
+				int onhire_id = 1000;
+				for (int i = size+1; i < ccfbList.size(); i++) {
+					onhire_id = onhire_id + 1;
+					int count = num;
+					//补0
+					while(count > 0){
+						cashList.add( getNewCashDetailsBean(ccfbList.get(i),onhire_id ) );
+						count = count -1;
+						onhire_id = onhire_id + 1;
+					}
+					CashDetailsBean otherObj = ccfbList.get(i);
+					otherObj.setFundInDetails(key+"期"+otherObj.getFundInDetails());
+					otherObj.setOnhire_id(onhire_id);
+					//补完0后则继续封装对应的现金流数据
+					cashList.add(otherObj);
+					key = key + 1;
+				}
+			}else{//期末后收情况下:
+				//封装新的第0期
+				objFirst.setFundIn( NumberUtils.doubleToString( firstIn ) );
+				objFirst.setFundInDetails(firstFundInDetails);
+				objFirst.setFundOut( NumberUtils.doubleToString( firstOut ) );
+				objFirst.setFundOutDetails(firstFundOutDetails);
+				objFirst.setNetFlow(NumberUtils.doubleToString( firstIn - firstOut ) );
+				objFirst.setOnhire_id(1000);
+				cashList.add(objFirst);
+				//封装后续所有现金流
+				int onhire_id = 1000;
+				int rent_list = 1;
+				for (int i = size; i < ccfbList.size(); i++) {
+					onhire_id = onhire_id + 1;
+					int count = num;
+					//补0
+					while(count > 0){
+						cashList.add( getNewCashDetailsBean(ccfbList.get(i),onhire_id) );
+						count = count -1;
+						onhire_id = onhire_id + 1;
+					}
+					CashDetailsBean otherObj = ccfbList.get(i);
+					otherObj.setFundInDetails(rent_list+"期"+otherObj.getFundInDetails());
+					otherObj.setOnhire_id(onhire_id);
+					//补完0后则继续封装对应的现金流数据
+					cashList.add(otherObj);
+					rent_list = rent_list + 1;
+				}
+			}
+		}
+		return cashList;
+	}
+	
+	/**
+	 * <p>计算固定格式情况现金流补0个数。</p>
+	 * @author sea
+	 * @param cb 交易结构
+	 * @return
+	 */
+	private static int getCountZero(ConditionBean cb){
+		//计算补0个数
+		int num = 0;
+		logger.debug("cb.getIncomeNumberYear():"+cb.getIncomeNumberYear());
+		// 付租类型
+		if (null != cb.getIncomeNumberYear() && ("income_1".equals(cb.getIncomeNumberYear()) || "12".equals(cb.getIncomeNumberYear())) ) {//月付
+			num = 12/12-1;//0
+		} else if (null != cb.getIncomeNumberYear() && ("income_3".equals(cb.getIncomeNumberYear()) || "4".equals(cb.getIncomeNumberYear())) ) {//季付
+			num = 12/4-1;//2
+		} else if (null != cb.getIncomeNumberYear() && ("income_6".equals(cb.getIncomeNumberYear()) || "2".equals(cb.getIncomeNumberYear())) ) {//半年付
+			num = 12/2-1;//5
+		} else if (null != cb.getIncomeNumberYear() && ("income_12".equals(cb.getIncomeNumberYear()) || "1".equals(cb.getIncomeNumberYear())) ) {//年付
+			num = 12/1-1;//11
+		} else if (null != cb.getIncomeNumberYear() && ("income_2".equals(cb.getIncomeNumberYear())  ||  "6".equals(cb.getIncomeNumberYear())) ) {//双月付
+			num = 12/6-1;//1
+		}else{
+			num = 0;
+		}
+		return num;
+	}
+	
+	/**
+	 * <p>生成补0的现金流对象。</p>
+	 * @author sea
+	 * @param obj 具体冒一期现金流对象
+	 * @return
+	 */
+	private static CashDetailsBean getNewCashDetailsBean(CashDetailsBean obj,int onhire_id){
+		CashDetailsBean newObj = new CashDetailsBean();
+		newObj.setDocId(obj.getDocId());
+		newObj.setContractId(obj.getContractId());
+		newObj.setQuotId(obj.getQuotId());
+		newObj.setPlanDate("-");
+		newObj.setFundIn("0");
+		newObj.setFundInDetails("补0");
+		newObj.setFundOut("0");
+		newObj.setFundOutDetails("补0");
+		newObj.setNetFlow("0");
+		newObj.setOnhire_id(onhire_id);
+		return newObj;
+	}
+}

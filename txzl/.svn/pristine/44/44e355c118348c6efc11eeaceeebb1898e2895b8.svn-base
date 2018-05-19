@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+资金实收、实付名细表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			      select vi.FEETYPENAME,
+			             vi.PAYMENTID,
+			             vi.planmoney,
+			             vi.devicename1 devicename1,
+			             vi.fundtype,
+                         vi.fundtypename,
+			             vi.FACTMONEY FACTMONEY,
+			             vi.BILLNUM,
+			             case
+			               when vi.ROLL_BACK = '0' then
+			                '否'
+			               else
+			                '是'
+			             end ROLL_BACK,
+			             vi.ebanknumber ebanknumber,
+			             vi.settlemethodname settlemethodname,
+			             vi.penalty penalty,
+			             vi.factdate factdate,
+			             vi.feeadjust feeadjust,
+			             vi.otherbank otherbank,
+			             vi.clientname clientname,
+			             vi.clientaccnumber clientaccnumber,
+			             vi.clientbank,
+			             vi.clientaccount,
+			             vi.accountbank accountbank,
+			             vi.account account,
+			             vi.accnumber accnumber,
+			             vi.factobject factobject,
+			             vi.accountingdate accountingdate,
+			             vi.ffcmemo ffcmemo
+			        from VI_CONTRACT_FUND_FUND_CHARGE vi
+			       where 1 = 1
+                /~contractid:and vi.contractid='{contractid}'~/
+				/~feetype:and vi.feetype='{feetype}'~/
+				/~paytype:and vi.paytype='{paytype}'~/
+				/~feetypes:and vi.feetype in(<<feetypes>>)~/
+   
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <isPrepared>false</isPrepared>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

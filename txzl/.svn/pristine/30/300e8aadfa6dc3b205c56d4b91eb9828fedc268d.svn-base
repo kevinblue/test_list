@@ -1,0 +1,134 @@
+package com.tenwa.leasing.service.contractcomm;
+
+import java.util.Map;
+
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ContractInvoiceType;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+public interface ContractCommService {
+  public void saveFactoringContractEquip(ContractInfo contracinfo,	Map<String, String> variablesMap) throws Exception;
+  public void  loadContractInfoFromProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  saveAndCreateContractNo(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractInvoiceFromCust(CustInfo custInfo,Map<String, String> variablesMap)throws Exception;
+  public void  loadContractEquipFromProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractGuaranteeMethodFromProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractGuaranteeEquipFromProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractInvoiceFromProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractSignatoryInfoToCreate(CustInfo custInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractSupplierInfoByProj(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractRentCalculationParam(String contractid,String custname,String custid,String flowunid,String process,Map<String, String> variablesMap)throws Exception ;
+  public void  loadContractBadAssetsInfo(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractRentCalculationFromProj(String contractid,ProjInfo projInfo,Map<String, String> variablesMap)throws Exception ;		
+  
+  public ContractInfo saveContractInfo(Map<String,String>variablesMap,Integer ContractStatus)throws Exception;
+  public void saveContractRentCalculationBefore(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractEquip(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractGuaranteeMethod(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractGuaranteeEquip(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractSignatoryInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractSupplierInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractInvoiceType(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractChangeInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveContractChangeOtherInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveRiskInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void saveBadAssetsInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void loadContractEquipTmp(ContractInfo contracInfo,Map<String, String> variablesMap,String flowunid) throws Exception;
+  public void loadContractGuaranteeEquipTmp(ContractInfo contracInfo,Map<String, String> variablesMap,String flowunid) throws Exception;
+  public void loadContractGuaranteeMethodTmp(ContractInfo contracInfo,Map<String, String> variablesMap,String flowunid) throws Exception;
+  public void loadContractNumSet(ContractInfo contracInfo,Map<String, String> variablesMap,String flowunid) throws Exception;
+  /**
+   * 更新生成文件的filekey
+   * @param strWord   存放多行的namne
+   * @param tempkey   一般指合同或项目的ID
+   * @param variablesMap
+   * @throws Exception
+   */
+  public void updateWordKey(String strWord,String tempkey,Map<String,String>variablesMap)throws Exception;
+  /**
+   * 加载生成文件
+   * @param strWord   存放多行的namne
+   * @param modelname 模块名
+   * @param tempkey    一般指合同或项目的ID
+   * @param variablesMap
+   * @throws Exception
+   */
+  public void loadFile(String strWord,String modelname,String tempkey,Map<String,String>variablesMap)throws Exception;
+  public ContractInfo loadContractInfo( Map<String,String>variablesMap)throws Exception;
+  public void  loadContractEquip(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractGuaranteeMethod(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractGuaranteeEquip(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractInvoice(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+  public void  loadContractRentCalculationFromBefore(ContractInfo contractid,Map<String, String> variablesMap)throws Exception ;
+  public void  loadContractSignatoryInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void  loadContractSupplierInfo(ContractInfo contracinfo,Map<String,String>variablesMap)throws Exception;
+  public void  updateContractConditionDataAndSaveDatatoHis(ContractInfo contracinfo, Map<String,String>variablesMap,String docId,String process)throws Exception;
+  public void  updateContractFundDataAndSaveDatatoHis(ContractInfo contracinfo, Map<String,String>variablesMap,String docId,String process)throws Exception;
+  public void  saveContractCustChangeInfo(ContractInfo contracinfo, Map<String,String>variablesMap)throws Exception;
+  public void  loadContractRentCalculation(ContractInfo contractid,Map<String, String> variablesMap)throws Exception ;
+  public void  saveorupdateRelationPerson(Map<String, String> variablesMap) throws Exception;
+  public void saveContractPremiseInfo(ContractInfo contracinfo, Map<String, String> variablesMap) throws Exception;
+  void loadContractPremise(ContractInfo contracinfo, Map<String, String> variablesMap) throws Exception;
+  void saveContractDocList(String strWord, ContractInfo contracinfo, Map<String, String> variablesMap) throws Exception;
+  void loadContractPremiseInfoByProj(ProjInfo projInfo, Map<String, String> variablesMap) throws Exception;
+	/**
+	 * 获得当前登录人的部门路径立项变更
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public String getDeptLujingChange(String id) throws Exception;
+
+	/**
+	 * 获得某个用户的所有信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public String getcustinfo(String id) throws Exception;
+	
+	
+	 public void  loadTaxContractInfo(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+	 public void  loadTaxContractInvoiceType(ContractInvoiceType ctype,Map<String, String> variablesMap) throws Exception;
+	 /**
+	  * 获得某个合同的商务信息
+	  * 保证金、保证金抵扣、保证金退还、调息节点、罚息率、IRR
+	  * @param id
+	  * @return
+	  * @throws Exception
+	  */
+	 public String getContractCondition(String id) throws Exception; 
+	 
+	 public void updateContractCondition(Map<String, String> variablesMap)throws Exception;
+	 public void loadFactoringContractEquip(ProjInfo projInfo,	Map<String, String> variablesMap) throws Exception;
+	 
+	 public void  loadContractEquipTmp(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+	 public void  loadContractGuaranteeEquipTmp(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+	 public void  loadContractGuaranteeMethodTmp(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+	 public void  loadProjPaymentPremiseCondition(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+	 public void  saveProjPaymentPremiseCondition(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+	 public void  loadContractPaymentPremiseCondition(ContractInfo contractInfo,
+			Map<String, String> variablesMap) throws Exception; 
+	 public void  loadSupplierorSignat(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+	 /**
+	  * 财务收入折现使用的加载测算参数方法 
+	  * @param contracinfo
+	  * @param variablesMap
+	  * @throws Exception
+	  */
+	 public void loadContractRentCalculationForFinance(ContractInfo contracinfo,Map<String, String> variablesMap) throws Exception;
+	 /**
+	  * 加载财务折现页面
+	  * @param contractInfo
+	  * @param variablesMap
+	  * @throws Exception
+	  */
+	public void loadIncomeDiscount(ContractInfo contractInfo,Map<String, String> variablesMap)throws Exception;
+	/**
+	 * 保理合同变更发票信息加载
+	 * @param contractInfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadFactoringContractEquip(ContractInfo contractInfo,Map<String, String> variablesMap)throws Exception;
+	 
+}

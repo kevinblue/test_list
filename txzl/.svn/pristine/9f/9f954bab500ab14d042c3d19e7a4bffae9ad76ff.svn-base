@@ -1,0 +1,292 @@
+package com.reckon.renttranrate.web;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import com.reckon.bean.ConditionBean;
+import com.reckon.bean.FundPlanBean;
+import com.reckon.bean.FundRentPlanBean;
+import com.reckon.bean.InterContBean;
+import com.reckon.bean.TabCalBean;
+import com.reckon.commons.helper.GrossProfitCalculator;
+import com.reckon.dao.impl.FundPlanDAOImpl;
+import com.reckon.dao.impl.IrrDetailsDAOImpl;
+import com.reckon.entity.contract.reckon.cash.CashHelp;
+import com.reckon.entity.contract.reckon.cash.ContractCashDetail;
+import com.reckon.entity.contract.reckon.fund.ContractFundRentPlanTemp;
+import com.reckon.entity.interest.FundStandardInterest;
+import com.reckon.rentcalc.service.impl.pub.FundFundChargeServiceImpl;
+import com.reckon.renttranrate.service.TransRateHelper;
+import com.reckon.renttranrate.service.TransRateService;
+import com.reckon.renttranrate.service.impl.PmtNextDayServiceImpl;
+import com.reckon.renttranrate.service.impl.PmtNextListServiceImpl;
+import com.reckon.renttranrate.service.impl.PmtNextMonthServiceImpl;
+import com.reckon.renttranrate.service.impl.PmtNextYearServiceImpl;
+import com.reckon.renttranrate.service.impl.QuotaTransRateServiceImpl;
+import com.reckon.service.RentCalculateService;
+import com.reckon.service.impl.RentCalculateServiceImpl;
+import com.reckon.util.DictTools;
+import com.reckon.util.IrrTools;
+import com.reckon.util.TbBeanTools;
+import com.reckon.util.tools.DateTools;
+import com.reckon.util.tools.NumTools;
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.leasing.entity.fund.ContractFundFundPlan;
+
+/**
+ * @author MHY QQ:648020894
+ */
+public class TransRateDo {
+	static Logger logger = Logger.getLogger(TransRateDo.class);
+	
+	
+	public static void main(String[] args) {
+		List<String> a = new ArrayList<String>();
+		a.add("0");
+		a.add("1");
+		a.add("2");
+		a.add("3");
+		a.add("4");
+		System.out.println(a.subList(0, 2).get(0));
+		System.out.println(a.subList(0, 2).size());
+		System.out.println(a.size());
+	}
+
+	/**
+	 * 
+	 * 调息处理入口
+	 * 
+	 * @param adjustId
+	 * @param contractInfoId
+	 * @param creator
+	 * @return
+	 * @throws Exception
+	 */
+	public Hashtable<String, String> processTransRate(String adjustId, String contractInfoId, String contractId, String creator, String docId) throws Exception {
+		logger.info("开始进行调息处理....");
+		
+		FundPlanDAOImpl fundPlanDAO = new FundPlanDAOImpl();
+		// 查询该合同的商务条件信息
+		ConditionBean cb = fundPlanDAO.findContractCondition(contractInfoId);
+		cb.setContractId(contractId);
+		cb.setDocId(docId);
+		cb.setProjId(contractId);
+		cb.setCreator(creator);
+		cb.setModificator(creator);
+		cb.setCreateDate(DateTools.getSystemDateTime());
+		cb.setModifyDate(DateTools.getSystemDateTime());
+		DictTools.getReversDict(cb);
+
+		// 查询租金计划
+		FundRentPlanBean oldRentPlanContext = fundPlanDAO.findContractFundRentPlanList(contractInfoId);
+		oldRentPlanContext.setBusinessId(contractInfoId);// CONTRACT_INFO.ID
+		oldRentPlanContext.setContractId(contractId);// CONTRACT_INFO.CONTRACT_ID
+		oldRentPlanContext.setDocId(docId);
+		oldRentPlanContext.setCreator(creator);
+		oldRentPlanContext.setModificator(creator);
+		oldRentPlanContext.setCreateDate(DateTools.getSystemDateTime());
+		oldRentPlanContext.setModifyDate(DateTools.getSystemDateTime());
+		
+		//查询原现金流
+		String fundsql = " FROM  ContractFundFundPlan where contractId = '"+contractInfoId+"' order by planDate ";
+		TableService tableService = (TableService)WebUtil.getApplicationContext().getBean("tableService");
+		List<ContractFundFundPlan> fundFundPlanList = tableService.findResultsByHSQL(fundsql);
+		// 根据调息id获得选定的央行调息记录
+		Hashtable<String, String> PBOCInfo = fundPlanDAO.getStandInfoById(adjustId);
+	
+		// 根据调息方式得到合同重新计算利息的起始日期
+		String newDate = TransRateHelper.getNewDateByAdjustType(cb.getAdjustStyle(), PBOCInfo.get("start_date").toString(),cb.getStartDate());
+		//计算调息开始期项
+		int startList = TransRateHelper.getStartListFromRentPlan(oldRentPlanContext.getPlanDateList(), newDate);
+		//注释
+//		if(cb.getStartTransRateDate() != null && cb.getStartTransRateDate().length() > 0){
+//		//注释 int startListNew = TransRateHelper.getStartListFromRentPlan(oldRentPlanContext.getPlanDateList(), cb.getStartTransRateDate());
+//			int startListNew = TransRateHelper.getStartListFromRentPlan(oldRentPlanContext.getPlanDateList(), cb.getStartTransRateDate());
+//			if(startList > 0 && startListNew > 0){
+//				startList = Math.max(startList, startListNew);
+//			}
+//		}
+		logger.info("调息开始期项...." + startList);
+		if("next_list".equals(cb.getAdjustStyle())){
+			startList++;
+		}else if("next_year".equals(cb.getAdjustStyle())){
+			startList=startList+1;
+		}else if("next_year_next_list".equals(cb.getAdjustStyle())){
+			startList=startList+2;
+		}
+		//--------------------------------------------------
+		List<FundStandardInterest> tmpfais=new ArrayList<FundStandardInterest>();
+		List<FundStandardInterest> fsi=null;
+		if("next_list".equals(cb.getAdjustStyle())){
+			//如果是次期 获取最新的央行调息记录 
+			fsi=tableService.findResultsByHSQL("from FundStandardInterest where startDate= (select max(startDate) from FundStandardInterest)");
+			tmpfais.addAll(fsi);
+		}else if("next_year".equals(cb.getAdjustStyle())||"next_year_next_list".equals(cb.getAdjustStyle())){
+			//如果是次起租年  获取上年所有的央行调息记录
+			fsi=tableService.findResultsByHSQL("from FundStandardInterest where startDate< '"+DateUtil.getSystemDate().substring(0, 4)+cb.getStartDate().substring(4, 10)+"' and startDate>= '"+new BigDecimal(DateUtil.getSystemDate().substring(0, 4)).subtract(BigDecimal.ONE).toString()+cb.getStartDate().substring(4, 10)+"'");
+			tmpfais.addAll(fsi);
+		}
+		//判断上调或者下调多少个0.25
+		String rateFloat=TransRateHelper.getRateFloatByProportion(cb.getLeaseTerm(),  tmpfais);
+		//判断从起始日期开始的利率是否相等 不相等的话不可以调息
+		boolean isRateEven = TransRateHelper.isRateEvenFromStartList(oldRentPlanContext.getYearRateList(), startList);
+		//查询合同调息开始期项后回笼的租金
+		String rentIncome = fundPlanDAO.findRentIncomeByRentList(contractInfoId, startList);
+		String msgs = "";
+		if (startList == 0) {// 开始日期参数是否正确
+			msgs += "\\n合同号:" + contractId + "不满足调息规则!\\n调息日期不在合同租赁期限内.\\n未进行调息.";
+		} else if (!isRateEven) {// 起始期数之后的利率是否一致
+			msgs += "\\n合同号:" + contractId + "不满足调息规则!\\n调息开始期项之后的期数中利率不相同.\\n未进行调息.";
+		} else if ("next_list".equals(cb.getAdjustStyle()) && startList > cb.getIncomeNumber()) {// 次期时
+			msgs += "\\n合同号:" + contractId + "不满足调息规则!\\n次期调息合同且调息开始期数为合同最后一期.\\n未进行调息.";
+		} else if ("no_adjust".equals(cb.getAdjustStyle())) {
+			msgs += "\\n合同号:" + contractId + "不满足调息规则!\\n合同商务条件为固定不调息合同.\\n未进行调息.";
+		} else if(new BigDecimal(rentIncome).compareTo(BigDecimal.ZERO)==1){//合同调息开始期项后回笼的租金大于0不允许调息
+			msgs += "\\n合同号:" + contractId + "不满足调息规则!\\n调息开始期项之后回笼过租金.\\n未进行调息.";
+		}
+		
+		logger.info("进行合同是否可以此次调息的判断....." + msgs);
+
+		Hashtable<String, String> resultMap = new Hashtable<String, String>();
+		if (msgs.length() > 0) {
+			resultMap.put("message", msgs);
+			resultMap.put("isSucess", "false");
+		} else {
+			
+			logger.info("起始期数后年利率是否相等...." + isRateEven);
+			String oldYearRate = oldRentPlanContext.getYearRateList().get(startList - 1);
+			logger.info("调息旧年利率...." + oldYearRate);
+			String newIRR = new BigDecimal(rateFloat).add(new BigDecimal(cb.getIrr())).toString();
+			String newYearRate="";
+			logger.info("调息新年利率...." + newYearRate);
+
+			// 清空原来的临时流程数据
+			fundPlanDAO.cleanContractConditionTemp(docId, contractId);
+			fundPlanDAO.cleanContractRentPlanTemp(docId, contractId);
+			fundPlanDAO.cleanContractCashDetailTemp(docId, contractId);
+
+			// 调息上下文信息
+			InterContBean icb = new InterContBean();
+			icb.setContractId(contractId);
+			icb.setAdjustId(adjustId);
+			icb.setStartList(startList);
+			icb.setOldYearRate(oldYearRate);
+			icb.setNewYearRate(newYearRate);
+			icb.setCreator(creator);
+			icb.setAdjustDate(newDate);
+			icb.setDocId(docId);
+			icb.setOldIrr(cb.getIrr());
+			icb.setNewIrr(newIRR);
+			//icb.setOldPlanIrr(cb.getPlanIrr());//planIrr还需要
+			
+			String cashql = " FROM  CashHelp where cashDate >= '"+cb.getStartDate()+"' AND cashDate <= '"+cb.getEndDate().replaceAll(" ", "")+"' order by cashDate ";
+			List<CashHelp> cashHelpList = tableService.findResultsByHSQL(cashql);
+			
+			// 调息
+			processPmtTranRate(cb, oldRentPlanContext, icb,fundFundPlanList,cashHelpList);
+			
+			newYearRate = String.valueOf( icb.getNewYearRate() );
+			
+			// 财务计划调息
+			/*if (!(cb.getSettleMethod().equals("even_rent") && "next_list".equals(cb.getAdjustStyle())) && !"even_corpus".equals(cb.getSettleMethod())) {// 等额租金次期、等额本金时财务计划不需再处理,因为上面调息时处理业务租金计划时已经同时设置了财务租金计划
+				TransRateHelper.processFinacRentPlan(cb, oldRentPlanContext, icb);
+			}*/
+
+			// 保存临时租金计划到临时表
+			fundPlanDAO.saveRentPlanTempList(oldRentPlanContext);
+			
+
+			// 创建现金流
+			// 得到操作表信息
+			TabCalBean tcb = TbBeanTools.getTabInfo("cont_process", cb);
+			
+			// 查询资金收付计划
+			List<FundPlanBean> fundPlanList = fundPlanDAO.findFundPlanList(contractInfoId);
+			if(fundPlanList != null || fundPlanList.size()<=0){
+				//向临时表当中插入数据
+				FundFundChargeServiceImpl  ffc = new FundFundChargeServiceImpl();
+				ffc.addFundFundTemp(fundPlanList, cb, tcb);
+			}
+			
+			//修改现金流的生成规则，按照租金计划和资金计划生成
+			IrrDetailsDAOImpl idd = new IrrDetailsDAOImpl();
+			idd.deleteCashDetails(tcb, tcb.getContractCashTb());// 合同现金流明细表
+			idd.addCashDetails(tcb, cb);
+			
+			
+			String hsql = "";
+			String process = tcb.getCalType();
+			List rentPlanList = null;
+			List cashDetailList = null;
+			Map<String, Object> queryParams = new HashMap<String, Object>();
+			queryParams.put("docId", cb.getDocId());
+			queryParams.put("contractId", cb.getProjId());
+			rentPlanList = tableService.findEntityByProperties(ContractFundRentPlanTemp.class, queryParams);
+			
+			hsql = " FROM  ContractCashDetailTemp where contractId = '"+cb.getProjId()+"' AND docId = '"+cb.getDocId()+"' order by planDate ";
+			cashDetailList = tableService.findResultsByHSQL(hsql);
+			logger.info("现金流大小==》"+ cashDetailList.size());
+			Collections.sort(rentPlanList);
+			Collections.sort(cashDetailList);
+			
+			// 计算现金流实际IRR
+			String realIrr = IrrTools.getIrr(cashDetailList, process);
+			icb.setNewIrr(realIrr);
+			
+			RentCalculateServiceImpl rcs = new RentCalculateServiceImpl();
+			//BigDecimal grossProfit = GrossProfitCalculator.reckonGrossProfit(cb, oldRentPlanContext, fundPlanList, PBOCInfo);
+			BigDecimal grossProfit = rcs.getGrossProfit(rentPlanList, cb, process);
+			cb.setGrossProfit(grossProfit);
+			// 保存临时商务条件
+			
+			//cb.setPlanIrr(planIrr);//planIrr不需要
+			resultMap.put("oldIrr", cb.getIrr());
+			cb.setIrr(realIrr);
+			cb.setCreator(creator);
+			cb.setModificator(creator);
+			cb.setCreateDate(DateTools.getSystemDateTime());
+			cb.setModifyDate(DateTools.getSystemDateTime());
+			DictTools.getPersiDict(cb);
+			fundPlanDAO.addContractConditionTemp(cb);
+			
+			//resultMap.put("newIrr", realIrr);
+			resultMap.put("newIrr", newIRR);
+			//resultMap.put("newPlanIrr", planIrr);
+			resultMap.put("startList", "" + startList);
+			resultMap.put("oldRate", oldYearRate==""?cb.getYearRate():oldYearRate);
+			resultMap.put("newRate", newYearRate);
+			//resultMap.put("oldPlanIrr", oldPlanIrr);
+			resultMap.put("adjustDate", newDate);
+			resultMap.put("message", "调息处理成功!");
+			resultMap.put("isOver", "true");
+			resultMap.put("isSucess", "true");
+		}
+		return resultMap;
+	}
+
+	private static void processPmtTranRate(ConditionBean cb, FundRentPlanBean oldRentPlanContext, InterContBean icb,List<ContractFundFundPlan> fundPlanList,List<CashHelp> cashHelpList) throws Exception {
+		TransRateService rtrs = null;
+		/*if("quota".equals(cb.getRateFloatType())){//定额调息
+			//rtrs = new QuotaTransRateServiceImpl();
+		} else if ("next_day".equals(cb.getAdjustStyle())) {// 次日
+			//rtrs = new PmtNextDayServiceImpl();
+		} else if ("next_month".equals(cb.getAdjustStyle())) {// 次月
+			//rtrs = new PmtNextMonthServiceImpl();
+		} else if ("next_year".equals(cb.getAdjustStyle())) {// 次年
+			//rtrs = new PmtNextYearServiceImpl();
+		} else if ("next_list".equals(cb.getAdjustStyle())||"next_year".equals(cb.getAdjustStyle())) {// 次期
+			rtrs = new PmtNextListServiceImpl();
+		}*/
+		rtrs = new PmtNextListServiceImpl();
+		rtrs.processPmtTranRate(cb, oldRentPlanContext, icb,fundPlanList,cashHelpList);
+	}
+}

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+
+select a.*,
+       di.id diid,
+       sys_guid() id,
+       100000 + aaa.accoutamount  accoutamount , --账户金额及初始值
+       100000 + aa.accountbalance  accountbalance, --账户余额
+       100000 + aa.accountbalance + aaaa.balancedeposit balancedeposit --存款余额
+  from (select substr(sktjb.RECEIPT_TIME || fktjb.payment_time, 0, 10) plantime,
+               substr(sktjb.rw || fktjb.rw, 0, 1) rown,
+               sktjb.RECEIPT_TIME,
+               sktjb.rw sktjb_rw,
+               sktjb.nbzkin_amount inneraccount,
+               sktjb.nbzkin_id nbzkinid,
+               sktjb.hk_amount returnamount,
+               sktjb.hk_id hkid,
+               sktjb.zjxb_amount fundallocated,
+               sktjb.zjxb_id zjxbid,
+               sktjb.nbjk_amount innerborrow,
+               sktjb.nbjk_id nbjkid,
+               sktjb.wbjk_amount outterborrow,
+               sktjb.wbjk_id wbjkid,
+               fktjb.payment_time,
+               fktjb.rw fktjb_rw,
+               fktjb.fk_amount payment,
+               fktjb.fk_id fkid,
+               fktjb.sc_amount funddeposit,
+               fktjb.sc_id scid,
+               fktjb.wbhk_amount outterreturn,
+               fktjb.wbhk_id wbhkid,
+               fktjb.nbzk_amount inneretran,
+               fktjb.nbzk_id nbzkid,
+               fktjb.jtjk_amount groupreturn,
+               fktjb.jtjk_id jtjkid
+          from (select main_table.RECEIPT_TIME,
+                       main_table.rw,
+                       nbzkin.amount           nbzkin_amount,
+                       nbzkin.id               nbzkin_id,
+                       hk.amount               hk_amount,
+                       hk.id                   hk_id,
+                       zjxb.amount             zjxb_amount,
+                       zjxb.id                 zjxb_id,
+                       nbjk.amount             nbjk_amount,
+                       nbjk.id                 nbjk_id,
+                       wbjk.amount             wbjk_amount,
+                       wbjk.id                 wbjk_id
+                  from --查询主表列，查询出在若干类型中，哪一种类型的数量最多，用这种类型的行数量对应的日期和行号来做主表
+                       (select RECEIPT_TIME, type_num rw
+                          from (select pcd.RECEIPT_TIME,
+                                       rank() over(partition by pcd.RECEIPT_TIME order by pcd.id desc) type_num
+                                  from RECEIPT_COUNT_DETAIL pcd
+                                 inner join (select RECEIPT_TIME, fund_type
+                                              from (select RECEIPT_TIME,
+                                                           fund_type,
+                                                           fund_type_num,
+                                                           rank() over(partition by RECEIPT_TIME order by fund_type_num desc) rn
+                                                      from (select RECEIPT_TIME,
+                                                                   fund_type,
+                                                                   count(fund_type) fund_type_num
+                                                              from RECEIPT_COUNT_DETAIL
+                                                             group by RECEIPT_TIME,
+                                                                      fund_type) t1) t2
+                                             where rn = 1) t3
+                                    on pcd.RECEIPT_TIME = t3.RECEIPT_TIME
+                                   and pcd.fund_type = t3.fund_type) t3) main_table
+                  left join (select receipt_time,
+                                   amount,
+                                   id,
+                                   rank() over(partition by receipt_time order by id) rw
+                              from RECEIPT_COUNT_DETAIL
+                             where fund_type = '内部账户转款(转入)') nbzkin
+                    on main_table.receipt_time = nbzkin.receipt_time
+                   and main_table.rw = nbzkin.rw
+                  left join (select receipt_time,
+                                   amount,
+                                   id,
+                                   rank() over(partition by receipt_time order by id) rw
+                              from RECEIPT_COUNT_DETAIL
+                             where fund_type = '回款') hk
+                    on main_table.receipt_time = hk.receipt_time
+                   and main_table.rw = hk.rw
+                  left join (select receipt_time,
+                                   amount,
+                                   id,
+                                   rank() over(partition by receipt_time order by id) rw
+                              from RECEIPT_COUNT_DETAIL
+                             where fund_type = '资金下拨') zjxb
+                    on main_table.receipt_time = zjxb.receipt_time
+                   and main_table.rw = zjxb.rw
+                  left outer join (select receipt_time,
+                                         amount,
+                                         id,
+                                         rank() over(partition by receipt_time order by id) rw
+                                    from RECEIPT_COUNT_DETAIL
+                                   where fund_type = '内部借款') nbjk
+                    on main_table.receipt_time = nbjk.receipt_time
+                   and main_table.rw = nbjk.rw
+                  left join (select receipt_time,
+                                   amount,
+                                   id,
+                                   rank() over(partition by receipt_time order by id) rw
+                              from RECEIPT_COUNT_DETAIL
+                             where fund_type = '外部借款') wbjk
+                    on main_table.receipt_time = wbjk.receipt_time
+                   and main_table.rw = wbjk.rw) sktjb
+          full join (select main_table.payment_time,
+                           main_table.rw,
+                           fk.amount               fk_amount,
+                           fk.id                   fk_id,
+                           sc.amount               sc_amount,
+                           sc.id                   sc_id,
+                           wbhk.amount             wbhk_amount,
+                           wbhk.id                 wbhk_id,
+                           nbzk.amount             nbzk_amount,
+                           nbzk.id                 nbzk_id,
+                           jtjk.amount             jtjk_amount,
+                           jtjk.id                 jtjk_id
+                      from --查询主表列，查询出在若干类型中，哪一种类型的数量最多，用这种类型的行数量对应的日期和行号来做主表
+                           (select payment_time, type_num rw
+                              from (select pcd.payment_time,
+                                           rank() over(partition by pcd.payment_time order by pcd.id desc) type_num
+                                      from PAYMENT_COUNT_DETAIL pcd
+                                     inner join (select payment_time, fund_type
+                                                  from (select payment_time,
+                                                               fund_type,
+                                                               fund_type_num,
+                                                               rank() over(partition by payment_time order by fund_type_num desc) rn
+                                                          from (select payment_time,
+                                                                       fund_type,
+                                                                       count(fund_type) fund_type_num
+                                                                  from PAYMENT_COUNT_DETAIL
+                                                                 group by payment_time,
+                                                                          fund_type) t1) t2
+                                                 where rn = 1) t3
+                                        on pcd.payment_time = t3.payment_time
+                                       and pcd.fund_type = t3.fund_type) t3) main_table
+                      left join (select payment_time,
+                                       amount,
+                                       id,
+                                       rank() over(partition by payment_time order by id) rw
+                                  from PAYMENT_COUNT_DETAIL
+                                 where fund_type = '付款') fk
+                        on main_table.payment_time = fk.payment_time
+                       and main_table.rw = fk.rw
+                      left join (select payment_time,
+                                       amount,
+                                       id,
+                                       rank() over(partition by payment_time order by id) rw
+                                  from PAYMENT_COUNT_DETAIL
+                                 where fund_type = '资金上存') sc
+                        on main_table.payment_time = sc.payment_time
+                       and main_table.rw = sc.rw
+                      left join (select payment_time,
+                                       amount,
+                                       id,
+                                       rank() over(partition by payment_time order by id) rw
+                                  from PAYMENT_COUNT_DETAIL
+                                 where fund_type = '内部账户转款(转出)') nbzk
+                        on main_table.payment_time = nbzk.payment_time
+                       and main_table.rw = nbzk.rw
+                      left join (select payment_time,
+                                       amount,
+                                       id,
+                                       rank() over(partition by payment_time order by id) rw
+                                  from PAYMENT_COUNT_DETAIL
+                                 where fund_type = '外部还款') wbhk
+                        on main_table.payment_time = wbhk.payment_time
+                       and main_table.rw = wbhk.rw
+                      left join (select payment_time,
+                                       amount,
+                                       id,
+                                       rank() over(partition by payment_time order by id) rw
+                                  from PAYMENT_COUNT_DETAIL
+                                 where fund_type = '还集团借款') jtjk
+                        on main_table.payment_time = jtjk.payment_time
+                       and main_table.rw = jtjk.rw) fktjb
+            on sktjb.RECEIPT_TIME = fktjb.payment_time
+           and sktjb.rw = fktjb.rw
+         order by plantime ASC, rown ASC) a
+  left join DEPOSIT_INTEREST di
+    on di.didate = substr(a.plantime, 0, 7)
+  left join (select b.receipt_time accountbalancetime,
+                    b.fund_type,
+                    b.SERIAL_NUM_new,
+                    rank() over(partition by b.receipt_time order by b.SERIAL_NUM_new desc) SERIAL_NUM,
+                    (select sum(case
+                                  when c.fund_type = '内部账户转款(转入)' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '回款' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '资金下拨' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '内部借款' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '外部借款' then
+                                   to_number(c.amount)
+                                  else
+                                   to_number(-c.amount)
+                                end) nu
+                       from (select a.*,
+                                    ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                               from (select max(r.id) id,
+                                            sum(r.amount) amount,
+                                            max(r.receipt_time) receipt_time,
+                                            max(r.fund_type) fund_type
+                                       from receipt_count_detail r
+                                      group by r.receipt_time, r.fund_type
+                                     union all
+                                     select max(p.id),
+                                            sum(p.amount),
+                                            max(p.payment_time),
+                                            max(p.fund_type)
+                                       from payment_count_detail p
+                                      group by p.payment_time) a
+                              order by a.receipt_time) c
+                      where c.SERIAL_NUM_new < b.SERIAL_NUM_new + 1)  accountbalance   --账户余额，计算当天的金额
+               from (select a.*,
+                            ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                       from (select max(r.id) id,
+                                    sum(r.amount) amount,
+                                    max(r.receipt_time) receipt_time,
+                                    max(r.fund_type) fund_type
+                               from receipt_count_detail r
+                              group by r.receipt_time, r.fund_type
+                             union all
+                             select max(p.id),
+                                    sum(p.amount),
+                                    max(p.payment_time),
+                                    max(p.fund_type)
+                               from payment_count_detail p
+                              group by p.payment_time, p.fund_type) a
+                      order by a.receipt_time) b) aa
+    on aa.accountbalancetime = a.plantime
+   and aa. serial_num = a.rown
+
+  left join (select b.receipt_time accountbalancetime,
+                    rank() over(partition by b.receipt_time order by b.SERIAL_NUM_new desc) SERIAL_NUM,
+                    (select sum(case
+                                  when c.fund_type = '内部账户转款(转入)' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '回款' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '资金下拨' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '内部借款' then
+                                   to_number(c.amount)
+                                  when c.fund_type = '外部借款' then
+                                   to_number(c.amount)
+                                  else
+                                   to_number(-c.amount)
+                                end) nu
+                       from (select a.*,
+                                    ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                               from (select max(r.id) id,
+                                            sum(r.amount) amount,
+                                            max(r.receipt_time) receipt_time,
+                                            max(r.fund_type) fund_type
+                                       from receipt_count_detail r
+                                      group by r.receipt_time, r.fund_type
+                                     union all
+                                     select max(p.id),
+                                            sum(p.amount),
+                                            max(p.payment_time),
+                                            max(p.fund_type)
+                                       from payment_count_detail p
+                                      group by p.payment_time, p.fund_type) a
+                              order by a.receipt_time) c
+                      where c.SERIAL_NUM_new < b.SERIAL_NUM_new)  accoutamount   --账户金额，计算前一天的账户余额
+               from (select a.*,
+                            ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                       from (select max(r.id) id,
+                                    sum(r.amount) amount,
+                                    max(r.receipt_time) receipt_time,
+                                    max(r.fund_type) fund_type
+                               from receipt_count_detail r
+                              group by r.receipt_time, r.fund_type
+                             union all
+                             select max(p.id),
+                                    sum(p.amount),
+                                    max(p.payment_time),
+                                    max(p.fund_type)
+                               from payment_count_detail p
+                              group by p.payment_time, p.fund_type) a
+                      order by a.receipt_time) b) aaa
+    on aaa.accountbalancetime = a.plantime
+   and aaa. serial_num = a.rown
+
+  left join (select b.receipt_time accountbalancetime,
+                    rank() over(partition by b.receipt_time order by b.SERIAL_NUM_new desc) SERIAL_NUM,
+                    (select sum(case
+                                
+                                  when c.fund_type = '资金下拨' then
+                                   to_number(-c.amount)
+                                  when c.fund_type = '资金上存' then
+                                   to_number(c.amount)
+                                  else
+                                   0
+                                end) nu
+                       from (select a.*,
+                                    ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                               from (select max(r.id) id,
+                                            sum(r.amount) amount,
+                                            max(r.receipt_time) receipt_time,
+                                            max(r.fund_type) fund_type
+                                       from receipt_count_detail r
+                                      group by r.receipt_time, r.fund_type
+                                     union all
+                                     select max(p.id),
+                                            sum(p.amount),
+                                            max(p.payment_time),
+                                            max(p.fund_type)
+                                       from payment_count_detail p
+                                      group by p.payment_time, p.fund_type) a
+                              order by a.receipt_time) c
+                      where c.SERIAL_NUM_new < b.SERIAL_NUM_new + 1) balancedeposit    
+               from (select a.*,
+                            ROW_NUMBER() OVER(ORDER BY a.receipt_time) AS SERIAL_NUM_new
+                       from (select max(r.id) id,
+                                    sum(r.amount) amount,
+                                    max(r.receipt_time) receipt_time,
+                                    max(r.fund_type) fund_type
+                               from receipt_count_detail r
+                              group by r.receipt_time, r.fund_type
+                             union all
+                             select max(p.id),
+                                    sum(p.amount),
+                                    max(p.payment_time),
+                                    max(p.fund_type)
+                               from payment_count_detail p
+                              group by p.payment_time, p.fund_type) a
+                      order by a.receipt_time) b) aaaa
+    on aaaa.accountbalancetime = a.plantime
+   and aaaa. serial_num = a.rown
+ where 1 = 1
+   and (a.inneraccount is not null or a.returnamount is not null or
+       a.fundallocated is not null or a.innerborrow is not null or
+       a.outterborrow is not null or a.payment is not null or
+       a.funddeposit is not null or a.outterreturn is not null or
+       a.inneretran is not null or a.groupreturn is not null)
+
+	       	/~plantimeStart: and a.plantime >= '{plantimeStart}' ~/
+            /~plantimeEnd: and a.plantime <= '{plantimeEnd}' ~/
+			/~reportstyle: and di.REPORT_STYLE = '{reportstyle}' ~/
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

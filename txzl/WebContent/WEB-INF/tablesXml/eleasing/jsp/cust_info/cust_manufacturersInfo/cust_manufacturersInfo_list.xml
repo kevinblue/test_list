@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				SELECT 
+        			  custmanufacturers.ID id,
+         			  custmanufacturers.quality_rate  qualityrate,
+          			  custmanufacturers.CREDIT_RATE creditrate,
+          			  custmanufacturers.project_name projectname,
+          			  tdd.name_  qualityratename,
+          			  tdd1.name_  creditratename,
+          			  -- cic.org_code  Socialcode,
+                 	  --cic.id   Socialcodeid,
+          			 --  custinfo.cust_name  companyname,
+           			 custmanufacturers.COMPANY_NUMBER companynumber,
+		            custmanufacturers.COMPANY_NAME companyname,
+		            custmanufacturers.MONTH_AVG_MONEY monthavgmoney,
+		            custmanufacturers.PAYMENT_WAY paymentway,
+		            custmanufacturers.PURCHASE_PROJECT purchaseproject,
+		            custmanufacturers.CUST_ID custid,
+		            custinfo.CUST_NAME custname,
+           			 custmanufacturers.creator_ as creator,
+                    base1.Realname_ AS creatorname,
+                    SUBSTR(custmanufacturers.create_date,0,10) as createdate,
+                    custmanufacturers.modificator_ as modificator, 
+                    base2.Realname_ AS modificatorname, 
+                    SUBSTR(custmanufacturers.modify_date,0,10) as modifydate
+        		FROM CUST_MANUFACTURERS_INFO custmanufacturers
+        		left join cust_info custinfo
+          		on custmanufacturers.cust_id = custinfo.id
+          		
+          		  left join cust_info_company  cic  on custinfo.id=cic.cust_id
+          
+          		
+        		left join
+              t_users users1
+              on custmanufacturers.creator_ = users1.id_ 
+              left join t_users  base1 on custmanufacturers.creator_=base1.id_
+                left join t_users  base2 on custmanufacturers.modificator_=base2.id_
+                left join t_dicts_datas tdd on tdd.id_=custmanufacturers.quality_rate
+                left join t_dicts_datas tdd1 on tdd1.id_=custmanufacturers.credit_rate
+        where 1=1
+				/~custid: and custmanufacturers.CUST_ID = '{custid}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+      <table_sql> 
+	        <![CDATA[
+				SELECT 
+					custmanufacturers.ID id,
+				  	custmanufacturers.COMPANY_NUMBER companynumber,
+				  	custmanufacturers.COMPANY_NAME companyname,
+				  	custmanufacturers.MONTH_AVG_MONEY monthavgmoney,
+				  	custmanufacturers.PAYMENT_WAY paymentway,
+				  	custmanufacturers.PURCHASE_PROJECT purchaseproject,
+				  	custmanufacturers.CUST_ID custid,
+				  	custinfo.CUST_NAME custname,
+				  	custmanufacturers.creator_ as creator,
+                    base1.Realname_ AS creatorname,
+                    CONVERT(varchar(100),custmanufacturers.create_date,23) as createdate,
+                    custmanufacturers.modificator_ as modificator, 
+                    base2.Realname_ AS modificatorname, 
+                    CONVERT(varchar(100),custmanufacturers.modify_date,23) as modifydate
+				    FROM CUST_MANUFACTURERS_INFO custmanufacturers
+				    left join cust_info custinfo
+					on custmanufacturers.cust_id = custinfo.id
+				    left join
+	                t_users users1
+	                on custmanufacturers.creator_ = users1.id_ 
+	                left join t_users  base1 on custmanufacturers.creator_=base1.id_
+              	    left join t_users  base2 on custmanufacturers.modificator_=base2.id_
+				    where 1=1
+				/~custid: and custmanufacturers.CUST_ID = '{custid}'~/
+			 ]]> 
+	  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

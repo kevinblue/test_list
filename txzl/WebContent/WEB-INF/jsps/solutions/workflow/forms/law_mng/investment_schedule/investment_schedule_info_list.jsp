@@ -1,0 +1,229 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>风电项目投资</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+	
+function importMiniTableCallBack(message, tableid) {
+	var info = eval("(" + message + ")");
+	mini.alert(info.message);
+	mini.get("id_minitableimport").hide();
+	mini.unmask(document.body);
+	mini.get(tableid).reload();
+	
+	var tabledate = info.tabledate;
+	//console.info(info);
+	if ("" != tabledate) {
+		var grid = mini.get(tableid);
+		grid.set({
+			data : mini.decode(tabledate)
+		});
+	}		
+}
+	
+	jQuery(function() {
+		/*
+		var showTools = true;
+		if ('${param.isView}' == 'true' || isViewHistoryTask == true) {
+			showTools = false;
+		}
+		;*/
+		seajs
+				.use(
+						[ "js/apcomponent/aptable/aptable.js" ],
+						function(ApTable) {
+							new ApTable(
+									{
+										id : "investment_sch",
+										renderTo : "id_table_investment_sch_detail",
+										width : globalClientWidth-10,
+										height:globalClientHeight-30,
+										showPager : false,
+										pageSize:700,
+										lazyLoad : false,
+										title : "风电项目投资",
+										isClickLoad : false,
+										remoteOper : true,
+										
+										multiSelect : true,
+										loadMode : 'ajax',
+										//importOrExPortParam : {
+										//	'exclid' : 'EXCLcheck'
+										//},//用来校验租赁物单价*数量=总价
+										//,//导入EXCEL对应的类
+										//importOrExPortCallBack : 'saveRegVatInvoice',//导入回调方
+										importTargetClass : 'com.tenwa.leasing.entity.investmentschedule.InvestmentSchedule',
+										importHeaderIndex : '1',//标题行
+										importDataIndex : '2',//数据行
+										//showToolbar : showTools,
+										pageSize : 15,
+										showPager : true,
+										virtualScroll : true,
+										tools : [ 'add', '-', 'edit', '-',
+												'remove', '-', 'copy', '-',
+												'exportExcel', '-',
+												'importExcel' ],
+										entityClassName : 'com.tenwa.leasing.entity.investmentschedule.InvestmentSchedule',
+										frozenStartColumn : 0,
+										frozenEndColumn : 0,
+										xmlFileName : '/eleasing/jsp/investment_schedule/investment_schedule_info_list.xml',
+
+										columns : [ 
+										           
+										            {
+											type : 'indexcolumn'
+										}, 
+										{
+											type : 'checkcolumn'
+										}, 
+										
+										{
+											field : 'id',
+											header : 'id',
+											visible : false
+										}, 
+									
+										
+										{
+											field : 'coding',
+											header : '编码',
+											queryConfig : {},
+											formEditorConfig : {
+												required : false,
+												labelWidth : 100,
+												maxLength : 120,
+												colspan : 3,
+												width : '100%'
+											}
+										},
+										
+										{
+											field : 'equiplabor',
+											header : '设备/劳务名称',
+											formEditorConfig : {
+												required : true,
+												newLine : true,
+												labelWidth : 100,
+												maxLength : 120,
+												colspan : 3,
+												width : '100%'
+											}
+										}, {
+											field : 'unit',
+											header : '单位',
+											formEditorConfig : {
+												newLine : true,
+												colspan : 3,
+												maxLength : 120
+											}
+										}, {
+											field : 'specification',
+											header : '规格型号',
+											formEditorConfig : {
+												newLine : true,
+												colspan : 3,
+												maxLength : 120
+											}
+										}, {
+											field : 'numberone',
+											header : '数量',
+
+											formEditorConfig : {
+												newLine : true,
+												colspan : 3,
+												maxLength : 120
+											}
+										}, {
+											field : 'unitprice',
+											header : '单价',
+											formEditorConfig : {
+												newLine : true,
+												colspan : 3,
+												maxLength : 120
+											}
+										}, {
+											field : 'totalprice',
+											header : '合价',
+											formEditorConfig : {
+												newLine : true,
+												colspan : 3,
+												maxLength : 120
+											}
+										} ]
+									});
+						});
+	});
+	/**
+	 //计算设备总价
+	 function adjustTotalPrice() {
+	 var equipnum = $("input[name=equipnum]").val();
+	 var price = $("input[name=price]").val();
+	 equipnum = equipnum || 0;
+	 price = price || 0;
+	 var temp = Number(equipnum) * Number(price);
+	 mini.getbyName("equipprice").setValue(decimal(temp, 2));
+	 }
+	 //检查租赁物件必填和交易价和测算中的价格是否一样
+	 function checkEquipIsNull() {
+	 var grid1 = mini.get("proj_equip");
+	 var jsondata = grid1.getData();
+	 if (jsondata.length <= 0) {
+	 mini.alert("请填写租赁物！！");
+	 return false;
+	 }
+	 //租赁物总价
+	 var totalPrice = 0;
+	 for (var i = 0; i < jsondata.length; i++) {
+	 totalPrice += parseFloat(jsondata[i]['equipprice']);
+	 }
+	 //计算商务条件的设备款
+	 var tempequipAmt = mini.get("equipamt").getValue();
+	 tempequipAmt = tempequipAmt.replace(/,/g, "");
+	 var equipAmt = parseFloat(tempequipAmt).toFixed(2);
+	 totalPrice = parseFloat(totalPrice).toFixed(2);
+	 equipAmt = parseFloat(equipAmt).toFixed(2);
+	 if (parseFloat(totalPrice) < parseFloat(equipAmt)) {
+	 mini.alert("【租赁物明细】标签的合计总价[" + totalPrice + "]不能小于【拟商务条件】标签中的设备款["
+	 + equipAmt + "]！");
+	 return false;
+	 } else {
+	 return true;
+	 }
+	 }
+	 //加载客户信息
+	 function showcustinfo(custid) {
+	 var params = "id=" + custid + "&isView=true";
+	 var url = getRootPath()
+	 + "/leasing/cust_info/cust_company/cust_company_detail.bi?"
+	 + params;
+	 var sheight = window.screen.availHeight - 30;
+	 var swidth = window.screen.availWidth - 10;
+	 var winoption = "left=0px,top=0px,height="
+	 + sheight
+	 + "px,width="
+	 + swidth
+	 + "px,toolbar=yes,menubar=yes,location=yes,status=yes,scrollbars=yes,resizable=yes";
+	 window.open(url, '_blank', winoption);
+	 }
+	 **/
+</script>
+
+</head>
+<body>
+<div id="mini_test_form">
+		<div id="id_table_investment_sch_detail"></div>
+	</div>
+	
+</body>
+</html>
+

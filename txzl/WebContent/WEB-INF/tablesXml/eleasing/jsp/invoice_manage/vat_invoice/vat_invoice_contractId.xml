@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	
+            SELECT CRI.ID              CID,
+                   CRI.CONTRACT_ID     CONTRACTID,
+                   CI.CUST_NAME        CUSTNAME,
+                   CD.EQUIP_AMT        EQUIPAMT,
+                   CRI.CONTRACT_NUMBER CONTRACTNUMBER,
+                   CRI.PROJECT_NAME    PROJECTNAME,
+                   CD.EQUIP_AMT - (SELECT NVL(SUM(VIC.REGISTERED_AMT), 0) FROM VAT_INVOICE_CONTRACT VIC WHERE CRI.ID = VIC.CONTRACT_ID) AS UNREGISTEREDAMT
+              FROM CONTRACT_INFO CRI
+              LEFT JOIN CUST_INFO CI
+                ON CRI.CUST_ID = CI.ID
+              LEFT JOIN CONTRACT_CONDITION CD
+                ON CRI.ID = CD.CONTRACT_ID
+             WHERE 1=1
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

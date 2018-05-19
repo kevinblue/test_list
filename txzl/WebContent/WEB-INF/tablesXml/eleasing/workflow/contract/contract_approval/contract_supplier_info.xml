@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+    SELECT CUST.CUST_NAME   AS SELLERNAME,
+           CUST.ID          AS SELLER,
+           CP.PERSON_REP    AS SELLERLEGALPERSON,
+           CRP.PERSON_NAME_ AS SELLERLINKMAN,
+           CP.OFTEN_ADDR    AS SELLERREGISTERADDR,
+           CP.MAIL_ADD      AS SELLERADDR,
+           CP.POST_CODE     AS SELLERPOSTCODE,
+           CP.PHONE_        AS SELLERTEL,
+           CP.FAX_NUMBER    AS SELLERFAX,
+           --CP.REG_ADDRESS   AS SELLERREGISTERADDR,
+           CA.ACC_NUMBER    AS SELLERACCNUMBERNAME,
+           CA.ACC_NUMBER    AS SELLERACCNUMBER,
+           CA.BANK_NAME     AS SELLERACCBANK,
+           CA.ACCOUNT       AS SELLERACCNAME
+      FROM CUST_INFO CUST
+      LEFT JOIN (
+        SELECT CIP.CUST_ID,'' AS PERSON_REP,CIP.OFTEN_ADDR,CIP.MAIL_ADD,CIP.POST_CODE,CIP.PHONE_,CIP.FAX_NUMBER FROM CUST_INFO_PERSON CIP
+        UNION ALL
+        SELECT CIC.CUST_ID,CIC.PERSON_REP,CIC.REG_ADDRESS,CIC.MAILA_DDRESS,CIC.POST_CODE,CIC.PHONE,CIC.FAX FROM CUST_INFO_COMPANY CIC
+      ) CP ON CUST.ID = CP.CUST_ID
+      LEFT JOIN CUST_RELATED_PERSON CRP ON CUST.ID = CRP.CUST_ID AND CRP.MAIN_PERSON_FLAG = '是'
+      LEFT JOIN CUST_TYPE_INFO CTI ON CUST.ID = CTI.CUST_ID
+      LEFT JOIN CUST_ACCOUNT CA ON CUST.ID = CA.CUST_ID AND CA.IS_MAIN = '是'
+      WHERE CUST.ID IN (SELECT PE.VNDR FROM PROJ_EQUIP PE WHERE PE.PROJ_ID = '{proj_id}')
+      AND CTI.CUST_TYPE = 'cust_type.vndr'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

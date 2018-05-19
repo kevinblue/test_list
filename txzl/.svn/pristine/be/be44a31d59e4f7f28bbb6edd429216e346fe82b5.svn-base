@@ -1,0 +1,245 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>开票确认</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript">
+//状态下拉查询
+var statusdata = [{name : '已退回',value : '已退回'},{name : '已申请',value : '已申请'},{name : '已导出',value : '已导出'},{name : '全部',value : ''}];
+
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id : 'table_id1',
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : '<spring:message code="InvoicingPlanConfirmation" text="租金计划开票确认"/>',
+				iconCls : 'icon-node',
+				multiSelect : true,
+				//hiddenQueryArea : true,//是否将查询区域折叠起来
+				queryButtonColSpan : 4,
+				queryButtonNewLine:false,
+				showPager:true,
+				params:{
+					status:"已申请"
+				},
+				isRemoteStatistic: true,
+				xmlFileName : '/eleasing/jsp/invoice_manage/rent_invoice/invoice_confirm.xml',
+				tools : [
+					{
+						html : '<spring:message code="Back" text="退回"/>',
+						plain : true,
+						iconCls : 'icon-addfolder',
+						handler : function(miniTable, buttonText) {
+							var checkedRowDatas = miniTable.getSelecteds();
+							var operType = "退回";
+							var operTitle = "租金计划开票";
+							var operAction = "backRentIncomeInvoice";
+							
+							if(0 == checkedRowDatas.length){
+								mini.alert("<spring:message code="5CAB6C00-12EC-4F1E-8F41-A43D6E7A3527" text="请选中要操作的数据！  "/>");
+								return;
+							}
+							var params =[];
+						    for(var i = 0;i<checkedRowDatas.length;i++){
+								var checkedRowdata = checkedRowDatas[i];
+								if("已退回"==checkedRowdata.status){
+									alert("<spring:message code='ContractLine' text='合同号'/>:"+checkedRowdata.contractid+"<spring:message code='F3B37FE0-E494-46CA-A3C8-18D0934932B3' text='已退回,不能再退回!!!'/>" );
+									return false;
+								}
+								if("已导出"==checkedRowdata.status){
+									alert("<spring:message code='ContractLine' text='合同号'/>:"+checkedRowdata.contractid+"<spring:message code='52516C6A-6ED7-4F40-ABF9-FBBB03F1AB3E' text='已导出,不能退回!!!'/>" );
+									return false;
+								}
+								var id = checkedRowdata.id;
+								var billtype=checkedRowdata.billtype;
+								var data={};
+								data.id=id;
+								data.billtype=billtype;
+								//data.type=checkedRowdata.plantypeid;
+								params.push(data);
+							}
+							if(!window.confirm(("确定"+operType+"当前"+checkedRowDatas.length+"条记录么？"))) return;
+							var url=getRootPath()+"/acl/"+operAction+".acl";
+							//遮罩
+							mini.mask({
+								el : document.body,
+								cls : 'mini-mask-loading',
+								html : '数据操作中 请稍等...'
+							});
+							jQuery.ajax({
+								url : url,
+								type : 'POST',
+								timeout : 30 * 1000,
+								data : {datas:mini.encode(params)},
+								dataType : 'json',
+								error : function(res, errInfo, e) {
+									mini.unmask(document.body);
+								},
+								success : function(resultJson) {
+									var returnState = resultJson.returnType;
+									switch (returnState) {
+									case "SUCCESS": {
+										miniTable.reload();
+										mini.unmask(document.body);
+										mini.alert(operType + " 成功！");
+										break;
+									}
+									case "FAILURE": {
+										miniTable.reload();
+										mini.unmask(document.body);
+										mini.alert(operType + " 失败！");
+										mini.alert("<spring:message code='943AB7E1-6835-41EE-95BA-34289A1A1BE7' text='生成失败！'/>"+resultJson.content);
+										break;
+									}
+									}
+								}
+							});
+						}
+					},'-',
+					{
+						html : '<spring:message code="confirInvoice" text="确认开票"/>',
+						plain : true,
+						iconCls : 'icon-addfolder',
+						handler : function(miniTable, buttonText) {
+							var checkedRowDatas = miniTable.getSelecteds();
+							if(0 == checkedRowDatas.length){
+								mini.alert("<spring:message code="5CAB6C00-12EC-4F1E-8F41-A43D6E7A3527" text="请选中要操作的数据！  "/>");
+								return;
+							}
+							var temprentIdArr = [];
+							var tempcurrentmoneyArr = [];
+							var tempinvoiceIdArr = [];
+							var params={};
+							for(var i = 0;i<checkedRowDatas.length;i++){
+								var checkedRowdata = checkedRowDatas[i];
+								if("已退回"==checkedRowdata.status){
+									alert("合同号："+checkedRowdata.contractid+"已退回,不能导出!!!" );
+									return false;
+								}
+								if(Number(checkedRowdata.balanceexportmoney)==0){
+									alert("合同号："+checkedRowdata.contractid+"已导出,不能导出!!!" );
+									return false;
+								}
+								var billtype=checkedRowdata.billtype;
+								if(billtype=="rent"){
+									var rentid=checkedRowdata.id;
+									var currentmoney = checkedRowdata.currentmoney;
+									temprentIdArr.push("'"+rentid+"'");
+									tempcurrentmoneyArr.push("'"+currentmoney+"'");
+								}else{
+									var invoiceid=checkedRowdata.id;
+									tempinvoiceIdArr.push("'"+invoiceid+"'");
+								}
+							}
+							 params["rentids"] = temprentIdArr.join(",");
+							 params["currentmoneys"] = tempcurrentmoneyArr.join(",");
+							 params["invoiceids"] = tempinvoiceIdArr.join(",");
+		                     mini.mask({
+									el : document.body,
+									cls : 'mini-mask-loading',
+									html : '数据操作中 请稍等...'
+								});
+							jQuery.ajax({
+								url : getRootPath()+"/acl/exportRentIncomeInvoiceBeforeTwo.acl",
+								type : 'POST',
+								timeout : 30 * 1000,
+								data : params,
+								dataType : 'json',
+								error : function(res, errInfo, e) {
+									mini.unmask(document.body);
+								},
+								success : function(resultJson) {
+									var returnState = resultJson.returnType;
+									switch (returnState) {
+									case "SUCCESS": {
+										miniTable.reload();
+										mini.unmask(document.body);
+										mini.alert("操作成功！");
+										mini.get("table_id1").reload();
+										break;
+									}
+									case "FAILURE": {
+										miniTable.reload();
+										mini.unmask(document.body);
+										mini.alert("操作失败！");
+										break;
+									}
+									}
+								}
+							}); 
+
+						}
+					}
+				],
+				columns : [ 
+				    {type : 'indexcolumn'},
+				   	{type : 'checkcolumn'},  
+				   	{field : 'billtype',header : 'billtype',visible : false},
+				   	{field : 'id',header : 'id',visible : false},
+				   	{field : 'contractid',header : '<spring:message code="ContractId" text="合同号"/>',queryConfig : {}},
+				   	{field : 'contractnumber',header : '<spring:message code="ContractLine" text="业务合同号"/>',queryConfig : {},renderer:function(e){
+						return "<a href='javascript:void(0);' onclick='showContractDetail(\""+e.record.cid+"\")'>" + e.record.contractnumber + "</a>";
+					}},
+				   	{field : 'custname',header : '<spring:message code="CustomerName" text="客户名称"/>',allowSort:true,queryConfig : {}},
+				   	{field : 'rentlist',header : '<spring:message code="PlanPeriod" text="期次"/>'},
+				   	{field : 'plandate',header : '<spring:message code="PlanDate" text="计划日期"/>'},
+				   	{field : 'planmoney',header : '<spring:message code="PlanMoney" text="计划金额"/>',dataType:"currency",align:'right',summary: true},
+				   	{field : 'incomedate',header : '<spring:message code="CurrentDate" text="实收日期"/>',
+				   		queryConfig : {
+				   			newLine: true,
+							type : 'date',
+							vtype : 'date',//
+							range : true,//是否是范围查询
+							format : 'yyyy-MM-dd',
+							showTime : true
+						}
+				   	},
+				   	{field : 'haveexpmoney',header : '已导出金额',summary: true},
+				   	{field : 'currentmoney',header : '本次导出金额',summary: true,
+				   		queryConfig : 
+				   		{
+				   			type:'float',
+				   			range:true
+				   		}	
+				   	},
+				   	{field : 'plantype',header : '<spring:message code="MoneyType" text="金额类型"/>',queryConfig : { }},
+				   	{field : 'invoicetype',header : '<spring:message code="InvoiceType" text="发票类型"/>'},
+				   	{field : 'taxrate',header : '税率',visible : false},
+				   	{field : 'taxratename',header : '税率'},
+				   	{field : 'taxregcode',header : '<spring:message code="TaxRegCode" text="纳税人识别号"/>'},
+				   	{field : 'taxbank',header : '<spring:message code="TaxBank" text="开户行及银行账号"/>',width:250},
+				   //{field : 'taxacc',header : '<spring:message code="TaxAccountNumber" text="开户账号"/>'},
+				   	//{field : 'taxtel',header : '<spring:message code="BillingPhone" text="开票电话"/>'},
+				   	{field : 'regaddress',header : '<spring:message code="BillingAddress" text="开票地址及电话"/>',width:250},
+				   	{field : 'status',header : '<spring:message code="Status" text="状态"/>',
+						queryConfig : 
+				   	    {
+							type : 'combobox',//表单域类型
+							valueField : 'value',
+							textField : 'name',
+							allowInput : false,
+							newLine: true,
+							//defaultValue:'1',
+							data : statusdata
+					   }	
+					}
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body></body>
+</html>
+<!-- <script>
+function showContractDetail(cid){
+	var url = getRootPath()+"/workflow/forms/contract/contract_search/fund_fund_plan_base.bi?contractid="+cid;
+	openFullScreenWindow(url);
+}
+</script> -->

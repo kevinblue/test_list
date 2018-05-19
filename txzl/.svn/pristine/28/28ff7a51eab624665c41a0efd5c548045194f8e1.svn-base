@@ -1,0 +1,215 @@
+package com.tenwa.leasing.entity.finacial;
+
+import java.math.BigDecimal;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+
+
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.kernal.annotation.FieldName;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.file.BaseFile;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+/**
+ * 
+ * @author zyh
+ * @date 2016-9-23下午09:33:10
+ * @info 集团存款台帐
+ * @Copyright 
+ * Tenwa
+ */
+@Entity
+@FieldName(name = "集团存款台帐")
+@Table(name="CAPITAL_PLAN")
+public class CapitalPlan {
+	
+	@Id
+    @GeneratedValue(generator = "paymentableGenerator")     
+    @GenericGenerator(name = "paymentableGenerator", strategy = "uuid") 
+    @Column(length=32)
+	private String id;
+	
+	@FieldName(name="序号")
+	@Column(name="SERIAL_NUM", length=50)
+	private String  serialNum;//
+	
+	@FieldName(name="金额（元）")
+	@Column(name="AMOUNT",precision = 22, scale = 2)
+	private BigDecimal  amount;
+	
+	@FieldName(name="上存/下拨日期")
+	@Column(name="DEP_STIR_DATE",length=20)
+	private String depStirDate;
+	
+	@FieldName(name="类型")
+	@Column(name="TYPE",length=20)
+	private String type;
+	
+	@FieldName(name="存款利率")
+	@Column(name="INTEREST_RATES",precision = 22, scale = 4)
+	private BigDecimal interestRates;
+	
+	@FieldName(name="存款余额")
+	@Column(name="BALANCE",precision = 22, scale = 2)
+	private BigDecimal balance;
+	
+	@FieldName(name="存款利息")
+	@Column(name="INTEREST",precision = 22, scale = 2)
+	private BigDecimal interest;
+	
+	@FieldName(name="备注")
+	@Column(name="NOTE",length=50)
+	private String note;
+	
+	@FieldName(name = "上传文件名")
+	@ManyToOne(targetEntity = BaseFile.class, fetch = FetchType.LAZY)
+	@JoinColumn(name = "UP_ID")
+	private BaseFile upLoadId;
+	
+	@ManyToOne
+	@FieldName(name="创建人")
+	@JoinColumn(name="CREATOR_")
+	private User creator;
+	
+	@FieldName(name="创建时间")
+	@Column(name="CREATE_DATE", length=20)	
+	private String createDate;
+	
+	@ManyToOne
+	@FieldName(name="修改人")
+	@JoinColumn(name="MODIFICATOR_")
+	private User modificator;
+	
+	@FieldName(name="修改时间")
+	@Column(name="MODIFY_DATE", length=20)	
+	private String modifyDate;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getSerialNum() {
+		return serialNum;
+	}
+
+	public void setSerialNum(String serialNum) {
+		this.serialNum = serialNum;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
+	}
+
+	public String getDepStirDate() {
+		return depStirDate;
+	}
+
+	public void setDepStirDate(String depStirDate) {
+		this.depStirDate = depStirDate;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public BigDecimal getInterestRates() {
+		return interestRates;
+	}
+
+	public void setInterestRates(BigDecimal interestRates) {
+		this.interestRates = interestRates;
+	}
+
+	
+	public BigDecimal getBalance() {
+		return balance;
+	}
+
+	public void setBalance(BigDecimal balance) {
+		this.balance = balance;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public void setNote(String note) {
+		this.note = note;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public String getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+
+	public User getModificator() {
+		return modificator;
+	}
+
+	public void setModificator(User modificator) {
+		this.modificator = modificator;
+	}
+
+	public String getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(String modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public BaseFile getUpLoadId() {
+		return upLoadId;
+	}
+
+	public void setUpLoadId(BaseFile upLoadId) {
+		this.upLoadId = upLoadId;
+	}
+
+	public BigDecimal getInterest() {
+		return interest;
+	}
+
+	public void setInterest(BigDecimal interest) {
+		this.interest = interest;
+	}
+
+
+}

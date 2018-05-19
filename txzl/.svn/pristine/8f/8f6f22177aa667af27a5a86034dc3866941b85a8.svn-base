@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select de.id,
+			       vcia.custid custinfo,
+			       vcia.custname custinfoname,
+			       vcia.orgcodecardno code,
+			       c.custtype custtype,
+			       nvl(de.baidu, ' ') baidu,
+			       nvl(de.execution_net, ' ') executionnet，
+			       nvl(de.judgmentnet, ' ') judgmentnet， 
+			       nvl(de.negative_control, ' ') negativecontrol,
+			       case
+			         when de.negative_control is not null and de.negative_control <>' ' then
+			          1
+			         else
+			          2
+			       end control
+			  from  vi_cust_info_all vcia 
+			  
+			  left join ASSET_NET_MONITOR_APPLY_DETAIL de
+			    on de.cust_id = vcia.custid 
+			    /~applyid: and de.apply_id='{applyid}'~/
+			  inner join (select ren.custid custid, wm_concat(ren.custtype) custtype
+			               from (select ci.cust_id custid, '承租人' custtype
+			                       from contract_info ci
+			                      where ci.contract_status = '31'
+			                      group by ci.cust_id
+			                     union all
+			                     select cg.assuror custid, '担保人' custtype
+			                       from contract_guarantee_method cg
+			                      inner join contract_info ci
+			                         on ci.id = cg.contract_id
+			                      where ci.contract_status = '31'
+			                      group by cg.assuror) ren
+			              group by ren.custid) c
+			    on vcia.custid = c.custid
+				where 1=1
+				
+				/~userid: and creator_='{userid}'~/
+				/~custinfoname: AND xb.custinfoname LIKE '%{custinfoname}%'~/
+				/~code: AND xb.code LIKE '%{code}%'~/
+				/~custtype: AND xb.custtype LIKE '%{custtype}%'~/
+				order by control
+	  ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

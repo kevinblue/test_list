@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ select pi.proj_id projid,
+ 
+       pi.id pid,
+       ci.project_name as projectname,
+       ci.id,
+       ci.CUSTID custid,
+       ci.CONTRACT_ID,
+       ci.CARD_NO,
+       ci.contract_number contractnumber,
+       ci.cust_name,
+       ci.department,
+       ci.contractstatus,
+       CS.Lease_Acc_Number,
+       CS.Lease_Acc_Bank,
+       CS.Lease_Acc_Name
+  FROM VI_CONTRACT_INFO CI, CONTRACT_SIGNATORY CS, Proj_info pi
+ where cs.contract_id = ci.ID
+   and pi.id = CI.proj_id
+   and CI.CONTRACT_STATUS >= 21
+   AND CI.CONTRACT_STATUS <= 100
+   /~projid: AND pi.proj_id like '%{projid}%' ~/
+/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+/~projectname: AND CI.PROJECT_NAME like '%{projectname}%' ~/
+/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+<EXTRACTEND>order by contract_id desc<EXTRACTEND>   
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

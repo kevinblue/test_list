@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			SELECT 
+				ID,
+				RENT_LIST AS RENTLIST,
+				PLAN_DATE AS PLANDATE,
+				RENT AS RENT,
+				CORPUS AS CORPUS,
+				INTEREST AS INTEREST,
+				CORPUS_OVERAGE AS CORPUSOVERAGE,
+				CORPUS_BUSINESS AS CORPUSBUSINESS,
+				INTEREST_BUSINESS AS INTERESTBUSINESS,
+				cautionmoney_Remain cautionmoneyRemain,
+				RENT_ADJUST AS RENTADJUST,
+				YEAR_RATE AS yearrate
+			 FROM PROJ_FUND_RENT_PLAN
+               WHERE PROJ_ID='{proj_id}'
+              <EXTRACTEND> ORDER BY RENTLIST<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

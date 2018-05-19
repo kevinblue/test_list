@@ -1,0 +1,111 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>所有权转移</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript">
+var currentClientWidth = document.documentElement.clientWidth;
+var currentClientHeight = document.documentElement.clientHeight;
+jQuery(function() {
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+		id: "transfer_of_ownership",
+		renderTo: "id_table_container_contract_change",
+		width: currentClientWidth,
+		height: currentClientHeight,
+		lazyLoad: false,
+		title: "所有权转移确认书",
+		remoteOper : false,
+		showPager: true,
+		pageSize: 20,
+		queryButtonColSpan: 2,
+		queryButtonNewLine:true,
+		xmlFileName: '/eleasing/workflow/contract/contract_change/contract_change_list.xml',
+		tools:[
+			   {
+				html:'生成所有权转移确认书',
+				plain:true,
+				iconCls:'icon-addfolder',
+				handler:function(miniTable, buttonText) {
+					var checkedRowDatas = miniTable.getSelecteds();
+					if(0 == checkedRowDatas.length){
+						mini.alert("请选择要导出资产所有权转移确认书的记录！！");
+						return;
+					}
+					var row = checkedRowDatas[0];
+					var leasform = row.leasform;
+					var params = {};
+					params['contract_id'] = row.contract_id;
+					//date:当前时间
+					params['date.nowTime']= new Date().format("yyyy 年 MM 月 dd 日");
+					//debugger;
+					if(leasform=='lease_form2'){
+						var startdate=tenwa.toDate(row.startdate,'yyyy-MM-dd');
+						var year = startdate.getFullYear();
+						var month = startdate.getMonth()+ 1;
+						var day = startdate.getDate();
+						//label_0,label_1,label_2
+						params['label.year']= year;
+						params['label.month']= month;
+						params['label.day']= day;
+					  	var fileTeplate=new fileTemplateConfig({						
+							templateno : 'F-201703004',
+							tableid:miniTable.config.id,
+							modelname:miniTable.config.title,
+							returntype:'listtonewpage',
+							parames :params
+						});
+						fileTeplate.createFile();
+				     }
+				if(leasform=='lease_form1'){																		
+				  	var fileTeplate=new fileTemplateConfig({						
+						templateno : 'F-201703003',
+						tableid:miniTable.config.id,
+						modelname:miniTable.config.title,
+						returntype:'listtonewpage',
+						parames :params
+					});
+					fileTeplate.createFile();
+					}
+				
+				if(leasform!='lease_form1'&&leasform!='lease_form2'){
+					mini.alert('没有找到对应模板！！！')
+				}
+				
+				}
+			}         
+		],
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			{field:'projid', header:'项目编号',queryConfig:{}},	
+			{field: 'cust_name', header: '客户名称',width:135,queryConfig:{width:165,newLine: false}},
+			{field: 'project_name', header: '项目名称',queryConfig:{width:165}},
+			{field: 'leasform', header: '租赁形式', visible: false},
+			{field: 'contract_number', header: '业务合同编号',width:110,queryConfig:{width:165,newLine:true}},			
+			{field: 'contract_id', header: '合同编号',width:110,queryConfig:{width:165,newLine:false}},
+			{field:'cleanleasemoney',dataType:"currency",header:'合同金额'},
+			{field: 'industry_type', header: '内部行业',width:80},
+			{field: 'projmanagename', header: '项目经理',width:80},
+			{field: 'contractstatus', header: '项目状态',width:80},
+			{field: 'card_no', header: '身份证/注册号/统一社会信用代码',width:175,queryConfig:{width:165}},			
+			{field: 'department', header: '出单部门'},
+			{field: 'startdate', header: '起租日',visible: false}
+			
+		 ]
+	  });
+   });
+});
+</script>
+</head>
+<body>
+<div id="id_table_container_contract_change"></div>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select list.*,tdd.name_ invoicetype From (	 
+				select 
+				ci.id as cid,
+				fii.id           as id,
+				cffp.payment_id   as paymentid,
+				ci.contract_id    as contractid,
+				CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+				cinfo.cust_name   as custname,
+				cffp.plan_date    as plandate,
+				cffp.plan_money   as planmoney,
+				tds.name_         as feetype,
+				cit.invoice_type as invoicetypeid,
+				cit.tax_reg_code  as taxregcode,
+		        cit.tax_bank      as taxbank,
+		        cit.tax_acc       as taxacc,
+	            case cffp.fee_type 
+	            when 'feetype1' then cit.hand_rate--手续费
+	            when 'feetype3' then cit.service_rate--咨询服务费
+	            when 'feetype4' then cit.nominal_rate--留购价
+	            when 'feetype6' then cit.returnamt_rate--厂商返利
+	            when 'feetype5' then cit.firstpayment_rate--首付款
+	            when 'feetype7' then cit.insurancelessor_rate--保险费
+	            end as taxrate,
+		        cit.invoice_phone as phone,
+		        cit.invoice_add   as regaddress,
+				case  when  nvl(fii.invoice_status,0)=1 then '已退回' when  nvl(fii.invoice_status,0)=2 then '已申请' end as status,
+        		TDD2.NAME_        AS LEASEFORM,
+        		cffp.plan_money-nvl(exporttab.exportmoney,0) currentmoney,
+        		nvl(exporttab.exportmoney,0) haveexportmoney
+				from fund_invoice_info fii
+				left join contract_fund_fund_plan cffp on fii.cffp_id=cffp.id and fii.bill_type='invoice'
+				left join t_dicts_datas tds on cffp.fee_type=tds.id_
+				left join contract_info ci on cffp.contract_id=ci.id
+				left join contract_invoice_type cit on ci.id=cit.contract_id
+				LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+				left join cust_info cinfo on ci.cust_id=cinfo.id
+				left join 
+                (
+                	 select fidi.fund_invoice_id , nvl(sum(nvl(fidi.invoice_money,0)),0) as exportmoney 
+                	 from fund_invoice_download_info fidi where fidi.HC_STATUS is null and fidi.IS_CANCEL is null group by  fidi.fund_invoice_id
+                )exporttab on fii.id=exporttab.fund_invoice_id
+				where 1=1
+				--计划开票
+			    --and fii.cffp_id is not null
+				--开票种类为发票
+				and fii.bill_type='invoice'
+				--增加本金一次性开票是否包含首付款判断
+				and ((select td.description_ From t_dicts_datas td where td.id_='iscorpusone.01')='否' or (cffp.fee_type!='feetype5' or cit.rent_invoice_type not in('invoice_type01','invoice_type02')))
+	        
+	        	union all
+	         
+				select 
+				ci.id as cid,
+		        fii.id           as id,
+		        cffp.payment_id   as paymentid,
+		        ci.contract_id    as contractid,
+		        CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+		        cinfo.cust_name   as custname,
+		        cffc.fact_date    as plandate,
+		        cffc.fact_money   as planmoney,
+		        tds.name_         as feetype,
+		    	 cit.invoice_type as invoicetypeid,
+		        cit.tax_reg_code  as taxregcode,
+		        cit.tax_bank      as taxbank,
+		        cit.tax_acc       as taxacc,
+		        case cffp.fee_type 
+	            when 'feetype1' then cit.hand_rate--手续费
+	            when 'feetype3' then cit.service_rate--咨询服务费
+	            when 'feetype4' then cit.nominal_rate--留购价
+	            when 'feetype6' then cit.returnamt_rate--厂商返利
+	            when 'feetype5' then cit.firstpayment_rate--首付款
+	            when 'feetype7' then cit.insurancelessor_rate--保险费
+	            end as taxrate,
+		        cit.invoice_phone as phone,
+		        cit.invoice_add   as regaddress,
+		        case  when  nvl(fii.invoice_status,0)=1 then '已退回' when  nvl(fii.invoice_status,0)=2 then '已申请' end as status,
+        		TDD2.NAME_        AS LEASEFORM,
+        		cffc.fact_money-nvl(exporttab.exportmoney,0) currentmoney,
+        		nvl(exporttab.exportmoney,0) haveexportmoney
+		        from fund_invoice_info fii
+		        left join contract_fund_fund_charge cffc on fii.cffc_id=cffc.id
+		        left join contract_fund_fund_plan cffp on cffc.payment_id=cffp.id
+		        left join t_dicts_datas tds on cffc.fee_type=tds.id_
+		        left join contract_info ci on cffc.contract_id=ci.id
+		        left join contract_invoice_type cit on ci.id=cit.contract_id
+		        LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+		        left join cust_info cinfo on ci.cust_id=cinfo.id
+		        left join 
+                (
+                	select fidi.fund_invoice_id , nvl(sum(nvl(fidi.invoice_money,0)),0) as exportmoney 
+                	from fund_invoice_download_info fidi where fidi.HC_STATUS is null and fidi.IS_CANCEL is null group by  fidi.fund_invoice_id
+                )exporttab on fii.id=exporttab.fund_invoice_id
+        
+				where 1=1
+				--实收开票
+				and fii.cffc_id is not null
+				--开票种类为发票
+				and fii.bill_type='invoice'
+				--不开票记录不显示
+				and nvl(fii.invoice_status,0)!=-1
+				--增加本金一次性开票是否包含首付款判断
+				and ((select td.description_ From t_dicts_datas td where td.id_='iscorpusone.01')='否' or (cffc.fee_type!='feetype5' or cit.rent_invoice_type not in('invoice_type01','invoice_type02')))
+	        )list left join t_dicts_datas tdd on tdd.id_=list.invoicetypeid
+	        where list.planmoney-nvl(list.haveexportmoney,0)>0
+	        /~contractid: and list.contract_id like '%{contractid}%' ~/
+			/~contractnumber: AND list.CONTRACT_NUMBER LIKE '%{contractnumber}%' ~/
+			/~custname: and list.cust_name like '%{custname}%' ~/
+			/~plandateStart: and list.plan_date >='{plandateStart}' ~/
+            /~plandateEnd: and list.plan_date <='{plandateEnd}' ~/
+            /~feetype: and list.feetype = '{feetype}' ~/
+            /~leaseform: AND list.LEAS_FORM = '{leaseform}' ~/
+	        /~status: and status in ('<<status>>') ~/
+            
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,409 @@
+package com.tenwa.leasing.utils;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
+import org.dom4j.xpath.DefaultXPath;
+
+import com.tenwa.exception.BusinessException;
+import com.tenwa.kernal.utils.FileUtil;
+
+
+/**
+ * 
+ * 
+ * WordXmlUtil
+ * 
+ * 操作wordXML达到word套打的功能
+ * 
+ * 2014-4-1 上午11:22:14
+ * 
+ * @version 1.0.0
+ *
+ */
+public class WordBookMarkXmlUtil {
+	
+	/**
+	 * 
+	 * replaceBookMark(替换文档的中的点位符)
+	 * (这里描述这个方法适用条件 – 可选)
+	 * @param document //要替换的wrod文档
+	 * @param book     //点位符
+	 * @param value    //值
+	 *void
+	 * @exception 
+	 * @since  1.0.0
+	 */
+	public static void replaceBookMark(Document document ,String book,String value){
+		System.out.println("//w:bookmarkStart[@w:name='"+book+"']"+":"+value);
+		DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+        xpath  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        DefaultXPath xpathRpr = new DefaultXPath("w:rPr");  
+        xpathRpr  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        
+        
+        List<Element> bookmarks = xpath.selectNodes(document);
+	          for( Element f : bookmarks){
+	        	  List<Element> elements=f.getParent().elements();
+	        	  int index=elements.indexOf(f);
+	        	  Element temp=elements.get(index-1);
+	        	  List<Element> rprs=xpathRpr.selectNodes(temp);
+	        	  Element wr=DocumentHelper.createElement("w:r");
+	        	  if(rprs.size()>0){
+	        		  wr.add(rprs.get(0).createCopy());
+	        	  }
+	        	  wr.add(DocumentHelper.createElement("w:t").addText(value));
+	        	  elements.add(elements.indexOf(f), wr);
+	     }     
+	}
+	
+	public static void replaceBookMarkByElement(Element document ,String book,String value,int cindex){
+		System.out.println("//w:bookmarkStart[@w:name='"+book+"']"+":"+value);
+		DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+        xpath  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        DefaultXPath xpathRpr = new DefaultXPath("w:rPr");  
+        xpathRpr  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        
+        
+       List<Element> bookmarks = xpath.selectNodes(document);
+//	          for( Element f : bookmarks){
+       
+	        	  List<Element> elements=bookmarks.get(cindex).getParent().elements();
+	        	  int index=elements.indexOf(bookmarks.get(cindex));
+	        	  Element temp=elements.get(index-1);
+	        	  List<Element> rprs=xpathRpr.selectNodes(temp);
+	        	  Element wr=DocumentHelper.createElement("w:r");
+	        	  if(rprs.size()>0){
+	        		  wr.add(rprs.get(0).createCopy());
+	        	  }
+	        	  wr.add(DocumentHelper.createElement("w:t").addText(value));
+	        	  elements.add(elements.indexOf(bookmarks.get(cindex)), wr);
+	    // }     
+	}
+	/**
+	 * 
+	 * replaceTableBookMark(替换word中指定书签中的表格数据)
+	 * (这里描述这个方法适用条件 – 可选)
+	 * @param document   //当前文档
+	 * @param book       //提点表格中行的位置
+	 * @param tableData  //表格数据
+	 *void
+	 * @exception 
+	 * @since  1.0.0
+	 */
+	public static void replaceTableBookMark(Document document ,String book,List<List>tableData) throws Exception{
+		//插入表格数据
+		 DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+	        xpath  
+	                .setNamespaceURIs(Collections  
+	                        .singletonMap("w",  
+	                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+	        List<Element> texts = xpath.selectNodes(document);
+	        if(texts.size()>0){
+	        	Element tdtextnode=texts.get(0);
+	        	xpath = new DefaultXPath("ancestor::w:tr");
+	        	List<Element> trs=xpath.selectNodes(tdtextnode);
+	        	if(trs.size()>0){
+	        		Element soureTr=trs.get(trs.size()-1);
+	               	List<Element> elements=soureTr.getParent().elements();
+	        	    int cindex=elements.indexOf(soureTr);//
+	        	    for(int i=0;i<tableData.size();i++){
+	        	    	if(i<tableData.size()-1){
+	        	           Element tr=soureTr.createCopy();//拷贝一行
+	        	           elements.add(cindex, tr);
+	        	        }
+	        	     }
+	        	    for(int i=0;i<tableData.size();i++){
+	        	    	  Element tr=elements.get(cindex+i);
+	        	    	  insertTrData(tr, tableData.get(i));
+	        	     }
+	        	   }
+	        	}
+	 }
+	/**
+	 * 
+	 * replaceTableBookMark(替换word中指定书签中的表格数据)
+	 * (这里描述这个方法适用条件 – 可选)
+	 * @param document   //当前文档
+	 * @param book       //提点表格中行的位置
+	 * @param tableData  //表格数据
+	 *void
+	 * @exception 
+	 * @since  1.0.0
+	 */
+	public static void replaceMTTableBookMark(Document document ,String book,List<List>tableData,boolean flag,int clen) throws Exception{
+		//插入表格数据
+		 DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+	        xpath  
+	                .setNamespaceURIs(Collections  
+	                        .singletonMap("w",  
+	                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+	        List<Element> texts = xpath.selectNodes(document);
+	        if(texts.size()>0){
+	        	Element tdtextnode=texts.get(0);
+	        	xpath = new DefaultXPath("ancestor::w:tr");
+	        	List<Element> trs=xpath.selectNodes(tdtextnode);
+	        	if(trs.size()>0){
+	        		Element soureTr=trs.get(0);
+	               	List<Element> elements=soureTr.getParent().elements();
+	        	    int cindex=elements.indexOf(soureTr);//
+	        	    if(flag==true){
+	        	    	if(tableData.size()>clen&&clen>0){
+	        	    		elements.remove(cindex);
+	        	    		elements.remove(cindex+1);
+	        	    	}
+	        	    	if(tableData.size()<=clen){
+	        	    		elements.remove(cindex+2);
+	        	    	}
+	        	    	if(tableData.size()<=clen){
+	        	    	    for(int i=0;i<tableData.size();i++){
+	    	        	    	if(i<tableData.size()-1){
+	    	        	           Element tr=soureTr.createCopy();//拷贝一行
+	    	        	           elements.add(cindex, tr);
+	    	        	        }
+	    	        	     }
+	        	    	    for(int i=0;i<tableData.size();i++){
+	  	        	    	  Element tr=elements.get(cindex+i);
+	  	        	    	  insertTrData(tr, tableData.get(i));
+	  	        	       }
+	        	    	}
+	        	    }
+	        	
+	        	   }
+	        	}
+	 }
+	public static void replaceMDBookMarkByFile(Document document ,String book,String fileName) throws Exception{
+		System.out.println("//w:bookmarkStart[@w:name='"+book+"']"+":"+fileName);
+		DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+        xpath  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        DefaultXPath xpathRpr = new DefaultXPath("w:rPr");  
+        xpathRpr  
+                .setNamespaceURIs(Collections  
+                        .singletonMap("w",  
+                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        DefaultXPath xpathBody = new DefaultXPath("//w:body");  
+        xpathBody  
+        .setNamespaceURIs(Collections  
+                .singletonMap("w",  
+                        "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+        File file = new File(StrTools.fileNameCheck(fileName));
+		ZipFile docxFile = new ZipFile(file);
+		ZipEntry documentXML = docxFile.getEntry("word/document.xml");
+		InputStream documentXMLIS = docxFile.getInputStream(documentXML);
+		SAXReader saxReader = new SAXReader();
+		Document tempdocument = null;
+		tempdocument = saxReader.read(documentXMLIS);
+		List<Element> body = xpathBody.selectNodes(tempdocument);
+        List<Element> bookmarks = xpath.selectNodes(document);
+	          for( Element f : bookmarks){
+	        	  Element p=f.getParent().getParent();
+	        	  List<Element> elements=p.elements();
+	        	  int index=elements.indexOf(f.getParent());
+	              List<Element> sourceEle=body.get(0).elements();
+	              List<Element> toSourceEle=new ArrayList<Element>();
+	              for(int i=0;i<sourceEle.size();i++){
+	            	  toSourceEle.add(sourceEle.get(i).createCopy());
+	              }
+	        	  elements.addAll(elements.indexOf(f.getParent()),toSourceEle);
+	        	  //elements.add(elements.indexOf(f.getParent()), document.getRootElement().createCopy());
+	     } 
+	      docxFile.close();          
+	}	
+	public static void replaceMCListBookMark(Document document ,String book,List<Object>tableData,boolean flag,int clen) throws Exception{
+		//插入表格数据，不生一行
+		 DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"']");  
+	        xpath  
+	                .setNamespaceURIs(Collections  
+	                        .singletonMap("w",  
+	                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+	        List<Element> texts = xpath.selectNodes(document);
+	        if(texts.size()>0){
+	        	Element tdtextnode=texts.get(0);
+	        	xpath = new DefaultXPath("ancestor::w:tr");
+	        	List<Element> trs=xpath.selectNodes(tdtextnode);
+	        	if(trs.size()>0){
+	        		Element soureTr=trs.get(0);
+	               	List<Element> elements=soureTr.getParent().elements();
+	        	    int cindex=elements.indexOf(soureTr);//
+	        	    if(tableData.size()>0){
+	        	    for(int i=0 ;i<tableData.size();i++){
+	        	      replaceBookMark(document,book+"_"+i+"",tableData.get(i).toString());
+	        	    }
+	        	    if(tableData.size()<clen){
+	        	    	for(int j=tableData.size();j<clen;j++){
+	        	    	 elements.remove(cindex+tableData.size());
+	        	    	}
+	        	    }
+	        	 }}
+	        }
+	 }
+	public static void replaceMSTableBookMark(Document document ,String book,List<List>tableData) throws Exception{
+		//以表格为模板套打多个
+		 DefaultXPath xpath = new DefaultXPath("//w:bookmarkStart[@w:name='"+book+"_0']");  
+	        xpath  
+	                .setNamespaceURIs(Collections  
+	                        .singletonMap("w",  
+	                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+	        List<Element> texts = xpath.selectNodes(document);
+	        if(texts.size()>0){
+	        	Element tdtextnode=texts.get(0);
+	        	xpath = new DefaultXPath("ancestor::w:tbl");
+	        	List<Element> tables=xpath.selectNodes(tdtextnode);
+	        	if(tables.size()>0){
+	        		Element table=tables.get(0);
+	               	List<Element> elements=table.getParent().elements();
+	        	    int cindex=elements.indexOf(table);//
+	        	    for(int i=0;i<tableData.size();i++){
+	        	    	if(i<tableData.size()-1){
+	        	    		Element temptable=table.createCopy();
+	        	    		elements.add(cindex, temptable);
+	        	    	}
+	        	    }  
+	        	    for(int i=0;i<tableData.size();i++){
+	        	    	  Element tr=elements.get(cindex+i);
+	        	    	  insertTableData(tr,book, tableData.get(i),i);
+	        	     }
+	        }
+	 }
+	}
+	 /**
+	  * 
+	  * insertTrData(替换一行中的数据)
+	  * (这里描述这)
+	  * @param tr （行对就tr）
+	  * @param book (占位符)
+	  * @param trData (一行中的数据)
+	  *void
+	  * @exception 
+	  * @since  1.0.0
+	  */
+	  public static void insertTrData(Element tr,List trData) throws Exception{
+		  DefaultXPath xpath = new DefaultXPath("w:tc/w:p");  
+		  xpath  
+          .setNamespaceURIs(Collections  
+                  .singletonMap("w",  
+                          "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+		  DefaultXPath xpathRpr = new DefaultXPath("w:pPr/w:rPr");  
+	        xpathRpr  
+	                .setNamespaceURIs(Collections  
+	                        .singletonMap("w",  
+	                                "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));
+		  List<Element> tds=   xpath.selectNodes(tr);
+		  for(int i=0;i<tds.size();i++){
+			  if(i<trData.size()){
+				  Element wr=DocumentHelper.createElement("w:r");
+				  List<Element> rprs=xpathRpr.selectNodes(tds.get(i));
+	        	  if(rprs.size()>0){
+	        		  wr.add(rprs.get(0).createCopy());
+	        	  }
+		    	  wr.add(DocumentHelper.createElement("w:t").addText(trData.get(i).toString()));
+		    	  tds.get(i).add(wr);
+			  }
+		  }
+		 
+	  }
+	  public static void insertTableData(Element tr,String book,List trData,int cindex) throws Exception{
+		    try {
+				List tdData=(List)trData;
+				for(int i=0;i<tdData.size();i++){
+					
+					replaceBookMarkByElement(tr,book+"_"+i,tdData.get(i).toString(),cindex);
+//					 DefaultXPath xpath = new DefaultXPath("//w:r[w:t='${"+book+"["+i+"]}']/w:t");  
+//				     xpath  
+//				            .setNamespaceURIs(Collections  
+//				                    .singletonMap("w",  
+//				                            "http://schemas.openxmlformats.org/wordprocessingml/2006/main"));  
+//				     List<Element> replacetext=   xpath.selectNodes(tr);
+//				    // System.out.println("//w:r[w:t='${"+book+"["+i+"]}']/w:t"+replacetext.size());
+//				      int j=-1;
+//				      for( Element f : replacetext){
+//				    	  j=j+1;
+//				    	  List tempData=(List)trData.get(j);
+//				    	  f.setText(StringUtil.nullToString(tempData.get(i).toString()));
+//				      }     
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	  }
+	  public static void saveWordXML(ZipFile docxFile,Document doc ,String filePath) throws Exception{
+//		  XMLWriter writer = null;  
+//          OutputFormat format = OutputFormat.createPrettyPrint();  
+//          format.setEncoding("utf-8");  
+//          writer = new XMLWriter(new FileOutputStream(new File(StrTools.fileNameCheck(filePath))),format);  	          
+//          writer.write(document);  
+//          writer.flush();  
+//          writer.close();  
+		  ByteArrayOutputStream byteOut = new ByteArrayOutputStream();  
+	        XMLWriter xmlWriter = new XMLWriter(byteOut);  
+          xmlWriter.write(doc);  
+	        ZipOutputStream docxOutFile =null;
+	        try {
+				docxOutFile=new ZipOutputStream(new FileOutputStream( StrTools.fileNameCheck(filePath)));
+				Enumeration entriesIter = docxFile.entries(); 
+				while(entriesIter.hasMoreElements()) {
+					   ZipEntry entry = (ZipEntry)entriesIter.nextElement();
+					   if(entry.getName().equals("word/document.xml")) 
+					   {
+						byte[] data =byteOut.toByteArray();
+						docxOutFile.putNextEntry(new ZipEntry(entry.getName()));
+						docxOutFile.write(data, 0, data.length); 
+						//docxOutFile.closeEntry(); 
+					}else{
+						InputStream incoming = docxFile.getInputStream(entry);
+						//byte[] data = new byte[1024 * 512]; 
+					//	int readCount = incoming.read(data, 0, (int) entry.getSize()); 
+				     docxOutFile.putNextEntry(new ZipEntry(entry.getName())); 
+				    // docxOutFile.write(data, 0, readCount); 
+					//	docxOutFile.closeEntry();
+						int b;
+				        while ((b = incoming.read()) != -1)
+				        docxOutFile.write(b);
+				        incoming.close();
+					} 
+
+				}
+				 docxOutFile.close(); 	
+			} catch (Exception e) {
+				throw new BusinessException(e.getMessage());
+			} finally{
+				if(null!=docxOutFile){FileUtil.safeCloseOutStream(docxOutFile);}
+				if(null!=byteOut){FileUtil.safeCloseOutStream(byteOut);}
+			}
+		  
+	  }
+	  public static Document getXMLDocument(String XMLPath) throws Exception{
+		  SAXReader saxReader = new SAXReader();  
+		  Document document  = saxReader.read(new File(StrTools.fileNameCheck(XMLPath))); // 读取XML文件,获得document对象  
+		  return document;
+	  }
+}

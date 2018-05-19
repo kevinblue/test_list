@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	       		select
+		        	vii.id             as id,
+		            vii.invoice_no     as invoiceno,
+		            vii.invoice_money  as invoicemoney,
+		            vii.record_date    as recorddate,
+		            cust1.cust_name    as purchasenitsname,
+		            vii.purchase_units as purchasenits,
+		            vii.goods_name     as goodsname,
+		            vii.memo           as memo,
+		            cust2.cust_name    as suppliername,
+		            vii.supplier       as supplier,
+		            vii.create_date    as createdate,
+		          	vii.modify_date    as modifydate,
+		            u1.realname_       as creatorname,
+		            vii.creator_       as creator,
+		         	u2.realname_       as modificator,
+		          	case when nvl(vii.invoice_status,0)=0 then '未提交' 
+		           	when vii.invoice_status=1 then '已提交' 
+		          	when vii.invoice_status=2 then '已确认' 
+		         	else '已退回' end invoicestatusname,
+		         	vii.invoice_status invoicestatus,
+		          	nvl(tt.contractnum,0)     as contractnum,
+		          	nvl(tt.sumamt,0)          as sumamt
+		        from vat_invoice_info vii
+		        left join cust_info cust1 on vii.purchase_units = cust1.id
+		        left join cust_info cust2 on vii.supplier = cust2.id
+		        left join t_users u1 on u1.id_ = vii.creator_
+		        left join t_users u2 on u2.id_ = vii.modificator_
+		        left join(
+		             select count(vic.id) contractnum,vic.invoice_id,sum(vic.registered_amt)sumamt from  vat_invoice_contract vic 
+		            group by vic.invoice_id) tt on tt.invoice_id = vii.id
+ 				where 1=1 
+	       		and vii.invoice_status = 1
+	       		/~id: and vii.id = '<<id>>'~/
+	       		/~invoiceno: and vii.invoice_no like '%{invoiceno}%'~/
+	       		/~invoicemoney: and vii.invoice_money >= to_number('{invoicemoney}')~/
+	       		/~recorddate: and vii.record_date like '%{recorddate}%'~/
+	       		/~pruchaseunits: and vii.purchase_units like '%{pruchaseunits}%'~/
+	  			/~purchasenitsname: and cust1.cust_name like '%{purchasenitsname}%'~/
+     			/~supplier: and vii.supplier like '%{supplier}%'~/
+	       		/~suppliername: and cust2.cust_name like '%{suppliername}%'~/
+	       		/~goodsname: and vii.goods_name like '%{goodsname}%'~/
+	       		/~recorddateStart: and vii.record_date >= '{recorddateStart}'~/
+	       		/~recorddateEnd: and vii.record_date <= '{recorddateEnd}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

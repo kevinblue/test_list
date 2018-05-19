@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	        
+				   
+				    select  				    			    
+				    ica.id id, 				    
+				    cri.id cid,              	 
+                	cri.id  contractid,
+                	cri.contract_id  contractidname,	
+                	cri.contract_number  contractnumber,
+				    ci.cust_name custname ,				    
+				    ins.id insuranceid,--保单号id
+				    ins.INSURANCE_NAME insurancename,--保险公司名
+				    ins.INSURANCE_ID   insuranceidname,--保单号				    				    
+				    --ica.INSURANCE_ID insuranceid ,
+				    ica.RECORD_NUMBER recordnumber,
+				    ica.REPORTER reporter,
+				    ica.CLAIMS_BEGINDATE claimsbegindate, 				    
+				    ica.CLAIMS_ADDRESS claimsaddress, 
+				    ica.CLAIMS_MANAGER claimsmanager , 
+				    ica.DANGER danger, 				    
+				    ica.CLAIMS_TIME claimstime ,
+				    ica.CLAIMS_MONEY claimsmoney,
+				    ica.CLAIMS_MONEY_DEAL claimsmoneydeal,				    
+				    ica.CLAIMS_INFO claimsinfo,
+				    ica.CLAIMS_AFTER claimsafter,
+				    ica.remark remark 				    
+				   	from  insurance_claim ica 
+					left join insurance_info ins	
+					on ins.id =ica.insurance_id 	
+			 		left join contract_info cri 
+			 		on ins.contract_id=cri.id 
+			 		left join cust_info ci 			 		 
+	       			on  cri.cust_id = ci.id  				 	       			  	
+	       			where cri.contract_status>=21 and  cri.contract_status<=31		       		
+	       		/~custname: and ci.CUST_NAME like '%{custname}%'~/	
+	       		/~insurancename: and ins.INSURANCE_NAME like '%{insurancename}%'~/
+	       		/~insuranceidname: and ins.INSURANCE_ID like '%{insuranceidname}%'~/
+				/~recordnumber: and ica.RECORD_NUMBER like '%{recordnumber}%'~/
+				/~contractidname: and cri.contract_id like '%{contractidname}%'~/
+				/~contractnumber: and cri.contract_number like '%{contractnumber}%'~/	
+				/~claimsbegindateStart: AND ica.CLAIMS_BEGINDATE >= '{claimsbegindateStart}' ~/
+				/~claimsbegindateEnd: AND ica.CLAIMS_BEGINDATE <= '{claimsbegindateEnd}' ~/
+			 ]]> 
+		
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

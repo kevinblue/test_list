@@ -1,0 +1,132 @@
+package com.tenwa.leasing.action.contract.contractPatrol;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Component;
+
+import com.tenwa.business.service.TableService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.service.contractcomm.ContractCommService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+/**
+ * @author Jason
+ * @date 2013-4-24
+ * @info
+ */
+@WorkflowAction(name = "contractPatrolStartAction", description = "流程开始动作", workflowName = "租后巡视")
+@Component(value = "contractPatrolStartAction")
+public class ContractPatrolStartAction implements JbpmBaseAction {
+	@Resource(name = "tableService")
+	private TableService tableService;
+
+ 
+	@Resource(name = "contractCommService")
+	private ContractCommService contractCommService;
+	
+	
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		WorkflowUtil.deleteWorkFlowConflict(this.tableService, variablesMap); 
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+	}
+
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		
+		String custid = variablesMap.get("custid");
+		//String contractid=variablesMap.get("contract_id");
+		CustInfo custInfo = this.tableService.findEntityByID(CustInfo.class, custid);
+		variablesMap.put("cust_info.custname", custInfo.getCustName());
+		variablesMap.put("cust_info.custnumber", custInfo.getCustNumber());
+		
+		if (custInfo.getCustClass().getCode().equals("CUST_INFO_COMPANY")) {
+			variablesMap.put("cust_info.custkind",
+					custInfo.getCustInfoCompany().getCustKind() == null ? "" : 
+					custInfo.getCustInfoCompany().getCustKind().getName() );
+			variablesMap.put("cust_info.personrep",custInfo.getCustInfoCompany().getPersonRep());
+			variablesMap.put("cust_info.code",custInfo.getCustInfoCompany().getOrgCode());
+		} else {
+			variablesMap.put("cust_info.custkind",
+					custInfo.getCustInfoPerson().getCustKind() == null ? "" : 
+					custInfo.getCustInfoPerson().getCustKind().getName() );
+			variablesMap.put("cust_info.code",custInfo.getCustInfoPerson().getIdCardNo());
+		}
+		String xsnum = WorkflowUtil.getCustPatrolSerialNumber(variablesMap, 
+				this.tableService.getBussinessDao().getHibernateTemplate(), 
+				this.tableService.getBussinessDao().getJdbcTemplate());
+		 variablesMap.put("contract_patrol_info.xsnum",xsnum);
+		/*带出巡视基本信息 、 整体经营情况 、本次巡视结论 部分信息  */
+			
+		String sql ="SELECT A.XUN_DATE,A.XUN_RESULT,A.XUN_THING FROM ASSET_MNG_DETAIL a "+
+					"RIGHT JOIN "+
+					"(SELECT cust_id,MAX(CREATE_DATE) create_date FROM ASSET_MNG_DETAIL  "+
+					"WHERE CUST_ID='"+variablesMap.get("custid")+"' GROUP BY CUST_ID )b "
+					+ "ON a.CUST_ID=b.CUST_ID AND a.CREATE_DATE=b.CREATE_DATE ";
+		
+		if(this.tableService.queryListBySql(sql).size()>0){
+		
+			Map<String, Object> map = this.tableService.queryListBySql(sql).get(0);
+			for(String key :map.keySet())
+			{
+				if(key.equals("XUN_DATE"))
+					variablesMap.put("contract_patrol_info.patroldate", map.get(key)== null ? "" 
+							: map.get(key).toString());
+				if(key.equals("XUN_RESULT"))
+					variablesMap.put("contract_patrol_info.marketvaluation",map.get(key) == null ? ""
+							:map.get(key).toString());
+				if(key.equals("XUN_THING"))
+					variablesMap.put("contract_patrol_info.patrolpoint", map.get(key)== null ? ""
+							:map.get(key).toString());
+			}//end loop
+			
+		}
+		/*基本信息*/
+		//variablesMap.put("cust_info.belongingpeoplename", custInfo.getCustInfoCompany().getBelongingPeople().getRealname());
+		//variablesMap.put("cust_info.deptname", custInfo.getCustInfoCompany().getd);
+		//variablesMap.put("cust_info.deptrote", jsonobject.getString("deptroute"));
+		//variablesMap.put("cust_info.rentmoney", jsonobject.getString("rent"));
+		//variablesMap.put("cust_info.corpusmoney", jsonobject.getString("corpus"));
+		
+		//String custinfo=contractCommService.getcustinfo(contractid);
+		String custinfo=contractCommService.getcustinfo(custid);
+		JSONArray jsonarray=new JSONArray(custinfo);
+		for(int i=0;i<jsonarray.length();i++){
+			JSONObject jsonobject=jsonarray.getJSONObject(i);
+			variablesMap.put("cust_info.belongingpeoplename", jsonobject.getString("username1"));
+			variablesMap.put("cust_info.deptname", jsonobject.getString("deptname1"));
+			variablesMap.put("cust_info.deptrote", jsonobject.getString("deptroute1"));
+			variablesMap.put("cust_info.rentmoney", jsonobject.getString("rent"));
+			variablesMap.put("cust_info.corpusmoney", jsonobject.getString("corpus"));
+		}
+		
+		/*客户项目列表*/
+		Map<String,String> projcustMap = new HashMap<String,String>();
+		projcustMap.put("custid", variablesMap.get("custid"));
+		variablesMap.put( "json_proj_cust_list_str", 
+				this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_patrol/proj_cust_list.xml", projcustMap).toString() );
+		
+	}
+	@Override
+	public void back(HttpServletRequest request, Map<String, String> variablesMap, JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+	 
+	}
+}

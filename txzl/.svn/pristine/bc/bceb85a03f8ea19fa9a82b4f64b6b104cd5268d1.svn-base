@@ -1,0 +1,153 @@
+package com.reckon.service.impl;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.reckon.bean.IncomeDiscount;
+import com.reckon.bean.IncomeDiscountBean;
+import com.reckon.bean.TabCalBean;
+import com.reckon.dao.Conn;
+import com.reckon.dao.impl.FundFundChargeDAOImpl;
+import com.reckon.service.IncomeDiscountService;
+import com.tenwa.kernal.utils.UUIDUtil;
+import com.tenwa.leasing.entity.fund.FinanceCashDetailTemp;
+
+/**
+ * 收入折现
+ * Tenwa
+ */
+public class IncomeDiscountServiceImpl implements IncomeDiscountService{
+	private static Logger logger = Logger.getLogger(IncomeDiscountServiceImpl.class); 
+	/**
+	 */
+	public void  getIncomeDiscount(IncomeDiscount id,List<FinanceCashDetailTemp>cashDetailList)throws Exception {
+		
+		//现金流总额totalMoney
+		BigDecimal totalMoney = new BigDecimal("0"); 
+		List<String>cashdetail =new ArrayList<String>();//現金流
+		String date=null;
+		for(FinanceCashDetailTemp cash:cashDetailList){
+			totalMoney=totalMoney.add(cash.getNetFlow());
+			cashdetail.add(cash.getNetFlow().toString());
+		}
+		//租金总额=总现金流+购置成本
+		
+		id.setTotalMoney(totalMoney.add(new BigDecimal(id.getAcqCost())).toString());
+		
+		BigDecimal irr=new BigDecimal(id.getFinaIrr()==null?"0":id.getFinaIrr());
+		
+		List<String> financeIncomeWithTax 	= new ArrayList<String>();//融资收入（含税）
+		List<String> financeincomeWithoutTax = new ArrayList<String>();//融资收入（不含税）
+		List<String> investmentDecrease = new ArrayList<String>();//租赁投资净额减少额
+		List<String> overInvestmentDecrease = new ArrayList<String>();//租赁投资净额余额
+		List<String> overDueAccounts = new ArrayList<String>();//长期应收款-原值(剩余应收款)
+		List<String> unconfirmedProfit = new ArrayList<String>();//未确认融资收益=overDueAccounts-overInvestmentDecrease
+		List<String> acountDate =new ArrayList<String>();
+		
+		overInvestmentDecrease.add(id.getAcqCost());
+		for(int i=0;i<cashDetailList.size();i++){
+			BigDecimal financeIncomeWithTaxTemp;
+			BigDecimal financeIncomeWithoutTaxTemp;
+			BigDecimal investmentDecreaseTemp;
+			BigDecimal overInvestmentDecreaseTemp;
+			//第一期：融资收入（不含税）&租赁投资净额减少额=0&租赁投资净额余额=totalMoney
+			if(i==0){
+				financeIncomeWithTaxTemp 	= new BigDecimal("0");//第一期为0
+				investmentDecreaseTemp 		= new BigDecimal("0");//第一期为0
+				financeIncomeWithoutTaxTemp = new BigDecimal("0");//第一期为0
+				overInvestmentDecreaseTemp 	= new BigDecimal(id.getAcqCost());//第一期=购置成本
+			}else{
+				//融资收入（含税)临时值
+				financeIncomeWithTaxTemp 	= new BigDecimal(overInvestmentDecrease.get(i-1)).multiply(irr).divide(new BigDecimal("1200"),20,BigDecimal.ROUND_HALF_UP);
+				//融资收入（不含税)临时值
+				financeIncomeWithoutTaxTemp = financeIncomeWithTaxTemp.divide(new BigDecimal(id.getTaxratio()==null||id.getTaxratio()==""?"0":id.getTaxratio()).divide(new BigDecimal(100),20,BigDecimal.ROUND_HALF_UP).add(new BigDecimal(1)),20,BigDecimal.ROUND_HALF_UP);
+				//租赁投资净额减少额临时值
+				investmentDecreaseTemp 		= cashDetailList.get(i).getNetFlow().subtract(financeIncomeWithTaxTemp);
+				//租赁投资净额余额临时值
+				overInvestmentDecreaseTemp 	= new BigDecimal(overInvestmentDecrease.get(i-1)).subtract(investmentDecreaseTemp);
+				
+			}
+			
+			totalMoney=totalMoney.subtract(cashDetailList.get(i).getNetFlow());
+			//长期应收款-原值(剩余应收款)【临时值】=现金流总额(剩余值)-本期现金流
+			BigDecimal overDueAccountsTemp=totalMoney;
+			//未确认融资收益
+			BigDecimal unconfirmedProfitTemp=overDueAccountsTemp.subtract(overInvestmentDecreaseTemp);
+			//记账日期
+			date=cashDetailList.get(i).getPlanDate();
+			
+			financeIncomeWithTax.add(financeIncomeWithTaxTemp.toString());
+			financeincomeWithoutTax.add(financeIncomeWithoutTaxTemp.toString());
+			investmentDecrease.add(investmentDecreaseTemp.toString());
+			overDueAccounts.add(overDueAccountsTemp.toString());
+			if(i>0){
+				overInvestmentDecrease.add(overInvestmentDecreaseTemp.toString());
+			}
+			unconfirmedProfit.add(unconfirmedProfitTemp.toString());
+			acountDate.add(date==null?"":date.substring(0, 7));
+		}
+		//保留小数点后两位
+		setParamTwoDecimalPoint(null,financeIncomeWithTax,financeincomeWithoutTax,investmentDecrease,overInvestmentDecrease,overDueAccounts,unconfirmedProfit);
+		id.setFinanceIncomeWithTax(financeIncomeWithTax);
+		id.setFinanceincomeWithoutTax(financeincomeWithoutTax);
+		id.setInvestmentDecrease(investmentDecrease);//租赁投资净额减少额
+		id.setOverInvestmentDecrease(overInvestmentDecrease);//租赁投资净额余额
+		id.setOverDueAccounts(overDueAccounts);//长期应收款-原值(剩余应收款)
+		id.setUnconfirmedProfit(unconfirmedProfit);
+		id.setAcountDate(acountDate);
+		id.setCashDetailList(cashdetail);
+	}
+
+	private void setParamTwoDecimalPoint(List<String> first,List<String>... lists) {
+		if(lists.length>0){
+			for(List<String> list:lists){
+				for(int i=0;i<list.size();i++){
+					BigDecimal temp=new BigDecimal(list.get(i)).setScale(2, BigDecimal.ROUND_HALF_UP);
+					list.set(i, temp.toString());
+				}
+			}
+		}
+	}
+
+	@Override
+	public void addIncomeDiscount(List<IncomeDiscountBean> idList,IncomeDiscount id, TabCalBean tcb) throws Exception {
+
+		for(IncomeDiscountBean list:idList ){
+			Conn conn = new Conn();
+			StringBuffer sb = new StringBuffer();
+			sb.append(" INSERT INTO "+tcb.getFinanceIncomeDiscount()).
+			append("(ID,doc_id,CONTRACT_ID").
+			append(",CASH_DETAIL,FINANCE_INCOME_WITH_TAX,").
+			append("FINANCE_INCOME_WITHOUT_TAX,INVESTMENT_DECREASE,").
+			append("OVER_INVESTMENT_DECREASE,OVER_DUE_ACCOUNTS,").
+			append("UNCONFIRMED_PROFIT,ACOUNT_DATE ").
+			append(") VALUES(").//sys_guid()  '" + UUIDUtil.getUUID() + "'
+			append("'"+UUIDUtil.getUUID()+"','" + id.getDocId()+"','" + id.getContractId()).
+			append("','" + list.getCashDetail()).
+			append("','" + list.getFinanceIncomeWithTax()).
+			append("','" + list.getFinanceincomeWithoutTax()).
+			append("','" + list.getInvestmentDecrease()).
+			append("','" + list.getOverInvestmentDecrease()).
+			append("','" + list.getOverDueAccounts()).
+			append("','" + list.getUnconfirmedProfit()).
+			append("','" + list.getAcountDate()).
+			append("')");
+			String replaceStr = sb.toString().replace("'null'", "null");
+			sb = sb.replace(0, sb.length(), replaceStr);
+			logger.info(sb.toString());
+			conn.executeUpdate(sb.toString());
+		}
+		
+	}
+
+	@Override
+	public void deleteIncomeDiscount(TabCalBean tcb)throws Exception {
+		Conn conn = new Conn();
+		String sql = " delete " + tcb.getFinanceIncomeDiscount() + " where " + tcb.getContOrProjCName() + "='" + tcb.getContOrProjCValue() + "' and doc_id='" + tcb.getDocId() + "'";
+		conn.executeUpdate(sql, "删除收入折现sql..:");
+	}
+	
+}

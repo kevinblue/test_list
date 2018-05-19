@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- V8凭证导出 -->
+      <table_sql> 
+	        <![CDATA[
+				SELECT 
+				V8.F1   AS COL1,
+				V8.F51  AS COL2,
+				V8.F52  AS COL3,
+				V8.F2   AS COL4,
+				V8.F3   AS COL5,
+				VC.SUBJECTS_CODE AS COL6,
+				VC.SUBJECTS_NAME AS COL7,
+				'RMB'            AS COL8,
+				'人民币'         AS COL9,
+				CASE V8.ENTRYDC WHEN 1 THEN V8.F7 WHEN -1 THEN V8.F8 END COL10,
+				V8.F7            AS COL11,
+				V8.F8            AS COL12, 
+				V8.F12            AS COL13,
+				
+				''            AS COL14, 
+				''            AS COL15,
+				''            AS COL16,
+				''            AS COL17,
+		        ''            AS COL18,
+		        ''            AS COL19,
+		        
+		        V8.F5         AS COL20,
+		        ''            AS COL21,
+		        ''            AS COL22,
+		        ''            AS COL23,
+		        ''            AS COL24,
+		        V8.F1         AS COL25,
+		        
+		        ''            AS COL26,
+		        ''            AS COL27,
+		        ''            AS COL28,
+		        ''            AS COL29,
+		        ''            AS COL30,
+		        
+		        '公司汇率'       AS COL31,
+		        '1'           AS COL32,
+		        V8.F59        AS COL33,
+		        
+		        ''            AS COL34,
+		        ''            AS COL35,
+		        ''            AS COL36,
+		        ''            AS COL37
+				
+				FROM VOUCHER_V8 V8
+				LEFT JOIN VOUCHERASS_STACTS_CONFIG VC ON VC.ID = V8.F6
+				WHERE 1=1
+				and V8.F3 in (<<ids>>)
+				ORDER BY V8.F3,V8.F59
+		  
+			   
+		 
+			]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

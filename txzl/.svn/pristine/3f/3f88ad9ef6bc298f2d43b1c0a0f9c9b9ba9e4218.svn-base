@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		     select cge.equip_name equipname,
+ round(cge.Guarantyvalue/10000,2) guarantyvalue,
+round(cge.Present_Value/10000,2) presentvalue,
+case 
+       when  ins.InsuranceId  is not null then '是' 
+       when  ins.InsuranceId  is null  then  '否/已过期' end  whetherinsurance,
+ins.*
+from  CONTRACT_GUARANTEE_EQUIP cge
+left join (select rownum,ii.contract_id conid,
+ ii.Insurance_Id InsuranceId,
+ ii.insurer_start_date startdata,
+ ii.insurer_end_date enddata,
+ ii.First_Beneficiary FirstBeneficiary
+ from insurance_info ii
+where to_date(ii.insurer_start_date, 'yyyy-mm-dd')   <=
+      to_date(to_char(sysdate,'yyyy-mm-dd'), 'yyyy-mm-dd') 
+     and to_date(ii.insurer_end_date, 'yyyy-mm-dd')   >
+     to_date(to_char(sysdate,'yyyy-mm-dd'), 'yyyy-mm-dd') 
+      and  rownum = 1
+      and ii.contract_id = '{contractidselect}'
+      ) ins on ins.conid = cge.contract_id
+   where cge.contract_id = '{contractidselect}'   
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

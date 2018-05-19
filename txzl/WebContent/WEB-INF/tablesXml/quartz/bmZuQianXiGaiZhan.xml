@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE
+  (ID,
+   proj_id,
+   MSG_TITLE,
+   SUBJECT_,
+   SEND_DATE,
+   CREATE_DATE,
+   MSG_TYPE,
+   FROMUSER,
+   CREATOR_)
+  select sys_guid(),
+         ci.proj_id， '租前息盖章提醒',
+         '合同编号为' || ci.contract_number || '的项目名称是' || ci.project_name || '的' ||
+         t.name_ || '将于' || ff.plan_date || '进行收款，请及时进行相关盖章流程',
+         to_char(SYSTIMESTAMP, 'yyyy-mm-dd'),
+         to_char(SYSTIMESTAMP, 'yyyy-mm-dd hh:mm:ss'),
+         'msgtype.1',
+         'Administrator',
+         'Administrator'
+    from (select cp.plan_date, cp.contract_id cd, cp.fee_type ft
+            from contract_fund_fund_plan cp
+           WHERE cp.fee_type = 'feetype9') ff
+    left join contract_info ci
+      on ci.id = ff.cd
+    left join T_DICTS_DATAS t
+      on t.id_ = ff.ft
+   where not exists
+   (select 1
+            from BASE_MESSAGE b
+           where instr(to_char(b.subject_),
+                       '合同编号为' || ci.contract_number || '的项目名称是' ||
+                       ci.project_name || '的' || t.name_ || '将于' ||
+                       ff.plan_date || '进行收款，请及时进行相关盖章流程') > 0)
+     and to_char(sysdate + 30, 'yyyy-mm-dd') = ff.plan_date
+
+
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

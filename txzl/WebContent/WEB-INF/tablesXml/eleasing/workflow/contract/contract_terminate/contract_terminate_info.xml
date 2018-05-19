@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		select tt.* 
+		--如果为期初，则为0；最后一期手续费收取日期，如果为空，则不再计算，直接取手续费之和；如果约定终止日小于最后一期手续费收取日期，为0
+         ,case cb.HAND_TYPE when 'period_type_0'then 
+         	case nvl(t6.plandate_,'0')
+                     when '0' then t6.totalhandmoney
+                       else round(t5.sumcorpus *(decode(sign(to_date('{adjustdate}', 'YYYY-MM-DD') -
+                          to_date(t6.plandate_, 'YYYY-MM-DD')),-1,0,(to_date('{adjustdate}', 'YYYY-MM-DD') -
+                          to_date(t6.plandate_, 'YYYY-MM-DD'))))*nvl(cb.hand_ratio, 0) / 36000,2)
+                         end
+               else 0 end overcorpushandmoney--未到期手续费
+         ,nvl(t4.grace_,0) dungrace --已到期租前息
+         ,t5.interest overcorpusinterest--所有剩余本金至提前还款日的利息
+         ,t5.sumcorpus --剩余本金
+         ,tt.penalty+tt.fundpenalty delaypenalty--迟延违约金
+         from (
+        select 
+        --资金罚息
+         nvl(FN_getPenalty2_By_Contract('{contractid}','{adjustdate}'),0) fundpenalty,
+			 	 nvl(FN_getPenalty_By_Contract('{contractid}','{adjustdate}'),0) penalty,
+         sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')  then t.remaincorpus else 0 end ) remaincorpus,
+           sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')   then t.remaininterest else 0 end ) remaininterest,
+           sum(case when  to_date(t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')  then t.corpus else 0 end ) remainfincorpus,
+           sum(case when to_date( t.plan_date,'YYYY-MM-DD') >  to_date('{adjustdate}','YYYY-MM-DD')   then t.interest else 0 end ) remainfininterest,
+           sum(case when  to_date( t.plan_date,'YYYY-MM-DD') <= to_date('{adjustdate}','YYYY-MM-DD')   then t.overduerent else 0 end ) overduerent
+         from (
+         select 
+            t1.corpus_business-nvl(t2.sumincomecorpus,0) remaincorpus,
+            t1.interest_business - nvl(t2.sumincomeinterest,0) remaininterest,
+            t1.rent - nvl(t2.sumincomerent,0) overduerent,
+            t1.corpus,
+            t1.interest,
+            t1.plan_date,
+            t1.rent_list
+             from  (
+             select cfrp.plan_date,
+             cfrp.rent_list,
+             cfrp.rent,
+             cfrp.interest,
+             cfrp.corpus,
+             cfrp.corpus_business,
+             cfrp.interest_business,
+             cfrp.contract_id contractid
+             from Contract_Fund_Rent_Plan cfrp 
+            where cfrp.contract_id = '{contractid}'
+            ) t1
+            left join 
+            (select sum( cfri.corpus ) sumincomecorpus
+            ,sum(cfri.interest ) sumincomeinterest,
+            sum( cfri.rent ) sumincomerent,
+            min(cfri.contract_id) contractid,
+            cfri.plan_list
+             from  contract_fund_rent_income cfri 
+            where cfri.contract_id = '{contractid}'
+            group by cfri.plan_list
+            )t2 on t2.contractid = t1.contractid and t2.plan_list = t1.rent_list
+        ) t 
+        )tt
+        left join (
+           select sum(money) handmoney from (
+                  select (nvl(cffp.PLAN_MONEY,0)-nvl(cffc.FACT_MONEY,0))money from contract_fund_fund_plan cffp
+                  left join (select PAYMENT_ID,sum(FACT_MONEY)FACT_MONEY from contract_fund_fund_charge group by PAYMENT_ID) cffc
+                  on cffc.PAYMENT_ID = cffp.id 
+                  where cffp.contract_id = '{contractid}'
+                  and cffp.FEE_TYPE = 'feetype1'--未到期手续费
+                  and to_date(cffp.plan_date,'YYYY-MM-DD')>to_date('{adjustdate}','YYYY-MM-DD') --小于约定终止日
+             )
+           )t3 on 1=1
+           left join (--页面：已到期租前息，约定终止日之前未回收租前息
+           select sum(money) grace_ from (
+                  select (nvl(cffp.PLAN_MONEY,0)-nvl(cffc.FACT_MONEY,0))money from contract_fund_fund_plan cffp
+                  left join (select PAYMENT_ID,sum(FACT_MONEY)FACT_MONEY from contract_fund_fund_charge group by PAYMENT_ID)cffc
+                  on cffc.PAYMENT_ID = cffp.id
+                  where cffp.contract_id = '{contractid}'
+                  and cffp.FEE_TYPE = 'feetype9'--已到期租前息
+                  and to_date(cffp.plan_date,'YYYY-MM-DD')<to_date('{adjustdate}','YYYY-MM-DD') --小于约定终止日
+             )
+           )t4 on 1=1
+           left join (--页面：剩余本金至提前还款日的利息（日期为最一近期已付款租金计划 到 约定终止日 的租金计划）
+             select t1.*,cfrp.year_rate,round(decode(sign(t1.datediff),-1,0,t1.datediff*t1.sumcorpus*cfrp.year_rate/36000),2)interest from( select vffp1.sumcorpus,to_date('{adjustdate}','YYYY-MM-DD')-to_date(vffp2.maxplandate,'YYYY-MM-DD')datediff,vffp2.maxrentlist from  (select 
+                sum(vi_vffp.CORPUS)sumcorpus from vi_contract_fund_rent_plan vi_vffp --剩余本金
+                 where vi_vffp.contractid = '{contractid}'
+                and CURRENTOVERAGE <>0)vffp1, --当前租金剩余不为0，即为还未回收的租金期次
+                (select max(PLANDATE)maxplandate,max(RENTLIST)maxrentlist from vi_contract_fund_rent_plan vi_vffp where vi_vffp.contractid = '{contractid}'and CURRENTOVERAGE =0 )vffp2
+              ) t1  -- 最后一次租金回收的日期（计划日期，不是实收） 
+              --从租金计划中，查询约定终止日所在的租金计划中的year_rate
+              left join (select year_rate from (select row_number()over(partition by CONTRACT_ID order by to_date(cfrptmp.plan_date,'yyyy-MM-dd')desc) num_,cfrptmp.year_rate
+              			 from contract_fund_rent_plan cfrptmp where CONTRACT_ID ='{contractid}' and to_date(PLAN_DATE,'yyyy-MM-dd')<=to_date('{adjustdate}','yyyy-MM-dd')) where num_=1)cfrp on  1=1 
+           ) t5 on 1=1
+           left join (--最后一期手续费收取日期，如果为空，则为不再计算，直接取手续费之和
+	           select plandate plandate_,totalhandmoney from (select max(PLANDATE)plandate from vi_contract_fund_fund_plan where contractid='{contractid}' and feetype='feetype1'and FACTMONEY>0)
+	           left join (select sum(plan_money)totalhandmoney from contract_fund_fund_plan where contract_id='{contractid}' and fee_type='feetype1')cffp on 1=1
+           )t6 on 1=1
+           left join (select * from contract_condition cb where contract_id='{contractid}')cb on 1=1
+           
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	   <sqlserver>
+	       <table_sql>
+	        <![CDATA[
+					select nvl([dbo].[FN_GETPENALTY_BY_CONTRACT]('{contractid}','{adjustdate}'),0) penalty,
+          sum(case when  CONVERT(datetime,t.plan_date) > CONVERT(datetime,'{adjustdate}') then t.remaincorpus else 0 end ) remaincorpus,
+           sum(case when  CONVERT(datetime,t.plan_date) >  CONVERT(datetime,'{adjustdate}')  then t.remaininterest else 0 end ) remaininterest,
+           sum(case when  CONVERT(datetime,t.plan_date)  >  CONVERT(datetime,'{adjustdate}')  then t.corpus else 0 end ) remainfincorpus,
+           sum(case when CONVERT(datetime,t.plan_date)  >  CONVERT(datetime,'{adjustdate}')  then t.interest else 0 end ) remainfininterest,
+           sum(case when  CONVERT(datetime,t.plan_date)  <=  CONVERT(datetime,'{adjustdate}')  then t.overduerent else 0 end ) overduerent
+         from (
+         select 
+            t1.corpus_business-nvl(t2.sumincomecorpus,0) remaincorpus,
+            t1.interest_business - nvl(t2.sumincomeinterest,0) remaininterest,
+            t1.rent - nvl(t2.sumincomerent,0) overduerent,
+            t1.corpus,
+            t1.interest,
+            t1.plan_date,
+            t1.rent_list
+             from  (
+             select cfrp.plan_date,
+             cfrp.rent_list,
+             cfrp.rent,
+             cfrp.interest,
+             cfrp.corpus,
+             cfrp.corpus_business,
+             cfrp.interest_business,
+             cfrp.contract_id contractid
+             from Contract_Fund_Rent_Plan cfrp 
+            where cfrp.contract_id = '{contractid}'
+            ) t1
+            left join 
+            (select sum( cfri.corpus ) sumincomecorpus
+            ,sum(cfri.interest ) sumincomeinterest,
+            sum( cfri.rent ) sumincomerent,
+            min(cfri.contract_id) contractid,
+            cfri.plan_list
+             from  contract_fund_rent_income cfri 
+            where cfri.contract_id = '{contractid}'
+            group by cfri.plan_list
+            )t2 on t2.contractid = t1.contractid and t2.plan_list = t1.rent_list
+        ) t 
+				 ]]> 
+	       </table_sql>
+	      </sqlserver> 
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

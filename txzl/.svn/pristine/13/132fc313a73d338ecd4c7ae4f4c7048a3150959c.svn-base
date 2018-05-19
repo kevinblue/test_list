@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+
+select a.id id,
+a.serial serial,
+a.diid diid,
+a.plantime plantime,
+a.fundplanno fundplanno,
+nvl(a.inneraccount,0) inneraccount,
+nvl(a.returnamount,0) returnamount,
+nvl(a.fundallocated,0) fundallocated,
+nvl(a.innerborrow,0) innerborrow,
+nvl(a.outterborrow,0) outterborrow,
+nvl(a.payment,0) payment,
+nvl(a.funddeposit,0) funddeposit,
+nvl(a.innertran,0) innertran,
+nvl(a.outterreturn,0) outterreturn,
+nvl(a.groupreturn,0) groupreturn,
+       case (a.serial)
+         when 1 then
+         nvl(/~accountbalance:'{accountbalance}'~/,0)
+         else
+          (select nvl(to_char(to_number(/~accountbalance:'{accountbalance}'~/)+sum(b.inneraccount) + sum(b.returnamount) +
+                  sum(b.fundallocated) + sum(b.innerborrow) +
+                  sum(b.outterborrow) - sum(b.payment) - sum(b.funddeposit) -
+                  sum(b.groupreturn) - sum(b.innertran) - sum(b.outterreturn)),0)
+             from (select rownum serialnew, t.*
+                     from (select t.id                   id,
+                                  d.id                   diid,
+                                  t.plan_time            plantime,
+                                  t.fund_plan_no         fundplanno,
+                                  t.inner_account        inneraccount,
+                                  t.inner_account_name   inneraccountname,
+                                  t.inner_account_unit   inneraccountunit,
+                                  t.inner_account_note   inneraccountnote,
+                                  t.return_amount        returnamount,
+                                  t.return_amount_name   returnamountname,
+                                  t.return_amount_unit   returnamountunit,
+                                  t.return_amount_note   returnamountnote,
+                                  t.fund_allocated       fundallocated,
+                                  t.fund_allocated_name  fundallocatedname,
+                                  t.fund_allocated_unit  fundallocatedunit,
+                                  t.fund_allocated_note  fundallocatednote,
+                                  t.inner_borrow         innerborrow,
+                                  t.inner_borrow_name    innerborrowname,
+                                  t.inner_borrow_unit    innerborrowunit,
+                                  t.inner_borrow_note    innerborrownote,
+                                  t.outter_borrow        outterborrow,
+                                  t.outter_borrow_name   outterborrowname,
+                                  t.outter_borrow_unit   outterborrowunit,
+                                  t.outter_borrow_note   outterborrownote,
+                                  t.payment              payment,
+                                  t.payment_name         paymentname,
+                                  t.payment_unit         paymentunit,
+                                  t.payment_note         paymentnote,
+                                  t.payment_silver       paymentsilver,
+                                  t.fund_deposit         funddeposit,
+                                  t.fund_deposit_name    funddepositname,
+                                  t.fund_deposit_unit    funddepositunit,
+                                  t.fund_deposit_note    funddepositnote,
+                                  t.fund_deposit_silver  funddepositsilver,
+                                  t.inner_tran           innertran,
+                                  t.inner_tran_name      innertranname,
+                                  t.inner_tran_unit      innertranunit,
+                                  t.inner_tran_note      innertrannote,
+                                  t.inner_tran_silver    innertransilver,
+                                  t.outter_return        outterreturn,
+                                  t.outter_return_name   outterreturnname,
+                                  t.outter_return_unit   outterreturnunit,
+                                  t.outter_return_note   outterreturnnote,
+                                  t.outter_return_silver outterreturnsilver,
+                                  t.group_return         groupreturn,
+                                  t.group_return_name    groupreturnname,
+                                  t.group_return_unit    groupreturnunit,
+                                  t.group_return_note    groupreturnnote,
+                                  t.group_return_silver  groupreturnsilver,
+                                  t.create_date          createdate,
+                                  t.modify_date          modifydate,
+                                  t.inner_account_type   inneraccounttype,
+                                  t.return_amount_type   returnamounttype,
+                                  t.fund_allocated_type  fundallocatedtype,
+                                  t.inner_borrow_type    innerborrowtype,
+                                  t.outter_borrow_type   outterborrowtype,
+                                  t.payment_type         paymenttype,
+                                  t.fund_deposit_type    funddeposittype,
+                                  t.inner_tran_type      innertrantype,
+                                  t.outter_return_type   outterreturntype,
+                                  t.group_return_type    groupreturntype,
+                                  t1.name_               inneraccounttypename,
+                                  t2.name_               returnamounttypename,
+                                  t3.name_               fundallocatedtypename,
+                                  t4.name_               innerborrowtypename,
+                                  t5.name_               outterborrowtypename,
+                                  t6.name_               paymenttypename,
+                                  t7.name_               funddeposittypename,
+                                  t8.name_               innertrantypename,
+                                  t9.name_               outterreturntypename,
+                                  t10.name_              groupreturntypename,
+                                  t.creator_             creator,
+                                  t.modificator_         modificator
+                             from DEPOSIT_INTEREST_DETAIL t
+                             left join t_dicts_datas t1
+                               on t1.id_ = t.inner_account_type
+                             left join t_dicts_datas t2
+                               on t2.id_ = t.return_amount_type
+                             left join t_dicts_datas t3
+                               on t3.id_ = t.fund_allocated_type
+                             left join t_dicts_datas t4
+                               on t4.id_ = t.inner_borrow_type
+                             left join t_dicts_datas t5
+                               on t5.id_ = t.outter_borrow_type
+                             left join t_dicts_datas t6
+                               on t6.id_ = t.payment_type
+                             left join t_dicts_datas t7
+                               on t7.id_ = t.fund_deposit_type
+                             left join t_dicts_datas t8
+                               on t8.id_ = t.inner_tran_type
+                             left join t_dicts_datas t9
+                               on t9.id_ = t.outter_return_type
+                             left join t_dicts_datas t10
+                               on t10.id_ = t.group_return_type
+                             left join DEPOSIT_INTEREST d
+                               on d.id = t.DI_ID
+                            order by plantime, fundplanno) t where t.plantime>=/~plantimeStart:'{plantimeStart}'~/ and t.plantime<=/~plantimeStart: '{plantimeEnd}' ~/) b
+            where b.serialnew < a.serial)
+       end accoutamount,            --账户余额
+(select nvl(to_char(to_number(/~accountbalance:'{accountbalance}'~/)+sum(b.inneraccount) + sum(b.returnamount) +
+                  sum(b.fundallocated) + sum(b.innerborrow) +
+                  sum(b.outterborrow) - sum(b.payment) - sum(b.funddeposit) -
+                  sum(b.groupreturn) - sum(b.innertran) - sum(b.outterreturn)),0)
+             from (select rownum serialnew, t.*
+                     from (select t.id                   id,
+                                  d.id                   diid,
+                                  t.plan_time            plantime,
+                                  t.fund_plan_no         fundplanno,
+                                  t.inner_account        inneraccount,
+                                  t.inner_account_name   inneraccountname,
+                                  t.inner_account_unit   inneraccountunit,
+                                  t.inner_account_note   inneraccountnote,
+                                  t.return_amount        returnamount,
+                                  t.return_amount_name   returnamountname,
+                                  t.return_amount_unit   returnamountunit,
+                                  t.return_amount_note   returnamountnote,
+                                  t.fund_allocated       fundallocated,
+                                  t.fund_allocated_name  fundallocatedname,
+                                  t.fund_allocated_unit  fundallocatedunit,
+                                  t.fund_allocated_note  fundallocatednote,
+                                  t.inner_borrow         innerborrow,
+                                  t.inner_borrow_name    innerborrowname,
+                                  t.inner_borrow_unit    innerborrowunit,
+                                  t.inner_borrow_note    innerborrownote,
+                                  t.outter_borrow        outterborrow,
+                                  t.outter_borrow_name   outterborrowname,
+                                  t.outter_borrow_unit   outterborrowunit,
+                                  t.outter_borrow_note   outterborrownote,
+                                  t.payment              payment,
+                                  t.payment_name         paymentname,
+                                  t.payment_unit         paymentunit,
+                                  t.payment_note         paymentnote,
+                                  t.payment_silver       paymentsilver,
+                                  t.fund_deposit         funddeposit,
+                                  t.fund_deposit_name    funddepositname,
+                                  t.fund_deposit_unit    funddepositunit,
+                                  t.fund_deposit_note    funddepositnote,
+                                  t.fund_deposit_silver  funddepositsilver,
+                                  t.inner_tran           innertran,
+                                  t.inner_tran_name      innertranname,
+                                  t.inner_tran_unit      innertranunit,
+                                  t.inner_tran_note      innertrannote,
+                                  t.inner_tran_silver    innertransilver,
+                                  t.outter_return        outterreturn,
+                                  t.outter_return_name   outterreturnname,
+                                  t.outter_return_unit   outterreturnunit,
+                                  t.outter_return_note   outterreturnnote,
+                                  t.outter_return_silver outterreturnsilver,
+                                  t.group_return         groupreturn,
+                                  t.group_return_name    groupreturnname,
+                                  t.group_return_unit    groupreturnunit,
+                                  t.group_return_note    groupreturnnote,
+                                  t.group_return_silver  groupreturnsilver,
+                                  t.create_date          createdate,
+                                  t.modify_date          modifydate,
+                                  t.inner_account_type   inneraccounttype,
+                                  t.return_amount_type   returnamounttype,
+                                  t.fund_allocated_type  fundallocatedtype,
+                                  t.inner_borrow_type    innerborrowtype,
+                                  t.outter_borrow_type   outterborrowtype,
+                                  t.payment_type         paymenttype,
+                                  t.fund_deposit_type    funddeposittype,
+                                  t.inner_tran_type      innertrantype,
+                                  t.outter_return_type   outterreturntype,
+                                  t.group_return_type    groupreturntype,
+                                  t1.name_               inneraccounttypename,
+                                  t2.name_               returnamounttypename,
+                                  t3.name_               fundallocatedtypename,
+                                  t4.name_               innerborrowtypename,
+                                  t5.name_               outterborrowtypename,
+                                  t6.name_               paymenttypename,
+                                  t7.name_               funddeposittypename,
+                                  t8.name_               innertrantypename,
+                                  t9.name_               outterreturntypename,
+                                  t10.name_              groupreturntypename,
+                                  t.creator_             creator,
+                                  t.modificator_         modificator
+                             from DEPOSIT_INTEREST_DETAIL t
+                             left join t_dicts_datas t1
+                               on t1.id_ = t.inner_account_type
+                             left join t_dicts_datas t2
+                               on t2.id_ = t.return_amount_type
+                             left join t_dicts_datas t3
+                               on t3.id_ = t.fund_allocated_type
+                             left join t_dicts_datas t4
+                               on t4.id_ = t.inner_borrow_type
+                             left join t_dicts_datas t5
+                               on t5.id_ = t.outter_borrow_type
+                             left join t_dicts_datas t6
+                               on t6.id_ = t.payment_type
+                             left join t_dicts_datas t7
+                               on t7.id_ = t.fund_deposit_type
+                             left join t_dicts_datas t8
+                               on t8.id_ = t.inner_tran_type
+                             left join t_dicts_datas t9
+                               on t9.id_ = t.outter_return_type
+                             left join t_dicts_datas t10
+                               on t10.id_ = t.group_return_type
+                             left join DEPOSIT_INTEREST d
+                               on d.id = t.DI_ID
+                            order by plantime, fundplanno) t where t.plantime>=/~plantimeStart:'{plantimeStart}'~/ and t.plantime<=/~plantimeStart: '{plantimeEnd}' ~/) b
+            where b.serialnew < a.serial + 1)
+      accountbalance,    --账户余额
+       case (a.serial)
+         when 1 then
+         nvl(/~balancedeposit:'{balancedeposit}'~/,0)
+         else
+       (select   nvl(to_char(to_number(/~balancedeposit:'{balancedeposit}'~/) + sum(b.funddeposit) - sum(b.fundallocated)),0)
+             from (select rownum serialnew, t.*
+                     from (select t.id                   id,
+                                  d.id                   diid,
+                                  t.plan_time            plantime,
+                                  t.fund_plan_no         fundplanno,
+                                  t.inner_account        inneraccount,
+                                  t.inner_account_name   inneraccountname,
+                                  t.inner_account_unit   inneraccountunit,
+                                  t.inner_account_note   inneraccountnote,
+                                  t.return_amount        returnamount,
+                                  t.return_amount_name   returnamountname,
+                                  t.return_amount_unit   returnamountunit,
+                                  t.return_amount_note   returnamountnote,
+                                  t.fund_allocated       fundallocated,
+                                  t.fund_allocated_name  fundallocatedname,
+                                  t.fund_allocated_unit  fundallocatedunit,
+                                  t.fund_allocated_note  fundallocatednote,
+                                  t.inner_borrow         innerborrow,
+                                  t.inner_borrow_name    innerborrowname,
+                                  t.inner_borrow_unit    innerborrowunit,
+                                  t.inner_borrow_note    innerborrownote,
+                                  t.outter_borrow        outterborrow,
+                                  t.outter_borrow_name   outterborrowname,
+                                  t.outter_borrow_unit   outterborrowunit,
+                                  t.outter_borrow_note   outterborrownote,
+                                  t.payment              payment,
+                                  t.payment_name         paymentname,
+                                  t.payment_unit         paymentunit,
+                                  t.payment_note         paymentnote,
+                                  t.payment_silver       paymentsilver,
+                                  t.fund_deposit         funddeposit,
+                                  t.fund_deposit_name    funddepositname,
+                                  t.fund_deposit_unit    funddepositunit,
+                                  t.fund_deposit_note    funddepositnote,
+                                  t.fund_deposit_silver  funddepositsilver,
+                                  t.inner_tran           innertran,
+                                  t.inner_tran_name      innertranname,
+                                  t.inner_tran_unit      innertranunit,
+                                  t.inner_tran_note      innertrannote,
+                                  t.inner_tran_silver    innertransilver,
+                                  t.outter_return        outterreturn,
+                                  t.outter_return_name   outterreturnname,
+                                  t.outter_return_unit   outterreturnunit,
+                                  t.outter_return_note   outterreturnnote,
+                                  t.outter_return_silver outterreturnsilver,
+                                  t.group_return         groupreturn,
+                                  t.group_return_name    groupreturnname,
+                                  t.group_return_unit    groupreturnunit,
+                                  t.group_return_note    groupreturnnote,
+                                  t.group_return_silver  groupreturnsilver,
+                                  t.create_date          createdate,
+                                  t.modify_date          modifydate,
+                                  t.inner_account_type   inneraccounttype,
+                                  t.return_amount_type   returnamounttype,
+                                  t.fund_allocated_type  fundallocatedtype,
+                                  t.inner_borrow_type    innerborrowtype,
+                                  t.outter_borrow_type   outterborrowtype,
+                                  t.payment_type         paymenttype,
+                                  t.fund_deposit_type    funddeposittype,
+                                  t.inner_tran_type      innertrantype,
+                                  t.outter_return_type   outterreturntype,
+                                  t.group_return_type    groupreturntype,
+                                  t1.name_               inneraccounttypename,
+                                  t2.name_               returnamounttypename,
+                                  t3.name_               fundallocatedtypename,
+                                  t4.name_               innerborrowtypename,
+                                  t5.name_               outterborrowtypename,
+                                  t6.name_               paymenttypename,
+                                  t7.name_               funddeposittypename,
+                                  t8.name_               innertrantypename,
+                                  t9.name_               outterreturntypename,
+                                  t10.name_              groupreturntypename,
+                                  t.creator_             creator,
+                                  t.modificator_         modificator
+                             from DEPOSIT_INTEREST_DETAIL t
+                             left join t_dicts_datas t1
+                               on t1.id_ = t.inner_account_type
+                             left join t_dicts_datas t2
+                               on t2.id_ = t.return_amount_type
+                             left join t_dicts_datas t3
+                               on t3.id_ = t.fund_allocated_type
+                             left join t_dicts_datas t4
+                               on t4.id_ = t.inner_borrow_type
+                             left join t_dicts_datas t5
+                               on t5.id_ = t.outter_borrow_type
+                             left join t_dicts_datas t6
+                               on t6.id_ = t.payment_type
+                             left join t_dicts_datas t7
+                               on t7.id_ = t.fund_deposit_type
+                             left join t_dicts_datas t8
+                               on t8.id_ = t.inner_tran_type
+                             left join t_dicts_datas t9
+                               on t9.id_ = t.outter_return_type
+                             left join t_dicts_datas t10
+                               on t10.id_ = t.group_return_type
+                             left join DEPOSIT_INTEREST d
+                               on d.id = t.DI_ID
+                            order by plantime, fundplanno) t where t.plantime>=/~plantimeStart:'{plantimeStart}'~/ and t.plantime<=/~plantimeStart: '{plantimeEnd}' ~/ ) b
+            where b.serialnew < a.serial)
+       end beforebalancedeposit,            --上一日存款余额余额
+          (select nvl(to_char(to_number(/~balancedeposit:'{balancedeposit}'~/) + sum(b.funddeposit) - sum(b.fundallocated)),0)
+             from (select rownum serialnew, t.*
+                     from (select t.id                   id,
+                                  d.id                   diid,
+                                  t.plan_time            plantime,
+                                  t.fund_plan_no         fundplanno,
+                                  t.inner_account        inneraccount,
+                                  t.inner_account_name   inneraccountname,
+                                  t.inner_account_unit   inneraccountunit,
+                                  t.inner_account_note   inneraccountnote,
+                                  t.return_amount        returnamount,
+                                  t.return_amount_name   returnamountname,
+                                  t.return_amount_unit   returnamountunit,
+                                  t.return_amount_note   returnamountnote,
+                                  t.fund_allocated       fundallocated,
+                                  t.fund_allocated_name  fundallocatedname,
+                                  t.fund_allocated_unit  fundallocatedunit,
+                                  t.fund_allocated_note  fundallocatednote,
+                                  t.inner_borrow         innerborrow,
+                                  t.inner_borrow_name    innerborrowname,
+                                  t.inner_borrow_unit    innerborrowunit,
+                                  t.inner_borrow_note    innerborrownote,
+                                  t.outter_borrow        outterborrow,
+                                  t.outter_borrow_name   outterborrowname,
+                                  t.outter_borrow_unit   outterborrowunit,
+                                  t.outter_borrow_note   outterborrownote,
+                                  t.payment              payment,
+                                  t.payment_name         paymentname,
+                                  t.payment_unit         paymentunit,
+                                  t.payment_note         paymentnote,
+                                  t.payment_silver       paymentsilver,
+                                  t.fund_deposit         funddeposit,
+                                  t.fund_deposit_name    funddepositname,
+                                  t.fund_deposit_unit    funddepositunit,
+                                  t.fund_deposit_note    funddepositnote,
+                                  t.fund_deposit_silver  funddepositsilver,
+                                  t.inner_tran           innertran,
+                                  t.inner_tran_name      innertranname,
+                                  t.inner_tran_unit      innertranunit,
+                                  t.inner_tran_note      innertrannote,
+                                  t.inner_tran_silver    innertransilver,
+                                  t.outter_return        outterreturn,
+                                  t.outter_return_name   outterreturnname,
+                                  t.outter_return_unit   outterreturnunit,
+                                  t.outter_return_note   outterreturnnote,
+                                  t.outter_return_silver outterreturnsilver,
+                                  t.group_return         groupreturn,
+                                  t.group_return_name    groupreturnname,
+                                  t.group_return_unit    groupreturnunit,
+                                  t.group_return_note    groupreturnnote,
+                                  t.group_return_silver  groupreturnsilver,
+                                  t.create_date          createdate,
+                                  t.modify_date          modifydate,
+                                  t.inner_account_type   inneraccounttype,
+                                  t.return_amount_type   returnamounttype,
+                                  t.fund_allocated_type  fundallocatedtype,
+                                  t.inner_borrow_type    innerborrowtype,
+                                  t.outter_borrow_type   outterborrowtype,
+                                  t.payment_type         paymenttype,
+                                  t.fund_deposit_type    funddeposittype,
+                                  t.inner_tran_type      innertrantype,
+                                  t.outter_return_type   outterreturntype,
+                                  t.group_return_type    groupreturntype,
+                                  t1.name_               inneraccounttypename,
+                                  t2.name_               returnamounttypename,
+                                  t3.name_               fundallocatedtypename,
+                                  t4.name_               innerborrowtypename,
+                                  t5.name_               outterborrowtypename,
+                                  t6.name_               paymenttypename,
+                                  t7.name_               funddeposittypename,
+                                  t8.name_               innertrantypename,
+                                  t9.name_               outterreturntypename,
+                                  t10.name_              groupreturntypename,
+                                  t.creator_             creator,
+                                  t.modificator_         modificator
+                             from DEPOSIT_INTEREST_DETAIL t
+                             left join t_dicts_datas t1
+                               on t1.id_ = t.inner_account_type
+                             left join t_dicts_datas t2
+                               on t2.id_ = t.return_amount_type
+                             left join t_dicts_datas t3
+                               on t3.id_ = t.fund_allocated_type
+                             left join t_dicts_datas t4
+                               on t4.id_ = t.inner_borrow_type
+                             left join t_dicts_datas t5
+                               on t5.id_ = t.outter_borrow_type
+                             left join t_dicts_datas t6
+                               on t6.id_ = t.payment_type
+                             left join t_dicts_datas t7
+                               on t7.id_ = t.fund_deposit_type
+                             left join t_dicts_datas t8
+                               on t8.id_ = t.inner_tran_type
+                             left join t_dicts_datas t9
+                               on t9.id_ = t.outter_return_type
+                             left join t_dicts_datas t10
+                               on t10.id_ = t.group_return_type
+                             left join DEPOSIT_INTEREST d
+                               on d.id = t.DI_ID
+                            order by plantime, fundplanno) t where t.plantime>=/~plantimeStart:'{plantimeStart}'~/ and t.plantime<=/~plantimeStart: '{plantimeEnd}' ~/) b
+            where b.serialnew < a.serial + 1)
+      balancedeposit   --存款余额
+  from (select rownum serial, t.*
+          from (select t.id                   id,
+                       d.id                   diid,
+                       t.plan_time            plantime,
+                       t.fund_plan_no         fundplanno,
+                       t.inner_account        inneraccount,
+                       t.inner_account_name   inneraccountname,
+                       t.inner_account_unit   inneraccountunit,
+                       t.inner_account_note   inneraccountnote,
+                       t.return_amount        returnamount,
+                       t.return_amount_name   returnamountname,
+                       t.return_amount_unit   returnamountunit,
+                       t.return_amount_note   returnamountnote,
+                       t.fund_allocated       fundallocated,
+                       t.fund_allocated_name  fundallocatedname,
+                       t.fund_allocated_unit  fundallocatedunit,
+                       t.fund_allocated_note  fundallocatednote,
+                       t.inner_borrow         innerborrow,
+                       t.inner_borrow_name    innerborrowname,
+                       t.inner_borrow_unit    innerborrowunit,
+                       t.inner_borrow_note    innerborrownote,
+                       t.outter_borrow        outterborrow,
+                       t.outter_borrow_name   outterborrowname,
+                       t.outter_borrow_unit   outterborrowunit,
+                       t.outter_borrow_note   outterborrownote,
+                       t.payment              payment,
+                       t.payment_name         paymentname,
+                       t.payment_unit         paymentunit,
+                       t.payment_note         paymentnote,
+                       t.payment_silver       paymentsilver,
+                       t.fund_deposit         funddeposit,
+                       t.fund_deposit_name    funddepositname,
+                       t.fund_deposit_unit    funddepositunit,
+                       t.fund_deposit_note    funddepositnote,
+                       t.fund_deposit_silver  funddepositsilver,
+                       t.inner_tran           innertran,
+                       t.inner_tran_name      innertranname,
+                       t.inner_tran_unit      innertranunit,
+                       t.inner_tran_note      innertrannote,
+                       t.inner_tran_silver    innertransilver,
+                       t.outter_return        outterreturn,
+                       t.outter_return_name   outterreturnname,
+                       t.outter_return_unit   outterreturnunit,
+                       t.outter_return_note   outterreturnnote,
+                       t.outter_return_silver outterreturnsilver,
+                       t.group_return         groupreturn,
+                       t.group_return_name    groupreturnname,
+                       t.group_return_unit    groupreturnunit,
+                       t.group_return_note    groupreturnnote,
+                       t.group_return_silver  groupreturnsilver,
+                       t.create_date          createdate,
+                       t.modify_date          modifydate,
+                       t.inner_account_type   inneraccounttype,
+                       t.return_amount_type   returnamounttype,
+                       t.fund_allocated_type  fundallocatedtype,
+                       t.inner_borrow_type    innerborrowtype,
+                       t.outter_borrow_type   outterborrowtype,
+                       t.payment_type         paymenttype,
+                       t.fund_deposit_type    funddeposittype,
+                       t.inner_tran_type      innertrantype,
+                       t.outter_return_type   outterreturntype,
+                       t.group_return_type    groupreturntype,
+                       t1.name_               inneraccounttypename,
+                       t2.name_               returnamounttypename,
+                       t3.name_               fundallocatedtypename,
+                       t4.name_               innerborrowtypename,
+                       t5.name_               outterborrowtypename,
+                       t6.name_               paymenttypename,
+                       t7.name_               funddeposittypename,
+                       t8.name_               innertrantypename,
+                       t9.name_               outterreturntypename,
+                       t10.name_              groupreturntypename,
+                       t.creator_             creator,
+                       t.modificator_         modificator
+                  from DEPOSIT_INTEREST_DETAIL t
+                  left join t_dicts_datas t1
+                    on t1.id_ = t.inner_account_type
+                  left join t_dicts_datas t2
+                    on t2.id_ = t.return_amount_type
+                  left join t_dicts_datas t3
+                    on t3.id_ = t.fund_allocated_type
+                  left join t_dicts_datas t4
+                    on t4.id_ = t.inner_borrow_type
+                  left join t_dicts_datas t5
+                    on t5.id_ = t.outter_borrow_type
+                  left join t_dicts_datas t6
+                    on t6.id_ = t.payment_type
+                  left join t_dicts_datas t7
+                    on t7.id_ = t.fund_deposit_type
+                  left join t_dicts_datas t8
+                    on t8.id_ = t.inner_tran_type
+                  left join t_dicts_datas t9
+                    on t9.id_ = t.outter_return_type
+                  left join t_dicts_datas t10
+                    on t10.id_ = t.group_return_type
+                  left join DEPOSIT_INTEREST d
+                    on d.id = t.DI_ID
+                 order by plantime, fundplanno) t where t.plantime>=/~plantimeStart:'{plantimeStart}'~/ and t.plantime<=/~plantimeStart: '{plantimeEnd}' ~/) a
+    where 1=1
+	       
+			  <EXTRACTEND> ORDER BY serial	<EXTRACTEND>	
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

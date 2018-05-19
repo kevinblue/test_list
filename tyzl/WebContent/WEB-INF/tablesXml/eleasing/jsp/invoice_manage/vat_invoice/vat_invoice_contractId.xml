@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	
+		        select 
+		        	cri.id              cid, 
+		        	cri.contract_id     contractid,		            
+		            ci.cust_name        custname,
+		            cd.EQUIP_AMT        equipamt,
+		            cri.contract_number contractnumber,
+                	cri.project_name    projectname		        
+		        from contract_info cri 
+		        left join cust_info ci on cri.cust_id=ci.id
+		        left join CONTRACT_CONDITION cd on cri.id = cd.contract_id
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

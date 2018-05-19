@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ SELECT a.contract_id contractid,
+ 		nvl(b.corpus, 0) /10000 as value1,  --已回收本金金额
+       (a.corpus - nvl(b.corpus, 0)) / 10000 as value2 --融资余额
+  FROM (SELECT cf.contract_id,
+               sum(cf.corpus) corpus,
+               max(cf.rent_list) rentlist,
+               sum(cf.rent) rent
+          FROM contract_fund_rent_plan cf
+         GROUP BY cf.contract_id) a
+  LEFT JOIN (SELECT ci.contract_id,
+                    sum(ci.corpus) corpus,
+                    max(ci.plan_list) rentlist,
+                    sum(ci.rent) rent
+               FROM contract_fund_rent_income ci
+              WHERE ci.hire_date <= '{lastdate.num}'
+              GROUP BY ci.contract_id) b
+    on a.contract_id = b.contract_id
+ WHERE a.contract_id = '{corpus.contractid}'
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

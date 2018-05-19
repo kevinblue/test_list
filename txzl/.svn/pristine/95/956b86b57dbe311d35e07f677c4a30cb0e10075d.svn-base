@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[		   
+             select xb.username username1,xb.deptname deptname1,xb.deptroute deptroute1,sum(xb.rentmoney) rent,sum(xb.corpusmoney) corpus from
+(select distinct
+      aa.BELONGINGPEOPLENAME username,
+      (select td.name_ from t_depts td where td.id_=tud.dept_id_) deptname,
+      (select trim(leading '》' from sys_connect_by_path(name_,'》')) name from t_depts t      
+             where t.id_=tud.dept_id_     
+             start with pid_='402811814a22c45f014a2353d45d0032' connect  by prior t.id_=t.pid_) deptroute,
+             r.rentmoney ,
+             r.corpusmoney 
+       from VI_CUST_INFO_ALL aa
+                    left join vi_user_leader leader on leader.id_ = aa.belongingpeople
+                    left join t_users_depts tud on tud.user_id_=aa.BELONGINGPEOPLE
+                    left join contract_info ci on ci.cust_id=aa.custid
+                    left join (select r.custid custid,
+                    nvl(r.rent,0)-nvl(b.factmoeny,0) rentmoney,
+                    nvl(r.corpus,0)-nvl(b.factmoeny,0) corpusmoney 
+                  from(select ci.cust_id custid,
+                    nvl(sum(frp.rent),0)-nvl(sum(frp.currentincome),0) rent,
+                    nvl(sum(frp.corpus),0)-nvl(sum(frp.CURCORPUSINCOME),0) corpus,
+                    ci.id contractid 
+                  from vi_contract_fund_rent_plan frp 
+                  left join contract_info ci on ci.id =frp.CONTRACTID 
+                   group by ci.cust_id,ci.id) r 
+                  left join (select bao.contractid contractid,
+                  (nvl(bao.factmoeny,0)-nvl(dikou.factmoeny,0)-nvl(tui.factmoeny,0)) factmoeny 
+                  from (select vcffc.CONTRACTID contractid,
+                  nvl(sum(vcffc.FACTMONEY),0) factmoeny 
+                  from vi_contract_fund_fund_charge vcffc 
+                  where vcffc.FEETYPE='feetype2' group by vcffc.CONTRACTID) bao
+      left join (select vcff.CONTRACTID contractid,nvl(sum(vcff.FACTMONEY),0) factmoeny from vi_contract_fund_fund_charge vcff where vcff.FEETYPE='feetype16' group by vcff.CONTRACTID) dikou
+      on bao.contractid = dikou.contractid left join 
+      (select vcf.CONTRACTID contractid,nvl(sum(vcf.FACTMONEY),0) factmoeny from vi_contract_fund_fund_charge vcf where vcf.FEETYPE='feetype17' group by vcf.CONTRACTID) tui
+      on bao.contractid=tui.contractid) b on r.contractid=b.contractid) r on aa.custid=r.custid
+          where aa.CUSTTYPE like '%cust_type.cust%' AND NVL(DRAFT_,'否')='否' 
+                and ci.contract_status=31 
+          and aa.custid='{custid}' ) xb group by xb.username,xb.deptname,xb.deptroute
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

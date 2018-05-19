@@ -1,0 +1,61 @@
+package com.tenwa.leasing.controller.accountReveivable;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.service.asset.AssetsMngService;
+
+
+
+@Controller(value = "")
+@RequestMapping(value = "/**/acl")
+public class TransferReceivables {
+
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "assetsMngService")
+	private AssetsMngService assetsMngService;
+
+	@SuppressWarnings("rawtypes")
+	@RequestMapping(value = "/showTransferReceivables.acl")
+	public String showTransferReceivables(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		Map<String, String> model = QueryUtil
+				.getRequestParameterMapByAjax(request);
+		String opertype = model.get("opertype");
+		//this.tableService.findEntityByID(entityClass, id)
+		Map<String, String> variablesMap = new HashMap<String, String>();
+			String contractid = model.get("contractid");
+			ContractInfo contractinfo = this.tableService
+					.findEntityByID(ContractInfo.class, contractid);
+			variablesMap = this.tableService
+					.getEntityPropertiesToStringMap(contractinfo, null, "contract_info");
+			variablesMap.put("contract_info.custclass", contractinfo.getCustId().getCustClass().getCode());
+			variablesMap.put("contract_info.proj_id", contractinfo.getProjId().getProjId());//项目编号
+			variablesMap.put("contract_info.projdate", contractinfo.getProjId().getProjDate());//项目日期
+			variablesMap.put("contract_info.custname", contractinfo.getCustId().getCustName());//供应商名称
+			variablesMap.put("contract_info.projname", contractinfo.getProjectName());//项目名称
+			variablesMap.put("contract_info.deptroute", contractinfo.getDeptroute());//部门路径	
+		for (Entry entry : variablesMap.entrySet()) {
+			request.setAttribute(entry.getKey().toString(), entry.getValue());
+		}
+		
+		if ("view".equals(opertype)) {
+			return "solutions/workflow/forms/factoring/factoring_transfer_receivables/transfer_receivables01.jsp";
+		}else{//solutions/workflow/forms/factoring/factoring_transfer_receivables/transfer_receivables01.jsp
+			return null;
+		}
+	}
+}

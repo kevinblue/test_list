@@ -1,0 +1,256 @@
+package com.tenwa.leasing.service.Proj.proComm;
+
+import java.util.Map;
+
+import com.tenwa.leasing.entity.proj.ProjDevelopInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+
+/**
+ * 
+ * 项目名称：tls5.1 类名称：ProCommService 类描述： 创建人：rovine 创建时间：2014年11月19日 下午6:33:09
+ * 
+ * @version
+ */
+public interface ProCommService {
+  /**
+     * 
+    * 方法名: initPorjCustInfo
+    * 方法描述: TODO(加载项目的客户信息)
+    * 参数:  @param pinfo
+    * 参数:  @param variablesMap
+    * 参数:  @throws Exception    设定文件
+    * 返回类型 void    返回类型
+    * @throws
+     */
+	public void loadPorjCustInfo(ProjInfo pinfo,Map<String, String> variablesMap) throws Exception;
+		
+	/**
+	 * 加载项目的基本信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public ProjInfo loadProjInfo(Map<String,String>variablesMap)throws Exception;
+	/**
+	 *保存项目信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	  
+	public ProjInfo saveProjInfo(Map<String,String>variablesMap,Integer ProStatus)throws Exception;
+	
+	
+	/**
+	 *保存项目信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	  
+	public ProjInfo saveProjInfoStop(Map<String,String>variablesMap,Integer ProStatus)throws Exception;
+	
+	
+	/**
+	 * 加载测算的的基本参数
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadRentCalculationParam(String projid,String custname,String custid,String flowunid,Map<String,String>variablesMap)throws Exception;
+	
+	/**
+	 * 加载项目的交易，资金计划，租金计划和现金流
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadProjRentCalculation(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存项目的交易结构，资金计划，租金计划，现金流
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjRentCalculation(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存项目的贸易基础交易情况
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveTradeBasedTransactions(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 加载项目的贸易基础交易情况
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadTradeBasedTransactions(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存项目的租赁物件
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjEquipment(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	
+	/**
+	 * 保存项目的担保人
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjGuaranteeMethod(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存项目的抵押物 
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjGuaranteeEquipment(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	
+	/**
+	 * 加载项目的租赁物件到前台的MAP中
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadProjEquipment(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 加载项目的担保人到前台的Map中
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadProjGuaranteeMethod(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 加载项目的抵押物到前台的MAP中
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadProjGuaranteeEquipment(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 加载项目的发票信息
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void loadProjInvoice(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存项目的发票信息
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void savProjInvoice(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存信审报告
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjReport(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	/**
+	 * 保存上会记录
+	 * @param projinfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjMeeting(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+	
+	/** 
+	* @Title: saveCreditReport 
+	* @Description: 保存上会清单内容
+	* @param @param projinfo
+	* @param @param variablesMap
+	* @param @throws Exception    设定文件 
+	* @return void    返回类型 
+	* @throws 
+	*/
+	public void saveCreditReport(ProjInfo projinfo,Map<String,String>variablesMap)throws Exception;
+
+	void saveProjPremiseInfo(ProjInfo projInfo, Map<String, String> variablesMap) throws Exception;
+	/**
+	 * 获得当前登录人所属部门
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public String getUsersDept() throws Exception;
+	/**
+	 * 获得当前登录人的部门路径
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public String getDeptLujing() throws Exception;
+	/**
+	 * 获得当前登录人的部门路径立项变更
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public String getDeptLujingChange(String id) throws Exception;
+
+	public void saveProjLimitInfo(ProjInfo projinfo, Map<String, String> variablesMap) throws Exception;
+	
+	
+	/**
+	 * 加载保理业务项目的基本信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public ProjDevelopInfo loadProjDevelopInfo(Map<String,String>variablesMap)throws Exception;
+    
+	
+	/**
+	 * 保存保理发票信息
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjInvoice(ProjInfo projinfo, Map<String, String> variablesMap)
+			throws Exception;
+
+	public void loadProjInvoicement(ProjInfo projinfo, Map<String, String> variablesMap)
+			throws Exception;
+	/**
+	 * 保存保理复议变更说明
+	 * @param projinfo
+	 * @param variablesMap
+	 */
+	public void saveProjChangeExplain(ProjInfo projinfo,
+			Map<String, String> variablesMap)throws Exception;
+	/**
+	 * 加载保理项目变更说明信息
+	 * @param projInfo
+	 * @param variablesMap
+	 * @throws Exception 
+	 */
+	public void loadProjChangeExplain(ProjInfo projInfo,
+			Map<String, String> variablesMap) throws Exception;
+
+	public void saveChangeReasonType(ProjInfo projinfo,
+			Map<String, String> variablesMap)throws Exception;
+	
+	/**
+	 * 保存付款前提条件
+	 * @param projinfo
+	 * @param variablesMap
+	 */
+	public void saveProjPaymentPremiseCondition(ProjInfo projinfo,
+			Map<String, String> variablesMap)throws Exception;
+	
+	/**
+	 * 加载付款前提条件
+	 * @param projinfo
+	 * @param variablesMap
+	 */
+	public void loadProjPaymentPremiseCondition(ProjInfo projInfo,
+			Map<String, String> variablesMap) throws Exception;
+	
+	public void getProjDevelopInfo(ProjInfo projInfo,Map<String, String> variablesMap) throws Exception;
+	/**
+	 * 变更合同层、项目层、项目开发层项目名称
+	 * @param projInfo
+	 * @param variablesMap
+	 * @throws Exception
+	 */
+	public void saveProjName(Map<String, String> variablesMap) throws Exception;
+	
+	
+}

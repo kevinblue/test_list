@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+ <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.tracywindy.org/table"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+     <xs:element name="table-root">
+         <xs:complexType>
+             <xs:sequence>
+                <xs:element minOccurs="1" maxOccurs="1" name="table">
+                   <xs:complexType>
+	                    <xs:sequence>
+		                 <xs:element minOccurs="1" maxOccurs="1" name="data">
+		                     <xs:complexType>
+		                         <xs:sequence>
+		                         	<xs:element minOccurs="1" maxOccurs="1" name="alldb">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                             <xs:element minOccurs="0" maxOccurs="1" name="oracle">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                             <xs:element minOccurs="0" maxOccurs="1" name="sqlserver">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="predefined_sql" type="xs:string"/>
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="order_column" type="xs:string"/>
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                            <xs:element minOccurs="0" maxOccurs="1" name="mysql">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                             <xs:element minOccurs="0" maxOccurs="1" name="db2">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                             <xs:element minOccurs="0" maxOccurs="1" name="sybase">
+		                                 <xs:complexType>
+			                                  <xs:sequence>
+			                                     <xs:element minOccurs="0" maxOccurs="1" name="table_sql" type="xs:string" />
+		                                         <xs:element minOccurs="0" maxOccurs="1" name="excel_sql" type="xs:string" />
+			                                  </xs:sequence>
+		                                 </xs:complexType>
+		                             </xs:element>
+		                             <xs:element minOccurs="0" maxOccurs="1" name="dataSource" type="xs:string" />
+		                             <xs:element minOccurs="0" maxOccurs="1" name="show_sql" type="xs:boolean" />
+		                             <xs:element minOccurs="0" maxOccurs="1" name="Data_Authority" type="xs:string" />
+		                              <xs:element minOccurs="0" maxOccurs="1" name="isPrepared" type="xs:boolean" />
+		                         </xs:sequence>
+		                    </xs:complexType>
+		                 </xs:element>
+	                   </xs:sequence>
+                   </xs:complexType>
+                </xs:element>
+             </xs:sequence>
+         </xs:complexType>
+    </xs:element>
+ </xs:schema>

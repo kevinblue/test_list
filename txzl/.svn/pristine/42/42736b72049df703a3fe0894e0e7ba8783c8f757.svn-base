@@ -1,0 +1,108 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>机组主数据</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyLoadMask.js"></script>
+<script type="text/javascript">
+var currentClientWidth = document.documentElement.clientWidth;
+var currentClientHeight = document.documentElement.clientHeight;
+var loadMask = null;
+jQuery(function(){
+	tenwa.createTable({
+		id: "projProgress",
+		renderTo: "id_projProgress",
+		width: currentClientWidth,
+		height: currentClientHeight,
+		lazyLoad: false,
+		title: "项目建设进度",
+		remoteOper : false,
+		showPager: true,
+		pageSize: 20,
+		entityClassName : 'com.tenwa.leasing.entity.SM.MachineMainData',
+		params:{projid:projid},
+		tools: ['exportExcel'],
+		queryButtonColSpan: 4,
+		queryButtonNewLine:false,
+		xmlFileName: '/eleasing/workflow/contract/SM_interface/machine_detail.xml',
+		columns: [
+			{type: 'indexcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			{field:'机组编号', header:'机组编号', visible: false},	
+			{field:'风场编号', header:'风场编号', visible: false},	
+			{field:'风场名称', header:'风场名称',formEditorConfig : {}},	
+			{field:'片区', header:'片区', visible: false},	
+			{field:'项目部', header:'项目部', visible: false},	
+			{field:'项目经理', header:'项目经理',formEditorConfig : {}},	
+			{field:'机组状态', header:'机组状态',formEditorConfig : {}},	
+			{field:'运行机位号', header:'运行机位号',formEditorConfig : {newLine:true}},	
+			{field:'SCADA风机编号', header:'SCADA风机编号', visible: false},	
+			{field:'SCADA风场编号', header:'SCADA风场编号', visible: false},	
+			{field:'机组容量', header:'机组容量',formEditorConfig : {}},	
+			{field:'机型', header:'机型',formEditorConfig : {}},	
+			{field:'轮毂高度', header:'轮毂高度',formEditorConfig : {newLine:true}},	
+			{field:'IP地址', header:'IP地址', visible: false},	
+			{field:'子网掩码', header:'子网掩码', visible: false},	
+			{field:'基础开挖时间', header:'基础开挖时间',formEditorConfig : {}},	
+			{field:'基础浇筑时间', header:'基础浇筑时间',formEditorConfig : {}},	
+			{field:'箱变安装时间', header:'箱变安装时间',formEditorConfig : {newLine:true}},	
+			{field:'接货开始时间', header:'接货开始时间',formEditorConfig : {}},	
+			{field:'接货结束时间', header:'接货结束时间',formEditorConfig : {}},	
+			{field:'吊装开始时间', header:'吊装开始时间',formEditorConfig : {newLine:true}},	
+			{field:'吊装结束时间', header:'吊装结束时间',formEditorConfig : {}},	
+			{field:'上电时间', header:'上电时间',formEditorConfig : {}},	
+			{field:'静调开始时间', header:'静调开始时间',formEditorConfig : {newLine:true}},	
+			{field:'静调结束时间', header:'静调结束时间',formEditorConfig : {}},	
+			{field:'动调开始时间', header:'动调开始时间',formEditorConfig : {}},	
+			{field:'动调结束时间', header:'动调结束时间',formEditorConfig : {newLine:true}},	
+			{field:'试运行开始时间', header:'试运行开始时间',formEditorConfig : {}},	
+			{field:'试运行结束时间', header:'试运行结束时间',formEditorConfig : {}},	
+			{field:'预验收通过时间', header:'预验收通过时间',formEditorConfig : {newLine:true}},	
+			{field:'在建转质保时间', header:'在建转质保时间',formEditorConfig : {}},	
+			{field:'主控程序版本号', header:'主控程序版本号', visible: false},	
+			{field:'变流版本号', header:'变流版本号', visible: false},	
+			{field:'变桨版本号', header:'变桨版本号', visible: false},	
+			{field:'初始化文件版本号', header:'初始化文件版本号', visible: false},	
+			{field:'变桨类型', header:'变桨类型',formEditorConfig : {}},	
+			{field:'变流类型', header:'变流类型',formEditorConfig : {newLine:true}},	
+			{field:'冷却', header:'冷却',formEditorConfig : {}},	
+			{field:'叶片', header:'叶片',formEditorConfig : {}},	
+			{field:'总线类型', header:'总线类型',formEditorConfig : {newLine:true}},	
+			{field:'塔筒', header:'塔筒',formEditorConfig : {}},	
+			{field:'基础形式', header:'基础形式',formEditorConfig : {}},	
+			{field:'塔架连接方式', header:'塔架连接方式',formEditorConfig : {newLine:true}},	
+			{field:'塔架图号', header:'塔架图号', visible: false},	
+			{field:'预计出质保时间', header:'预计出质保时间',formEditorConfig : {}},	
+			{field:'最终交接结束时间', header:'最终交接结束时间',formEditorConfig : {}},	
+			{field:'吊装过程验收开始时间', header:'吊装过程验收开始时间',formEditorConfig : {newLine:true}},	
+			{field:'吊装过程验收结束时间', header:'吊装过程验收结束时间',formEditorConfig : {}},
+			{field:'力矩验收开始时间', header:'力矩验收开始时间',formEditorConfig : {}},	
+			{field:'力矩验收结束时间', header:'力矩验收结束时间',formEditorConfig : {newLine:true}},	
+			{field:'接线开始时间', header:'接线开始时间',formEditorConfig : {}},	
+			{field:'接线结束时间', header:'接线结束时间',formEditorConfig : {}},	
+			{field:'整体验收开始时间', header:'整体验收开始时间',formEditorConfig : {newLine:true}},	
+			{field:'整体验收结束时间', header:'整体验收结束时间',formEditorConfig : {}},	
+			{field:'内部验收开始时间', header:'内部验收开始时间',formEditorConfig : {}},	
+			{field:'内部验收结束时间', header:'内部验收结束时间',formEditorConfig : {newLine:true}},	
+			{field:'预验收开始时间', header:'预验收开始时间',formEditorConfig : {}},	
+			{field:'最终交接开始时间', header:'最终交接开始时间',formEditorConfig : {}},
+			{field:'最终交接验收开始时间', header:'最终交接验收开始时间',formEditorConfig : {newLine:true}},
+			{field:'最终交接验收结束时间', header:'最终交接验收结束时间',formEditorConfig : {}},
+			{field:'最终出质保时间', header:'最终出质保时间',formEditorConfig : {}},
+			{field:'系统创建时间', header:'系统创建时间',formEditorConfig : {newLine:true}}
+		]
+	});
+});
+
+</script>
+</head>
+<body>
+<div id="id_projProgress"></div>
+</body>
+</html>

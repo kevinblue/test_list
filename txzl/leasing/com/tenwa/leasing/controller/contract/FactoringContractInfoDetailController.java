@@ -1,0 +1,94 @@
+package com.tenwa.leasing.controller.contract;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeMethod;
+import com.tenwa.leasing.entity.contract.ContractGuaranteeMethodTmp;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.entity.contract.ContractSignatory;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.fivecategoryapply.FiveCategoryApply;
+import com.tenwa.leasing.entity.proj.ProjDevelopInfo;
+import com.tenwa.leasing.entity.proj.ProjInfo;
+import com.tenwa.leasing.entity.trade.TradeBasedTransactions;
+import com.tenwa.leasing.service.contractcomm.ContractCommService;
+import com.tenwa.leasing.service.contractcomm.ContractInfoExtends;
+
+
+@Controller(value = "FactoringContractInfoDetailController")
+@RequestMapping(value = "/**/acl")
+public class FactoringContractInfoDetailController {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "contractInfoExtends")
+	private ContractInfoExtends contractInfoExtends;
+	
+	@Resource(name = "contractCommService")
+	private ContractCommService contractCommService;
+	
+	
+	//保理合同信息详情查询
+		@RequestMapping(value = "/queryFactoringContractInfoDetail.acl")
+		public String queryFactoringContractInfoDetail(HttpServletRequest request, HttpServletResponse response) throws Exception {
+			Map<String,String> model =QueryUtil.getRequestParameterMapByAjax(request);
+			String contractid = model.get("contractid");
+			ContractInfo contractInfo =(ContractInfo) this.tableService.findEntityByID(ContractInfo.class, contractid);
+			CustInfo custInfo = contractInfo.getCustId();
+			Map<String,String> variablesMap = new HashMap<String, String>();				
+			contractInfoExtends.getContractBaseInfo(variablesMap, contractInfo, custInfo);//加载合同基本信息									
+			this.contractCommService.loadFactoringContractEquip(contractInfo, variablesMap);//发票信息
+			variablesMap.put("contract_info.contractnumber",contractInfo.getContractNumber());			
+			//商务条件，租金计划，资金计划，现金流
+			 Map<String,String> querymap = new HashMap<String,String>();
+			 querymap.put("contract_id",contractid);		
+			 System.out.println(querymap);
+			 //商务条件
+			 variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(contractInfo.getContractCondition(), null,""));			 
+			 //合同现金流
+			 String json_fund_cash_flow_str=this.tableService.getJsonArrayData( "eleasing/workflow/contract/contract_fund_cash_flow.xml", querymap).toString();
+			 variablesMap.put("json_fund_cash_flow_str", json_fund_cash_flow_str);
+			 //租金计划(保理明细)
+			 variablesMap.put("json_fund_rent_plan_str", this.tableService.getJsonArrayData("eleasing/workflow/contract/contract_fund_rent_plan.xml",querymap).toString());
+			//资金收付计划
+			 Map<String,String> querymapone = new HashMap<String,String>();
+			 querymapone.put("contract_id",contractid);
+			 querymapone.put("notin", "\'feetype10\',\'feetype9\'");				
+			 variablesMap.put("json_fund_fund_charge_str", this.tableService.getJsonArrayData("eleasing/workflow/contract/fund_fund_charge_plan.xml",querymapone).toString());
+			// this.contractCommService.loadContractRentCalculationFromBefore(contractInfo, variablesMap);
+			 //合同各方
+	    	this.contractCommService.loadContractSignatoryInfo(contractInfo, variablesMap);
+			//供应商信息
+			this.contractCommService.loadContractSupplierInfo(contractInfo, variablesMap);
+			//贸易基础交易情况
+		   
+		    try{
+		    ProjInfo ProjInfo =contractInfo.getProjId();		  
+		    TradeBasedTransactions trade = ProjInfo.getTradeBasedTransactions();
+		    if(null!=trade){
+		    variablesMap.putAll(this.tableService.getEntityPropertiesToStringMap(trade, null, "trade_based_transactions"));	
+		    }
+		    }catch (Exception e){
+				e.printStackTrace();
+			}
+				
+			 for(Entry entry : variablesMap.entrySet()){
+				request.setAttribute(entry.getKey().toString(), entry.getValue());
+			  }
+			return "solutions/workflow/forms/factoring/factoring_contract_query/factoring_contract_info_detail.jsp";
+		}
+}

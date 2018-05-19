@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+				ri.id,
+				tdd1.name_ leasformname,
+        		tdd1.id_ leasform,
+				tdd2.name_ leasetypename,
+        		tdd2.id_ leasetype,
+				tdd3.name_ receivedinvoicetypename,
+        		tdd3.id_ receivedinvoicetype,
+				tdd40.name_ rentratename,
+				tdd40.id_ rentrate,
+				tdd4.name_ rentinvoicetypename,
+        		tdd4.id_ rentinvoicetype,
+				tdd50.name_ corpusratename,
+				tdd50.id_ corpusrate,
+				tdd5.name_ corpusinvoicetypename,
+        		tdd5.id_ corpusinvoicetype,
+				tdd60.id_ servicerate,
+				tdd60.name_ serviceratename,
+				tdd6.name_ serviceinvoicetypename,
+        		tdd6.id_ serviceinvoicetype,
+				tdd70.id_ handrate,
+				tdd70.name_ handratename,
+				tdd7.name_ handinvoicetypename,
+       			tdd7.id_ handinvoicetype,
+				tdd80.id_ nominalrate,
+				tdd80.name_ nominalratename,
+				tdd8.name_ nominalinvoicetypename,
+        		tdd8.id_ nominalinvoicetype,
+        		tdd9.id_ taxregtype,
+        		tdd9.name_ taxregtypename,
+        		tdd10.id_ returnamtrate,
+				tdd10.name_ returnamtratename,
+        		tdd100.id_ returnamtinvoicetype,
+				tdd100.name_ returnamtinvoicetypename,
+        		tdd11.id_ firstpaymentrate,
+				tdd11.name_ firstpaymentratename,
+        		tdd110.id_ firstpaymentinvoicetype,
+				tdd110.name_ firstpaymentinvoicetypename,
+        		tdd12.id_ insurancelessorrate,
+				tdd12.name_ insurancelessorratename,
+        		tdd120.id_ insurancelessorinvoicetype,
+				tdd120.name_ insurancelessorinvoicetypename
+				from rate_info ri
+				left join t_dicts_datas tdd1 on ri.leas_form=tdd1.id_
+				left join t_dicts_datas tdd2 on ri.lease_type=tdd2.id_
+				left join t_dicts_datas tdd3 on ri.received_invoice_type=tdd3.id_
+				left join t_dicts_datas tdd40 on ri.rent_rate=tdd40.id_
+				left join t_dicts_datas tdd4 on ri.rent_invoice_type=tdd4.id_
+				left join t_dicts_datas tdd50 on ri.corpus_rate=tdd50.id_
+				left join t_dicts_datas tdd5 on ri.corpus_invoice_type=tdd5.id_
+				left join t_dicts_datas tdd60 on ri.service_rate=tdd60.id_
+        		left join t_dicts_datas tdd6 on ri.service_invoice_type=tdd6.id_
+        		left join t_dicts_datas tdd70 on ri.hand_rate=tdd70.id_
+        		left join t_dicts_datas tdd7 on ri.hand_invoice_type=tdd7.id_
+        		left join t_dicts_datas tdd80 on ri.nominal_rate=tdd80.id_
+        		left join t_dicts_datas tdd8 on ri.nominal_invoice_type=tdd8.id_
+        		left join t_dicts_datas tdd9 on ri.tax_reg_type=tdd9.id_
+        		left join t_dicts_datas tdd10 on ri.returnamt_rate=tdd10.id_
+        		left join t_dicts_datas tdd100 on ri.returnamt_invoice_type=tdd100.id_
+        		left join t_dicts_datas tdd11 on ri.firstpayment_rate=tdd11.id_
+        		left join t_dicts_datas tdd110 on ri.firstpayment_invoice_type=tdd110.id_
+        		left join t_dicts_datas tdd12 on ri.insurancelessor_rate=tdd12.id_
+        		left join t_dicts_datas tdd120 on ri.insurancelessor_invoice_type=tdd120.id_
+        		
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

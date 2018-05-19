@@ -1,0 +1,53 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<input style="display:none;"	class="mini-textarea" id="id_json_leasing_insurance_list_str" name="json_leasing_insurance_list_str" value='${empty json_leasing_insurance_list_str ? "[]" : json_leasing_insurance_list_str }'></input>
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true' || isViewHistoryTask == true){showTools = false;};
+	tenwa.createTable({
+		id: "leasing_insurance_list",
+		renderTo: "id_table_leasing_insurance_list",
+		width: globalClientWidth - 30,
+		height: 365,
+		lazyLoad: false,
+		title: "",
+		allowCellWrap: true,
+		remoteOper : true,
+		showPager: true,
+		showToolbar: showTools,
+		//xmlFileName: '/eleasing/workflow/patrol/patrol_leaseInsurance.xml',
+		//tools: ['add', '-', 'edit', '-', 'remove'],
+		data: JsonUtil.decode('${empty json_leasing_insurance_list_str ? "[]" : json_leasing_insurance_list_str }'),
+	    
+		columns: [
+			{type:'indexcolumn',width:20},
+			//{type:'checkcolumn',width:9},
+			{field:'id', header:'id', visible:false},
+			{field:'is_insure', header:'租赁物是否保险', visible: true,
+				     formEditorConfig:{
+				    	 labelWidth:110,
+					     fieldVisible: true}
+			},
+			{field:'insurance_id', header:'保险单号码',visible: true,formEditorConfig:{
+				newLine:true,
+				readonly:true,
+				labelWidth:110,
+			     fieldVisible: true}
+			},
+			{field:'date_start_end', header:'保险期限',formEditorConfig:{
+				newLine:true,
+				readonly:true,
+				labelWidth:110,
+			     fieldVisible: true}
+			},
+			{field:'first_beneficiary', header:'第一受益人',formEditorConfig:{
+				newLine:true,
+				readonly:true,
+				labelWidth:110,
+			     fieldVisible: true}
+			}
+		]
+	});
+});
+</script>
+<div id="id_table_leasing_insurance_list" style="width:100%;height:100%;"></div>

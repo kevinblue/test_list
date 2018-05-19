@@ -1,0 +1,217 @@
+<%@page import="java.net.URLEncoder"%>
+<%@page import="com.tenwa.business.entity.User"%>
+<%@ taglib prefix='permission' uri='/WEB-INF/tlds/permission.tld'%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<%String id=request.getParameter("id");%>
+<%String loancontractid=request.getParameter("loancontractid");%>
+<title>借款详情</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script src="${pageContext.request.contextPath}/js/jquery/jquery-1.11.0.min.js?${currentTimestamp}" type="text/javascript"></script>
+<style>
+#id_table_cust_detail {
+	width: 100%;
+	border: 1px solid #99CCFF;
+}
+#id_table_cust_detail td{
+	padding-left: 10px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+#id_table_cust_detail td .mini-textbox-border{
+	background: #EEEEEE;
+}
+#id_table_cust_detail td .mini-buttonedit-border{
+	background: #EEEEEE;
+}
+#id_table_cust_detail .mini-buttonedit-buttons{
+	display: none;
+}
+#id_table_cust_detail .mini-textbox{
+	width: 100%;
+}
+#id_table_cust_detail .mini-buttonedit{
+	width: 100%;
+}
+</style>
+
+</head>
+<body>
+<div style="width: 100%;height: 100%;overflow: auto;">
+	<div id="form1" style="padding: 5px;">
+		<table id="id_table_cust_detail" cellpadding="0" cellspacing="0" align="center">
+	
+		    <tr>
+		        <td width="12%">借款单位：</td>
+		        <td width="38%" >
+ 		        	<input name="id" class="mini-textbox" style="display: none;"/>
+		            <input name="loanunit" class="mini-textbox  asLabel"/>
+		        </td>
+		        <td></td>
+		        <td>借款类别：</td>
+		        <td ><input name="loantype" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>借款合同编号：</td>
+		        <td><input name="loancontractid" class="mini-textbox  asLabel"/> </td>
+		        <td></td>
+		         <td >借款本金：</td>
+		        <td><input name="corpus" class="mini-textbox  asLabel"/></td>
+		    </tr>
+		    <tr>
+		        <td>借款期限：</td>
+		        <td><input name="loanterm" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>合同利率：</td>
+		        <td><input name="yearrate" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		     </tr>
+		     <tr>
+		        <td >保证金：</td>
+		        <td><input name="cautionmoney" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		     	<td >还款方式：</td>
+		        <td><input name="paymenttypename" class="mini-textbox  asLabel"/></td> 
+		     </tr>
+		     <tr>
+		        <td>借款日：</td>
+		        <td><input name="loandate" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>到期日：</td>
+		        <td><input name="expiredate" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>付款日：</td>
+		        <td><input name="paydate" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>借款项目：</td>
+		        <td><input name="projectname" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>已提款金额(元)：</td>
+		        <td><input name="atmmoney" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>剩余可提款金额(元)：</td>
+		        <td><input name="surplusatmmoney" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>已还款金额(元)：</td>
+		        <td><input name="sumcorpintes" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>剩余还款金额(元)：</td>
+		        <td><input name="surplusumcorpintes" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+             <tr>
+		        <td>利息预提金额(元)：</td><!-- 待确定 -->
+		        <td><input name="expectinterest" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>付息金额(元)：</td>
+		        <td><input name="alreadyinterest" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		    <tr>
+		        <td>未支付利息金额(元)：</td>
+		        <td><input name="surplusinterest" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>保证金已付金额(元)：</td>
+		        <td><input name="alreadycaution" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		     <tr>
+		        <td>保证金未付金额(元)：</td>
+		        <td><input name="surpluscaution" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	<td>手续费已付金额(元)：</td>
+		        <td><input name="alreadyhandling" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    </tr>
+		     <tr>
+		        <td>手续费未付金额(元)：</td>
+		        <td><input name="surplushandling" class="mini-textbox  asLabel"/></td>
+		        <td></td>
+		    	
+		    </tr>
+		    <tr>
+		        <td>担保抵押情况</td>
+		        <td colspan="4"><input name="mortgagedetail" class="mini-textarea  asLabel" width="100%"/> </td>
+		        <td></td>
+		    </tr>
+		</table>
+	</div>
+	<div id="tabDeatils" class="mini-tabs" activeIndex="0" onactivechanged=changTab style="width: 100%;" bodyStyle="padding:0;border:0;">
+	     <div title="融资费用支付计划" name="loanfeeplan" iconCls="icon-cut">
+	    	<jsp:include page="../loan_fee_plan/loan_fee_plan_list.jsp" >
+	    		<jsp:param value="<%=id %>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div> 
+	    <div title="融资费用实付" name="loanfeeincome" iconCls="icon-cut">
+	    	<jsp:include page="../loan_fee_income/loan_fee_income_list.jsp" >
+	    		<jsp:param value="<%=id %>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div> 
+	    <div title="提款" name="loanatmplan" iconCls="icon-cut">
+	    	<jsp:include page="../loan_fee_plan/loan_atm_plan_list.jsp" >
+	    		<jsp:param value="<%=id %>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div> 
+	    <div title="还款计划" name="loanrentplan" iconCls="icon-cut">
+	    	<jsp:include page="../loan_rent_plan/loan_rent_plan_list.jsp" >
+	    		<jsp:param value="<%=id%>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div>
+	     <div title="预提" name="loan_rent_plan_interest" iconCls="icon-cut">
+	    	<jsp:include page="../loan_rent_plan/loan_rent_plan_interest_list.jsp" >
+	    		<jsp:param value="<%=id%>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div>  
+	    <div title="还款" name="loanrentplan" iconCls="icon-cut">
+	    	<jsp:include page="../loan_rent_plan/loan_rent_hire_list.jsp" >
+	    		<jsp:param value="<%=id%>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div>
+	    <div title="付息" name="loanrentplan" iconCls="icon-cut">
+	    	<jsp:include page="../loan_rent_plan/loan_rent_hire_interest_list.jsp" >
+	    		<jsp:param value="<%=id%>" name="loanid"/>
+	    		<jsp:param value="<%=loancontractid%>" name="loancontractid"/>
+	    	</jsp:include>
+	    </div> 
+	</div>
+</div>
+<script>
+mini.parse();
+var form = new mini.Form("form1");
+//跨页面传递的数据对象，克隆后才可以安全使用
+$.ajax({
+    url: urlPrefix+"/eleasing/jsp/finacial/loan_account/get_loan_account_byid.xml&id=<%=id%>",
+    cache: false,
+    success: function (text) {   
+    	var result = mini.decode(text);
+    	miniui_ext.restoreFromDataSpecialChar(result.datas[0]);
+        form.setData(result.datas[0]);
+        miniui_ext.initcomboboxloaddata("form1",result.datas[0]);
+        miniui_ext.initformreadOnly("form1");//设置表单为只读
+        form.setChanged(false);
+        
+    }
+});
+</script>
+</body>
+</html>

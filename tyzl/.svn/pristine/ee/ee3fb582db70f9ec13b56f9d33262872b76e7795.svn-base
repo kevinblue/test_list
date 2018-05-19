@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 筛选： 红冲(保证金抵扣[保证金抵扣-PayFund7]不冲   pay_type_in
+ 字段说明：
+ 未收资金合计 = 应收资金合计 - 已收资金合计 - 调整资金合计
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 			select chag.id
+			,chag.contract_id contractid
+			,chag.payment_id fundfundchargeplan
+			,chag.fact_date factdate
+			,chag.fact_money factmoney
+			,chag.fee_adjust feeadjust
+			,chag.fact_object factobject
+			,chag.account_bank accountbank
+			,chag.account
+			,chag.acc_number accnumber
+			,chag.client_bank clientbank
+			,chag.client_account clientaccount
+			,chag.client_accnumber clientaccnumber
+			,chag.accounting_date accountingdate
+			,chag.fee_type feetype
+			,dict.name_ feetypename
+			,chag.settle_method settlemethod
+			,dict2.name_ settlemethodname
+			,ebank.ebdata_id ebanknumber
+			 from contract_fund_fund_charge chag
+			left join (select * from contract_fund_fund_plan pln 
+			where pln.pay_type='pay_type_in'
+			)pln 
+			on chag.contract_id=pln.contract_id and chag.payment_id=pln.id
+			left join fund_ebank_data ebank on ebank.id=chag.ebank_number
+			left join t_dicts_datas dict on dict.id_=chag.fee_type
+			left join t_dicts_datas dict2 on dict2.id_=chag.settle_method
+			where chag.settle_method<>'PayFund7'
+			and chag.pay_type='pay_type_in'
+			--非红冲数据
+			and nvl(chag.roll_back,0)=0
+			and chag.contract_id ='{contractid}'
+			
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

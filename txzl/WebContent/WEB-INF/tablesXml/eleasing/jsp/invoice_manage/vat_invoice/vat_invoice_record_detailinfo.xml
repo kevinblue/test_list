@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	       			select 
+	       					 vic.invoice_id							as invoiceid,
+                             vii.id                      					as id,
+                             vii.contract_number         		as contractnumber,
+                             vii.contract_id             			as contractid,
+                             
+                             vii.invoice_no              			as invoiceno,                                    						--发票号
+                             vii.invoice_money           		as invoicemoney,                               						--发票金额
+                             vii.purchase_units          		as purchasenits,                                 						--购货单位
+                             
+                             vii.supplier                				as supplier,                                     							--供应商ID
+                             cust.cust_name              		as suppliername,                                					--供应商名字
+                             vii.record_date    					as recorddate,															--登记日期
+                             vii.goods_name              		as goodsname,                                   					--货物名称
+	                         ('第'||cffp.payment_id||'笔设备款-金额：'||cffp.plan_money) 	as contractfundfundplanidname,    	--计划投放金额
+                             vii.contract_fund_fund_plan_id   												as contractfundfundplanid,        		--计划投放资金ID
+                             vii.memo                    			as memo,                                          						--备注
+                             case 
+                             		when vii.invoice_status=0 then '未提交'
+                             		when vii.invoice_status=1 then '确认中'
+                             		when vii.invoice_status=2 then '已确认'
+                             		when vii.invoice_status=3 then '已退回' 
+                             end invoicestatusname,
+                             vii.invoice_status					as invoicestatus														--状态
+                             
+                    from  vat_invoice_info vii
+                          left join vat_invoice_contract vic on vic.invoice_id=vii.id 
+                          left join contract_info ci on ci.id=vii.contract_id
+                          left join cust_info cust on cust.id=vii.supplier
+                          left join (select id,contract_id,payment_id,plan_money from contract_fund_fund_plan) cffp on cffp.id=vii.contract_fund_fund_plan_id
+                          
+                        where 1=1 and (vii.invoice_status is null or vii.invoice_status=0 or vii.invoice_status=1 or vii.invoice_status=3)-- or vii.invoice_status=1
+                        
+                      	/~id: and vii.id = '{id}'~/
+		       			/~contractnumber: and vii.contract_number like '%{contractnumber}%'~/
+		       			/~contractid: and ci.contract_id like '%{contractid}%'~/
+		       			/~invoiceno: and vii.invoice_no like '%{invoiceno}%'~/
+		       		
+		       			/~invoicemoneyMin: and vii.invoice_money>={invoicemoneyMin}~/
+						/~invoicemoneyMax: and vii.invoice_money<={invoicemoneyMax}~/
+		       			/~invoicedateMin: and tax.invoice_date>={invoicedateMin}~/
+						/~invoicedateMax: and tax.invoice_date<={invoicedateMax}~/
+		       			/~planmoneyMin: and cffp.plan_money>={planmoneyMin}~/
+						/~planmoneyMax: and cffp.plan_money<={planmoneyMax}~/
+						
+		       			/~purchasenits: and vii.purchase_units like '%{purchasenits}%'~/
+		       			/~suppliername: and cust.cust_name like '%{suppliername}%'~/
+		       			/~goodsname: and vii.goods_name like '%{goodsname}%'~/
+		       			/~memo: and vii.memo like '%{memo}%'~/
+						
+                    order by cffp.payment_id desc,recorddate
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>               
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+
+
+
+
+
+
+
+
+
+
+

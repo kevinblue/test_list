@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        SELECT aaaa.*,case when aaaa.presentvalue=0 then '0' else (round(100*aaaa.value1/aaaa.presentvalue,2))||'%' end  mortgage_proportion1 FROM (
+	        
+	select p.PLEDGE_NAME equipname,
+	nowvalue.value1 value1,
+	t1.name_  registypename ,--登记类型
+      round(to_number(
+      case when p.regis_type_id='regis_type.08' then
+      10000*nvl(p.sales_revenue,0)*(substr(p.debt_end,0,4)-substr(p.debt_start,0,4))
+      else
+       to_number(nvl(p.PLEDGE_VALUE_NOW,0))  
+      end
+      
+      ) / 10000, 2) guarantyvalue,  --原值，除了电费应收账款外为预期销售收入*融资年限，其余的为原值
+      case when p.regis_type_id='regis_type.07' then     --股权质押
+      	round((to_number(round(fd.subject_data, 2)) * to_number(nvl(p.PLEDGEDE_QUITY,0)) / 100)/10000,2)
+      	   when p.regis_type_id='regis_type.08' then      --应收账款质押
+                    
+               round(   fn_dfxz(to_char(to_number(substr(p.DEBT_END, 0, 4)) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          to_char(to_number(substr('{thissend1}', 0,4)) -
+                                  to_number(substr(p.DEBT_start, 0, 4)) + 1),
+                          
+                          p.SALES_REVENUE,
+                          8 / 100) +
+                  fn_dfxz(to_char(to_number(substr('{thissend1}', 0,4)) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          to_char(to_number(substr('{thissend1}', 0,4)) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          
+                          p.SALES_REVENUE,
+                          8 / 100) * (12 - to_number(substr('{thissend1}', 6, 2))) / 12,2)
+      	   when p.regis_type_id='regis_type.06' then      --动产抵押
+      	round((to_number(p.PLEDGE_VALUE_NOW) -
+       (to_number(p.PLEDGE_VALUE_NOW) *
+        (1 - to_number(p.SALVAGE_RATE) / 100) *
+        (substr('{thissend1}', 0, 4) - substr(p.PURCHASING_TIME, 0, 4)) /
+        to_number(p.DEPRECIA_LIFE))) /10000,2)
+        else round(to_number(p.PLEDGE_VALUE) / 10000, 2)     --其他
+        end as presentvalue,    --最新评估值，股权质押为股权质押现值，电费应收账款质押为电费应收现值	，动产抵押为抵押物净值，不动产其他类型为抵制物现值
+      case when to_number(case when p.regis_type_id='regis_type.08' then
+      nvl(p.sales_revenue,0)*(substr(p.debt_end,0,4)-substr(p.debt_start,0,4))
+      else
+       to_number(nvl(p.PLEDGE_VALUE_NOW,0))  
+      end) =0 then 0
+        else
+      round(to_number(cf.curcorpusoverage/ to_number(
+      case when p.regis_type_id='regis_type.08' then
+      nvl(p.sales_revenue,0)*(substr(p.debt_end,0,4)-substr(p.debt_start,0,4))
+      else
+       to_number(nvl(p.PLEDGE_VALUE_NOW,0))  
+      end
+      
+      ) / 10000)*100,2) end mortgage_proportio,--抵质押率
+     case
+       when ins.InsuranceId is not null then
+         '是'
+        when ins.InsuranceId is null then
+       '否/已过期'
+       end whetherinsurance,
+        p.debt_START mortgage_signday1,--抵质押债务起始日期
+       ins.memo   mortgage_currentstatus1, 
+      p.debt_START  mortgage_startdate1,--抵押物担保起始日指债务登记起始日
+      p.debt_end mortgage_enddate1,--抵押物担保起始日指债务到期日
+     --to_date(ins.enddata,'yyyy-mm-dd')-to_date(ins.startdata,'yyyy-mm-dd')+1 purchaselife,
+     ins.startdata||'至'||ins.enddata purchaselife,
+      ins.*
+  from PLEDGE p
+  left join t_dicts_datas t1 on t1.id_=p.regis_type_id
+  --截止报告日期的财报净融资额
+  LEFT JOIN (SELECT financial_data.*,cust_info.cust_name
+               FROM financial_data 
+               LEFT JOIN cust_info on financial_data.cust_id=cust_info.id
+              WHERE fina_sub_id = '7ECBF249468F4AC48C1DAE26AF3E8DA2'
+                and substr(financial_date,0,7) =substr('{thissend1}',0,7)
+                ) fd
+    on fd.cust_name = p.PLEDGE_OWNNER
+      --截止报告日期的融资余额
+  left join (
+  SELECT a.contract_id contractid,
+       (a.corpus - nvl(b.corpus, 0)) / 10000 as value1 --融资余额
+  FROM (SELECT cf.contract_id,
+               sum(cf.corpus) corpus,
+               max(cf.rent_list) rentlist,
+               sum(cf.rent) rent
+          FROM contract_fund_rent_plan cf
+         GROUP BY cf.contract_id) a
+  LEFT JOIN (SELECT ci.contract_id,
+                    sum(ci.corpus) corpus,
+                    max(ci.plan_list) rentlist,
+                    sum(ci.rent) rent
+               FROM contract_fund_rent_income ci
+              WHERE ci.hire_date <= '{thissend1}'
+              GROUP BY ci.contract_id) b
+    on a.contract_id = b.contract_id
+  LEFT JOIN (SELECT *
+               FROM Vi_Contract_Out_List
+              WHERE plan_date <= '{thissend1}') vco
+    on a.contract_id = vco.contract_id
+ WHERE a.contract_id = '{contractidselect}'
+  
+  
+  ) nowvalue on nowvalue.contractid=p.contract_id
+  --融资余额
+  LEFT JOIN (SELECT contractid,sum(curcorpusoverage) curcorpusoverage FROM vi_contract_fund_rent_plan GROUP BY contractid ) cf on cf.contractid=p.contract_id
+  left join (select 
+                    ii.contract_id        conid,
+                    ii.Insurance_Id       InsuranceId,
+                    ii.insurer_start_date startdata,
+                    ii.insurer_end_date   enddata,
+                    ii.memo memo,
+                    ii.First_Beneficiary  FirstBeneficiary
+               from insurance_info ii
+              where 1=1
+				and ii.insurer_start_date<='{thissend1}'
+				and ii.insurer_end_date>='{thissend1}'
+                and ii.contract_id = '{contractidselect}') ins
+    on ins.conid = p.contract_id
+ where p.contract_id = '{contractidselect}'
+and p.PLEDGE_START<='{thissend1}'
+and p.PLEDGE_end>='{thisstart1}'
+) aaaa
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

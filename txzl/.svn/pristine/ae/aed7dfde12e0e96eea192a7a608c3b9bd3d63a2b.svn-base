@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			   SELECT *FROM 
+			 (SELECT
+	   P.ID id,
+       PROJ_ID AS projInfo,
+       p.CONTRACTID as contractid,
+       p.DOC_ID as docid,
+       C.CUST_NAME AS assurorname,
+       C.ID AS assuror,
+       C.CUST_CLASS AS assurorcustclass,
+       DICT1.NAME_ AS assuremethodname,
+       DICT1.ID_ AS assuremethod,
+       DICT2.NAME_ AS assurerelationname,
+       DICT2.ID_ AS assurerelation,
+       CGMNOTE AS cgmnote
+       FROM PROJ_GUARANTEE_METHOD_TMP P
+       LEFT JOIN CUST_INFO C ON P.ASSUROR = C.ID
+       LEFT JOIN T_DICTS_DATAS DICT1 ON P.ASSURE_METHOD = DICT1.ID_
+       LEFT JOIN T_DICTS_DATAS DICT2 ON P.ASSURE_RELATION = DICT2.ID_) P
+           where 1=1 
+       /~projid: AND projInfo ='{projid}' ~/  
+       /~docid: AND docid ='{docid}' ~/     
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

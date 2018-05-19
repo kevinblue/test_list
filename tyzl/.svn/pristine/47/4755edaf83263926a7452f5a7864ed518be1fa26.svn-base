@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+					email.id_ as id,
+					email.email_address as emailaddress,
+					email.email_title as emailtitle,
+					email.email_content as emailcontent,
+					email.file_address as fileaddress,
+					email.file_names as filenames,
+					email.send_flag as sendflag,
+					case when email.send_flag=0 then'待发送' when email.send_flag=1 then '已发送' when email.send_flag=2 then'已取消' else '未知' end  as sendflagname,
+					email.notice_time as noticetime,
+					email.email_type as emailtype,
+					case when email.email_type='DELAYED' then '延时' when email.email_type='IMMEDIATELY' then '立即' else '未知' end  as emailtypename,
+					email.send_time as sendtime,
+					email.send_result as sendresult,
+					email.create_date_ as createdate,
+					users.realname_ as creator
+				from t_email_notice_tasks email
+                left join t_users users on email.creator_=users.id_
+				where email.send_flag != 2
+				/~emailtypename: and email.email_type='{emailtypename}'~/
+				/~sendflagname: and email.send_flag='{sendflagname}'~/
+				/~emailaddress: and email.email_address='{emailaddress}'~/
+			<EXTRACTEND> order by createdate desc <EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

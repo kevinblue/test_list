@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+			select p.id,
+			pi.id projid,
+       pi.project_name projidname,
+ p.time,
+       p.settlement_price as settlementprice,  --结算电价
+       p.after_benchmark_price as afterbenchmarkprice, --补贴电价
+       p.note,
+       pdi.benchmark_price benchmarkprice, --项目开发表火电标杆电价(元)
+       pdi.internet_price internetprice, --项目开发表上网电价（元/度）
+       p.thermal_price    thermalprice, --项目发电量表火电标杆电价(元)
+       p.internet_tariff  internettariff, --项目发电量表上网电价(元/度)
+       pdi.PROJ_INSTALLED_CAPACITY projinstalledcapacity, --项目容量（万千瓦）
+       p.ongrid_energy ongridenergy, --上网电量
+       (p.ongrid_energy/(pdi.PROJ_INSTALLED_CAPACITY*10000)) as standardhours, --标准发电小时数      
+       p.cash_received cashreceived, --实收电费(元)
+       p.ongrid_energy * p.settlement_price        benchmarktariff , --应收电费(元)    
+       p.ongrid_energy * p.after_benchmark_price   excludingnosubsidy, --应收补贴(元)   
+       p.ELECTRICITY_SUBSIDY   electricitysubsidy,  
+       p.power_rationing powerrationing,
+       p.power_limit powerlimit
+  from Proj_Electricity_Info p
+  left join PROJ_INFO pi
+    on p.proj_id = pi.id
+  LEFT JOIN proj_develope_info pdi
+    on pi.develop_id = pdi.id
+			
+         		 
+				  where 1=1
+				/~time: and p.time = '{time}' ~/
+                /~benchmarkaftertariff: and p.ongrid_energy * pdi.benchmark_price like '%{benchmarkaftertariff}%' ~/
+				/~projidname: and pi.project_name like '%{projidname}%' ~/				
+				<EXTRACTEND> order by projidname,time <EXTRACTEND>
+				
+				
+				
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

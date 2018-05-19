@@ -1,0 +1,955 @@
+package com.tenwa.leasing.serviceImpl.Finance;
+
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONArray;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import com.tenwa.business.dao.BaseDao;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.model.ExcelVersionEnum;
+import com.tenwa.business.service.TableService;
+import com.tenwa.exception.BusinessException;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.PoiExcelUtil;
+import com.tenwa.kernal.utils.SecurityUtil;
+import com.tenwa.leasing.entity.cust.CustInfo;
+import com.tenwa.leasing.entity.file.BaseFile;
+import com.tenwa.leasing.entity.finacial.DepositInterest;
+import com.tenwa.leasing.entity.finacial.PaymentCountDetail;
+import com.tenwa.leasing.entity.finacial.ReceiptCountDetail;
+import com.tenwa.leasing.entity.finance.FinancialData;
+import com.tenwa.leasing.entity.finance.FinancialSubjects;
+import com.tenwa.leasing.entity.finance.FinancialTable;
+import com.tenwa.leasing.service.finance.FinanceService;
+import com.tenwa.report.dao.ReportDao;
+@Service(value = "financeServiceImpl")
+public class FinanceServiceImpl implements FinanceService {
+	@Resource(name = "tableService")
+	private TableService tableService;
+	@Resource
+	private BaseDao baseDao;
+	@Resource(name = "reportDao")
+	private ReportDao reportDao;
+	
+	@Override
+	public String importFinance(HttpServletRequest request,Map<String, String> model) throws Exception {
+		MultipartFile multipartFile = null;
+		InputStream is = null;
+		String custid="";
+		CustInfo custInfo=null;
+		try {
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+			//加载附件
+			multipartFile = multipartRequest.getFile("tableImportExcel");
+			if (null == multipartFile) {
+				throw new BusinessException("没有上传财务报表的EXCEL");
+			}
+			//根据前台传过来的客户ID获得客户
+			if(model.containsKey("custid")){
+				custid=model.get("custid");
+				if(custid==null||"".equals(custid)){
+					
+				}else{
+				   custInfo=this.tableService.findEntityByID(CustInfo.class, custid);
+				}
+			}
+			if(null==custInfo){
+				throw new BusinessException("导入财务报表时没有提供客户ID");
+			}
+			//获得当前登陆的用户
+			User user = null;
+			boolean isWithUser = true;
+			try {
+				user = (User) SecurityUtil.getPrincipal();
+			} catch (Exception e) {
+				isWithUser = false;
+			}
+			is = multipartFile.getInputStream();
+			Workbook wb = null;
+			//获得上传文件的名称
+			String importFileName = multipartFile.getOriginalFilename().toLowerCase();
+			//登记上传的附件
+			BaseFile bf=this.tableService.saveUpFiletoService(multipartFile, model);
+			this.tableService.addlogFileOper(bf, "上传");
+			//判断文件类型创建wb
+			try {
+				if (importFileName.endsWith("xlsx")) {
+					wb = PoiExcelUtil.readWorkbook(is,ExcelVersionEnum.VERSION2007);
+				} else {
+					wb = PoiExcelUtil.readWorkbook(is,ExcelVersionEnum.VERSION2003);
+				}
+			} catch (Exception e1) {
+				throw new BusinessException("财务报表解析excel现错" + e1.getMessage());
+			}
+		    Map<String,List>financeTableConfig=new  HashMap<String,List>();
+		    //根据上传的文件的sheet名获得上传的配置
+		    financeTableConfig=this.getSheetRowConfig(wb);
+		    if(financeTableConfig.keySet().size()==0){
+		    	throw new BusinessException("财务报表出错没有配置科目表");
+		    }
+		    //根据文件和配置导入财务报表
+		    this.importFinanceDateByConfig(wb, financeTableConfig,custInfo,user);
+		} catch (Exception e) {
+			e.printStackTrace();
+			is.close();
+			throw new BusinessException(e.getMessage());
+		}
+		return null;
+		
+	}
+
+	@Override
+	public Map<String, List> getSheetRowConfig(Workbook wb )throws Exception {
+		//根据Sheet名称获得配置放到MAP中
+		int sheetCount = wb.getNumberOfSheets();
+		List<String> sheetNames = new ArrayList<String>();
+		for(int i=0;i<sheetCount;i++){
+			sheetNames.add(wb.getSheetName(i));
+		}
+		String hsql = "from FinancialTable where sheetname=?";
+		Map<String, List> maptable = new HashMap<String, List>();
+		List<FinancialTable> tables = null;
+		for (String sheetName : sheetNames) {
+			tables = null;
+			tables = this.tableService.findResultsByHSQL(hsql, sheetName);
+			if (tables.size() > 0) {
+				maptable.put(sheetName, tables);
+			}
+		}
+		return maptable;
+	}
+
+	@Override
+	public String importFinanceDateByConfig(Workbook wb,Map<String, List> tableconfig,CustInfo cust,User user) throws Exception {
+		List<FinancialTable> ftables=null;
+		Sheet sheet=null;
+		int startrowindex=0;
+		int startcellindex=0;
+		int keyRowIndex=0;
+		int keyCellIndex=0;
+
+		int skipcell=0;
+		String id="";
+		String otherData="";
+		//获取当前时间
+		String systemDate = DateUtil.getSystemDateTime();
+		Row DataRow=null;
+		String keyDate="";
+	    Set<FinancialSubjects> finSubjects=new HashSet<FinancialSubjects>();
+		Cell cell=null;
+		String value = "";
+		String yearvalue="";//excle年初的值
+		String yearend="";//数据库中年末的值
+		List<FinancialData> datas=new ArrayList<FinancialData>();
+		//根据每个shett配置遍历配置列
+		for(String sheetname:tableconfig.keySet()){
+			ftables=tableconfig.get(sheetname);
+			sheet=wb.getSheet(sheetname);
+		    for(FinancialTable ft:ftables){
+		        //if(ft.getDataType().getCode().equals("reportdatatype.01")){//数据字典
+		    	  	keyRowIndex=ft.getKeyRowIndex()-1;//年份所在行  2-1
+			    	keyCellIndex=ft.getKeyCellIndex()-1;//年份开如列 1-0
+			    	skipcell=ft.getSkipcell();//调过列数   0
+			    	finSubjects=ft.getFinancialSubjects();
+			    	if(finSubjects.size()<=0){
+			    		throw new BusinessException("财务报表中"+sheetname+"导入"+ft.getTitlename()+"没有配置科目");
+			    	}  
+			    	Row keyrow = (Row)sheet.getRow(keyRowIndex);//获得年所在行
+			    	cell = PoiExcelUtil.getCell(keyrow,keyCellIndex);
+		    		keyDate = "";
+		    		keyDate = PoiExcelUtil.getCellValue(cell);
+		    		if(null!=keyDate&&(!"".equals(keyDate))){
+		    			keyDate=keyDate.replace("年","-") ;
+			    		keyDate=keyDate.replace("月","-") ;
+			    		keyDate=keyDate.replace("日","") ;
+			    		keyDate=keyDate.replaceAll(" ", "");
+			    		for(FinancialSubjects fs:finSubjects){
+			    			 int rowIndex=Integer.valueOf(fs.getSubjectIndex())-1; //对应EXCEL位置行
+			    			 int cellIndex=Integer.valueOf(fs.getSubjectCell())-1;//对应EXCEL列
+					    	 DataRow=(Row)sheet.getRow(rowIndex);
+					    	 cell = PoiExcelUtil.getCell(DataRow,cellIndex);
+					    	 value=PoiExcelUtil.getCellValue(cell).replace(",", "");
+						    	   if("资负表".equals(sheetname)){
+						    		     String Contrast=fs.getContrast();
+						    		     if(Contrast!=""&&Contrast!=null){
+						    		    	 int contrastIndex=Integer.valueOf(fs.getContrast())-1;//年初所在的列
+							    			 cell = PoiExcelUtil.getCell(DataRow,contrastIndex);
+									    	 yearvalue=PoiExcelUtil.getCellValue(cell).replace(",", ""); 
+									    	     if(null!=yearvalue&&!"".equals(yearvalue)){
+									    	    	 yearend=getFinancefieldValue(cust,fs,yearvalue);
+									    	    	  if(null!=yearend&&!"".equals(yearend)){
+									    	    		    if(!yearvalue.equals(yearend)){
+										    	    	    	
+											    	    	   	 throw new BusinessException("资负表第"+fs.getSubjectIndex()+"行,第"+fs.getContrast()+"列的"+fs.getSubjectName()+"年初值不等于年末值");		  	
+											    	    }  
+									    	    	  }
+									    	     }	 
+						    		     }
+						    	     }
+					        	 String formula= fs.getFormula();//用來校驗科目表格字段
+						    	 if(formula!=""&&formula!=null){
+						    		   
+						    		    if(value==""){
+						    		    	 throw new BusinessException("财务报表中第"+fs.getSubjectIndex()+"行,第"+fs.getSubjectCell()+"列的"+fs.getSubjectName()+"不能为空");		
+						    		    	
+						    		    }else{
+						    		    	if(Integer.parseInt(value)<=Integer.parseInt(formula)){
+						    		    	throw new BusinessException("财务报表中第"+fs.getSubjectIndex()+"行,第"+fs.getSubjectCell()+"列的"+fs.getSubjectName()+"必须大于"+Integer.parseInt(formula));	
+						    		    	}  	
+						    		    }
+						    	 }
+						    	 FinancialData fd=new FinancialData();
+						    	 fd=this.getFinanceData(cust,fs,keyDate);//根据客户，科日和时间到数据库中查是否导过
+						    	 if(null==fd){
+						    	 fd=new FinancialData();
+						    	 }
+						 		 fd.setSubjectData(value);
+						 		 fd.setFinancialSubjectsid(fs);
+						 		 fd.setCreateDate(systemDate);
+						 		 fd.setCustInfo(cust);
+						 		 fd.setCreator(user);
+						 		 fd.setFinancialDate(keyDate);
+						 		 otherData="";
+						 		 //如果保存跳过的列，则调过的列，的值以豆号分隔
+						 		 if("是".equals(ft.getIsSaveSkipData())){
+							    	for(int j=1;j<=skipcell;j++){
+							    		cell = PoiExcelUtil.getCell(DataRow,cellIndex+j);
+								    	value=PoiExcelUtil.getCellValue(cell).replace(",", "");
+								    	if(!"".equals(otherData)){otherData+=",";}
+								    	otherData+=value;
+							    	} 
+							     }
+						 		 fd.setSubjectOtherData(otherData);
+						 		 datas.add(fd); 
+					    		 
+					    	 
+					
+					     }
+		    		}
+		    		  
+/*		    	  }else{
+		    	    	//读入评分数据
+				    	finSubjects=ft.getFinancialSubjects();
+				    	if(finSubjects.size()<=0){
+				    		throw new BusinessException("财务报表中"+sheetname+"导入"+ft.getTitlename()+"没有配置科目");
+				    	}else{
+				    		value="";
+				    		for(FinancialSubjects fs:finSubjects){
+				    			keyRowIndex=Integer.valueOf(fs.getSubjectIndex());
+				    			keyCellIndex=Integer.valueOf(fs.getSubjectCell());
+				    			 DataRow=(Row)sheet.getRow(keyRowIndex-1);
+						    	 cell = PoiExcelUtil.getCell(DataRow,keyCellIndex-1);
+						    	 FinancialData fd=null;
+						    	 value=PoiExcelUtil.getCellValue(cell);
+						    	 fd=this.getFinanceCriedtData(cust,fs);//根据客户，科日到数据库中查是否导过
+						    	 if(null==fd){fd=new FinancialData();}
+						 		 fd.setSubjectData(value);
+						 		 fd.setFinancialSubjectsid(fs);
+						 		 fd.setCreateDate(systemDate);
+						 		 fd.setCustInfo(cust);
+						 		 fd.setCreator(user);
+						 		 datas.add(fd);
+				    		}
+				    	}
+		    		  
+		    		  
+		    	  }*/
+	    		
+		    }
+		}
+		this.tableService.saveOrUpdateAllEntities(datas);
+		return "";
+	}
+
+	@Override
+	public String getKeyDate(String key) throws Exception {
+	   String strData="";
+	   if(key.indexOf("年")>0){
+		   strData=key.substring(0, 4)+"-12-31"; 
+	   }else{
+		   strData=key.replaceAll("//", "-");
+	   }
+	   return strData;
+	}
+	public FinancialData getFinanceCriedtData(CustInfo custinfo,FinancialSubjects fs) throws Exception {
+		String HSQL="From FinancialData FD where FD.custInfo=? and FD.FinancialSubjectsid=? ";
+		List<FinancialData> fds=new ArrayList<FinancialData>();
+		fds=this.tableService.findResultsByHSQL(HSQL, custinfo,fs);
+	    if(fds.size()>0){
+	    	return fds.get(0);
+	    }else{
+	       return null;	
+	    }
+	}
+
+	@Override
+	public FinancialData getFinanceData(CustInfo custinfo,FinancialSubjects fs,String financialDate ) throws Exception {
+		
+		
+		String HSQL="From FinancialData FD where FD.custInfo=? and FD.FinancialSubjectsid=? and FD.FinancialDate=?";
+		List<FinancialData> fds=new ArrayList<FinancialData>();
+		fds=this.tableService.findResultsByHSQL(HSQL, custinfo,fs,financialDate);
+	    if(fds.size()>0){
+	    	return fds.get(0);
+	    }else{
+	       return null;	
+	    }
+	}
+	@Override
+	public String getFinancefieldValue(CustInfo custinfo,FinancialSubjects fs,String yearvalue ) throws Exception {
+		String subject_data="";
+			  String sql="select *"
+					  +"from financial_data t"
+					 +" where t.financial_date ="
+					 +"(select MAX(t1.financial_date)"
+					 +"from financial_data t1"
+					        + " where t1.cust_id = '"+custinfo.getId()+"' and t1.fina_sub_id = '"+fs.getId()+"')"
+					   +"and t.cust_id = '"+custinfo.getId()
+					   +"'and t.fina_sub_id = '"+fs.getId()+"'";
+			    List<Map<String, Object>>  list=this.baseDao.queryListBySql(sql,null);
+				 if(null!=list&&list.size()>0){
+					 Object value= list.get(0).get("subject_data");
+						if (value == null) {
+							value = "";
+						}
+						 subject_data= value.toString();
+					
+					
+					 }
+				 
+				 System.out.println("年末的值"+subject_data);
+				 System.out.println("年初的值"+yearvalue);
+				return subject_data; 
+				 
+	}
+	@Override
+	public List<Map<String, Object>> getProjectYear(Map<String, String> model) throws Exception {
+		String custid = model.get("custid");
+		String sql="select fd.subject_data,fd.financial_date from financial_data fd left join financial_subjects fs on fs.id=fd.fina_sub_id where fs.subject_code='item1'and fd.cust_id='"+custid+"'";
+		List<Map<String, Object>> results = null;
+		results = this.tableService.queryListBySql(sql);
+		return results;
+	}
+
+	@Override
+	public void modifyFinanceData(Map<String, String> model) throws Exception {
+		List<FinancialData> dataList = new ArrayList<FinancialData>();
+		String ids = model.get("data");
+		System.out.println(ids);
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> list = objectMapper.readValue(ids, List.class);
+		for(Map<String,String> map : list){
+			String id = map.get("id");
+			FinancialData data = new FinancialData();
+			data = this.tableService.findEntityByID(FinancialData.class, id);
+			data.setSubjectData(map.get("subjectdata"));
+			dataList.add(data);
+		}
+	}
+	@Override
+	public void removeFinanceData(Map<String, String> model) throws Exception {
+		String custid = model.get("custid");
+		if(null==custid || custid.length()<0){
+			return;
+		}
+		CustInfo custInfo = this.tableService.findEntityByID(CustInfo.class, custid);
+		Map<String,Object> propertiesMap = new HashMap<String, Object>();
+		propertiesMap.put("custInfo",custInfo);
+		List<FinancialData> list = this.tableService.findEntityByProperties(FinancialData.class, propertiesMap);
+		this.tableService.removeAllEntites(list);
+	}
+
+	@Override
+	public List<Map<String, Object>> getProjectYearNew(Map<String, String> model)
+			throws Exception {
+		String custid = model.get("custid");
+		String sql="select fd.subject_data,fd.financial_date from financial_data fd left join financial_subjects fs on fs.id=fd.fina_sub_id where fs.subject_code='item0'and fd.cust_id='"+custid+"'";
+		List<Map<String, Object>> results = null;
+		results = this.tableService.queryListBySql(sql);
+		return results;
+	}
+
+	public synchronized String createCalNum() throws Exception {
+		try{
+			
+			String year=DateUtil.getSystemDate().substring(0, 4);
+			String month=DateUtil.getSystemDate().substring(5, 7);
+			String day=DateUtil.getSystemDate().substring(8, 10);
+			return "TXZL"+year+month+day+"000001";
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	@Override
+	public void addFundPlanReportApplication(Map<String, String> variablesMap) throws Exception {
+		DepositInterest work=new DepositInterest();
+		User user = SecurityUtil.getPrincipal();
+		work.setCreator(user);
+		work.setReportStyle("草稿");
+		work.setsN(createCalNum());
+		work.setDidate(variablesMap.get("didate"));
+		work.setNote(variablesMap.get("note"));
+		this.tableService.saveEntity(work);
+		String time=variablesMap.get("didate");
+		int year=Integer.parseInt(time.substring(0, 4));
+		int month=Integer.parseInt(time.substring(5, 7))-1;
+		//获取月第一天 
+		 Calendar startTime = Calendar.getInstance();
+		 startTime.set(Calendar.YEAR, year);     
+		 startTime.set(Calendar.MONTH, month);  
+		 startTime.set(Calendar.DAY_OF_MONTH,startTime.getMinimum(Calendar.DATE));  
+	     String startDate= new   SimpleDateFormat( "yyyy-MM-dd ").format(startTime.getTime());   
+	    //获取当月最后一天
+		Calendar endTime = Calendar.getInstance();     
+		endTime.set(Calendar.YEAR, year);     
+		endTime.set(Calendar.MONTH, month);     
+		endTime.set(Calendar.DAY_OF_MONTH,endTime.getActualMaximum(Calendar.DATE));  
+        String endDate=new  SimpleDateFormat( "yyyy-MM-dd ").format(endTime.getTime());
+		//保存收款数据
+        String rcdsql="insert into RECEIPT_COUNT_DETAIL "+
+"  (id, "+
+"   receipt_count, "+
+"   amount, "+
+"   receipt_time, "+
+"   payment_unit, "+
+"   payment_type, "+
+"   plan_name, "+
+"   fund_type, "+
+"   note_, "+
+"  di_id, "+
+"   cffp_id, "+
+"   CFRP_ID, "+
+"   creator_, "+
+"   modificator_, "+
+"   create_date, "+
+"   modify_date) "+
+"  ((select sys_guid() id, "+
+"           ci.project_name || '第' || c.payment_id || '期' || t.name_ receiptcount, "+
+"           c.plan_money amount, "+
+"           c.plan_date receipttime, "+
+"           c.pay_obj paymentunit, "+
+"           t.id_ paymenttype, "+
+"           '' planname, "+
+"           '回款' fund_type, "+
+"           c.fpnote note, "+
+variablesMap.get("id")+  "           diid, "+
+"           c.id cffpid, "+
+"           '' cfrpid, "+
+"           c.creator_, "+
+"           c.modificator_, "+
+"           c.create_date, "+
+"           c.modify_date "+
+"      from contract_fund_fund_plan c "+
+"      left join contract_info ci "+
+"        on ci.id = c.contract_id "+
+"      left join t_dicts_datas t "+
+"        on c.fee_type = t.id_ "+
+"     where c.plan_date>='"+startDate+"' and c.plan_date<='"+endDate+
+"'       and c.pay_type = 'pay_type_in') union "+
+"   (select sys_guid() id, "+
+"           ci.project_name || '第' || cf.rent_list || '期租金' receiptcount, "+
+"           cf.rent amount, "+
+"           cf.plan_date receipttime, "+
+"           vci.custname paymentunit, "+
+"           '' paymenttype, "+
+"           '' planname, "+
+"           '回款' fund_type, "+
+"           '' note, "+
+variablesMap.get("id")+"          diid, "+
+"           '' cffpid, "+
+"           cf.id cfrpid, "+
+"           cf.creator_, "+
+"           cf.modificator_, "+
+"           cf.create_date, "+
+"           cf.modify_date "+
+"     "+
+"      from contract_fund_rent_plan cf "+
+"      left join contract_info ci "+
+"        on ci.id = cf.contract_id "+
+"      left join vi_cust_info_all vci "+
+"        on ci.cust_id = vci.custid "+
+"     where cf.plan_date >=  '"+startDate+
+"'       and cf.plan_date <='"+endDate+"')) ";
+      //保存付款数据
+        String pcdsql="insert into PAYMENT_COUNT_DETAIL "+
+        		"  (id, "+
+        		"   PAYMENT_COUNT, "+
+        		"   amount, "+
+        		"   PAYMENT_TIME, "+
+        		"   SUPPORT_UNIT, "+
+        		"   RECEIPT_TYPE, "+
+        		"   plan_name, "+
+        		"   fund_type, "+
+        		"   note_, "+
+        		"   di_id, "+
+        		"   cffp_id, "+
+        		"   creator_, "+
+        		"   modificator_, "+
+        		"   create_date, "+
+        		"   modify_date) "+
+        		"  (select sys_guid() id, "+
+        		"          ci.project_name || '第' || c.payment_id || '期' || t.name_, "+
+        		"          c.plan_money, "+
+        		"          c.plan_date, "+
+        		"          c.pay_obj, "+
+        		"          t.name_, "+
+        		"          '' planname, "+
+        		"          '回款' fund_type, "+
+        		"          c.fpnote note, "+
+        		variablesMap.get("id")+"        diid, "+
+        		"          c.id cffpid, "+
+        		"          c.creator_, "+
+        		"          c.modificator_, "+
+        		"          c.create_date, "+
+        		"          c.modify_date "+
+        		"     from contract_fund_fund_plan c "+
+        		"     left join contract_info ci "+
+        		"       on ci.id = c.contract_id "+
+        		"     left join t_dicts_datas t "+
+        		"       on c.fee_type = t.id_ "+
+        		" where c.plan_date>='"+startDate+"' and c.plan_date<='"+endDate+
+        		"'       and c.pay_type = 'pay_type_out')";
+        System.out.println(rcdsql);
+        System.out.println(pcdsql);
+		reportDao.getJdbcTemplate().execute(rcdsql);
+		reportDao.getJdbcTemplate().execute(pcdsql);
+	}
+
+	@Override
+	public void deleteFundPlanReportApplication(Map<String, String> variablesMap) throws Exception {
+			String id=variablesMap.get("id");
+			DepositInterest di=this.tableService.findEntityByID(DepositInterest.class, id);
+			List<PaymentCountDetail>  pcdlist=new ArrayList<PaymentCountDetail>();
+			List<ReceiptCountDetail>  rcdlist=new ArrayList<ReceiptCountDetail>();
+			pcdlist=this.tableService.findResultsByHSQL("From PaymentCountDetail p where p.paymentTime<=? and p.paymentTime>= ? ",di.getDidate()+"-31", di.getDidate()+"-1");
+			rcdlist=this.tableService.findResultsByHSQL("From ReceiptCountDetail r where r.receiptTime<=? and r.receiptTime>= ? ",di.getDidate()+"-31", di.getDidate()+"-1");
+			Map<String,Object> queryMainObjectMap = new HashMap<String,Object>();
+		    queryMainObjectMap.put("diid", di);
+			
+		    List<PaymentCountDetail>  pcdlistManual=new ArrayList<PaymentCountDetail>();
+			List<ReceiptCountDetail>  rcdlistManual=new ArrayList<ReceiptCountDetail>();
+			pcdlistManual=this.tableService.findEntityByProperties(PaymentCountDetail.class, queryMainObjectMap);
+			rcdlistManual=this.tableService.findEntityByProperties(ReceiptCountDetail.class, queryMainObjectMap);
+			this.tableService.removeAllEntites(pcdlist);
+			this.tableService.removeAllEntites(rcdlist);
+			this.tableService.removeAllEntites(pcdlistManual);
+			this.tableService.removeAllEntites(rcdlistManual);
+			this.tableService.removeEntity(di);
+	}
+
+	@Override
+	public void updateFundPlanReport(Map<String, String> variablesMap) throws Exception {
+		String id=variablesMap.get("id");
+		DepositInterest work=this.tableService.findEntityByID(DepositInterest.class, id);
+		work.setReportStyle("已完成");
+		this.tableService.updateEntity(work);
+	}
+//资金计划表新增保存方法
+	@Override
+	public void addFundPlanData(Map<String, String> variablesMap) throws Exception {
+		String plantime=variablesMap.get("plantime");
+		String ddidsql="From DepositInterest d where d.didate=? ";
+		List<DepositInterest> diidlist= this.tableService.findResultsByHSQL(ddidsql, plantime.substring(0, 7));
+		String depositInterestId="";
+		if(diidlist.size()>0){
+			depositInterestId=diidlist.get(0).getId();
+		}
+		DepositInterest depositInterest=this.tableService.findEntityByID(DepositInterest.class, depositInterestId);
+		List<ReceiptCountDetail> rcdlist=new ArrayList<ReceiptCountDetail>();
+		List<PaymentCountDetail> pcdlist=new ArrayList<PaymentCountDetail>();
+		if(variablesMap.get("inneraccount")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("inneraccount"));
+			rcd.setFundtype("内部账户转款(转入)");
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("returnamount")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("returnamount"));
+			rcd.setFundtype("回款");
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("fundallocated")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("fundallocated"));
+			rcd.setFundtype("资金下拨");
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("innerborrow")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("innerborrow"));
+			rcd.setFundtype("内部借款");
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("outterborrow")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("outterborrow"));
+			rcd.setFundtype("外部借款");
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("payment")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("payment"));
+			pcd.setFundtype("付款");
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("funddeposit")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("funddeposit"));
+			pcd.setFundtype("资金上存");
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("inneretran")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("inneretran"));
+			pcd.setFundtype("内部账户转款(转出)");
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("outterreturn")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("outterreturn"));
+			pcd.setFundtype("外部还款");
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("groupreturn")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("groupreturn"));
+			pcd.setFundtype("还集团借款");
+			pcdlist.add(pcd);
+		}
+		if(rcdlist.size()>0){this.tableService.saveAllEntities(rcdlist);}
+		if(pcdlist.size()>0){this.tableService.saveAllEntities(pcdlist);}
+	}
+//修改资金计划
+	@Override
+	public void editFundPlanData(Map<String, String> variablesMap) throws Exception {
+		String plantime=variablesMap.get("plantime");
+		String depositInterestId =variablesMap.get("diid");
+		DepositInterest depositInterest=this.tableService.findEntityByID(DepositInterest.class, depositInterestId);
+		List<ReceiptCountDetail> addrcdlist=new ArrayList<ReceiptCountDetail>();
+		List<PaymentCountDetail> addpcdlist=new ArrayList<PaymentCountDetail>();
+		List<ReceiptCountDetail> editrcdlist=new ArrayList<ReceiptCountDetail>();
+		List<PaymentCountDetail> editpcdlist=new ArrayList<PaymentCountDetail>();
+		
+		if(variablesMap.get("nbzkinid")==null){
+			if(variablesMap.get("inneraccount")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("inneraccount").toString());
+			rcd.setFundtype("内部账户转款(转入)");
+			addrcdlist.add(rcd);
+			}
+		}else{
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String aString=variablesMap.get("nbzkinid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, aString);
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("inneraccount").toString());
+			rcd.setFundtype("内部账户转款(转入)");
+			editrcdlist.add(rcd);
+		}
+		if(variablesMap.get("hkid")==null){
+			if(variablesMap.get("returnamount")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("returnamount"));
+			rcd.setFundtype("回款");
+			addrcdlist.add(rcd);}
+		}else{
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String aString=variablesMap.get("hkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, aString);
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("returnamount"));
+			rcd.setFundtype("回款");
+			editrcdlist.add(rcd);
+		}
+		if(variablesMap.get("zjxbid")==null){
+			if(variablesMap.get("fundallocated")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("fundallocated"));
+			rcd.setFundtype("资金下拨");
+			addrcdlist.add(rcd);}
+		}else{
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String aString=variablesMap.get("zjxbid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, aString);
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);  
+			rcd.setAmount(variablesMap.get("fundallocated"));
+			rcd.setFundtype("资金下拨");
+			editrcdlist.add(rcd);
+		}
+		if(variablesMap.get("nbjkid")==null){
+			if(variablesMap.get("innerborrow")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("innerborrow"));
+			rcd.setFundtype("内部借款");
+			addrcdlist.add(rcd);}
+		}else{
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String aString=variablesMap.get("nbjkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, aString);
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("innerborrow"));
+			rcd.setFundtype("内部借款");
+			editrcdlist.add(rcd);
+		}
+		if(variablesMap.get("wbjkid")==null){
+			if(variablesMap.get("outterborrow")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("outterborrow"));
+			rcd.setFundtype("外部借款");
+			addrcdlist.add(rcd);}
+		}else{
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String aString=variablesMap.get("wbjkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, aString);
+			rcd.setReceiptTime(plantime);
+			rcd.setDiid(depositInterest);
+			rcd.setAmount(variablesMap.get("outterborrow"));
+			rcd.setFundtype("外部借款");
+			editrcdlist.add(rcd);
+		}
+		if(variablesMap.get("fkid")==null){
+			if(variablesMap.get("payment")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("payment"));
+			pcd.setFundtype("付款");
+			addpcdlist.add(pcd);}
+		}else{
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String aString=variablesMap.get("fkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, aString);
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("payment"));
+			pcd.setFundtype("付款");
+			editpcdlist.add(pcd);
+		}
+		if(variablesMap.get("scid")==null){
+			if(variablesMap.get("funddeposit")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("funddeposit"));
+			pcd.setFundtype("资金上存");
+			addpcdlist.add(pcd);}
+		}else{
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String aString=variablesMap.get("scid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, aString);
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("funddeposit"));
+			pcd.setFundtype("资金上存");
+			editpcdlist.add(pcd);
+		}
+		if(variablesMap.get("nbzkid")==null){
+			if(variablesMap.get("inneretran")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("inneretran"));
+			pcd.setFundtype("内部账户转款(转出)");
+			addpcdlist.add(pcd);}
+		}else{
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String aString=variablesMap.get("nbzkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, aString);
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("inneretran"));
+			pcd.setFundtype("内部账户转款(转出)");
+			editpcdlist.add(pcd);
+		}
+		if(variablesMap.get("wbhkid")==null){
+			if(variablesMap.get("outterreturn")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("outterreturn"));
+			pcd.setFundtype("外部还款");
+			addpcdlist.add(pcd);}
+		}else{
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String aString=variablesMap.get("wbhkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, aString);
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("outterreturn"));
+			pcd.setFundtype("外部还款");
+			editpcdlist.add(pcd);
+		}
+		if(variablesMap.get("jtjkid")==null){
+			if(variablesMap.get("groupreturn")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("groupreturn"));
+			pcd.setFundtype("还集团借款");
+			addpcdlist.add(pcd);}
+		}else{
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String aString=variablesMap.get("jtjkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, aString);
+			pcd.setPaymentTime(plantime);
+			pcd.setDiid(depositInterest);
+			pcd.setAmount(variablesMap.get("groupreturn"));
+			pcd.setFundtype("还集团借款");
+			editpcdlist.add(pcd);
+		}
+		if(addrcdlist.size()>0){
+			for (ReceiptCountDetail receiptCountDetail : addrcdlist) {
+				String receiptTime=receiptCountDetail.getReceiptTime();
+				String amount=receiptCountDetail.getAmount();
+				String fundtype=receiptCountDetail.getFundtype();
+				String receiptCountDetailSql="insert into receipt_count_detail (id,amount,receipt_time,fund_type,DI_ID)select sys_guid(),'"+amount+"','"+receiptTime+"','"+fundtype+"','"+receiptCountDetail.getDiid().getId()+"' from dual";
+				this.reportDao.getJdbcTemplate().execute(receiptCountDetailSql);
+			}
+		}
+	   if(editrcdlist.size()>0){
+		   for (ReceiptCountDetail receiptCountDetail : editrcdlist) {
+				String receiptCountDetailSql="update receipt_count_detail set amount='"+receiptCountDetail.getAmount()+"',RECEIPT_TIME='"+receiptCountDetail.getReceiptTime()+"',FUND_TYPE='"+receiptCountDetail.getFundtype()+"' where id='"+receiptCountDetail.getId()+"'";
+				this.reportDao.getJdbcTemplate().execute(receiptCountDetailSql);
+		   }
+	   }
+	   if(addpcdlist.size()>0){
+			for (PaymentCountDetail paymentCountDetail : addpcdlist) {
+				String paymentTime=paymentCountDetail.getPaymentTime();
+				String amount=paymentCountDetail.getAmount();
+				String fundtype=paymentCountDetail.getFundtype();
+				String paymentCountDetailSql="insert into PAYMENT_COUNT_DETAIL (id,amount,PAYMENT_TIME,fund_type,DI_ID)select sys_guid(),'"+amount+"','"+paymentTime+"','"+fundtype+"','"+paymentCountDetail.getDiid().getId()+"' from dual";
+				this.reportDao.getJdbcTemplate().execute(paymentCountDetailSql);
+			}
+			}
+		if(editpcdlist.size()>0){
+			for (PaymentCountDetail paymentCountDetail : editpcdlist) {
+				String paymentCountDetailSql="update PAYMENT_COUNT_DETAIL set amount='"+paymentCountDetail.getAmount()+"',PAYMENT_TIME='"+paymentCountDetail.getPaymentTime()+"',FUND_TYPE='"+paymentCountDetail.getFundtype()+"' where id='"+paymentCountDetail.getId()+"'";
+				this.reportDao.getJdbcTemplate().execute(paymentCountDetailSql);
+			}
+		}
+	}
+//删除资金计划表数据
+	@Override
+	public void removeFundPlanData(Map<String, String> variablesMap) throws Exception {
+		List<ReceiptCountDetail> rcdlist=new ArrayList<ReceiptCountDetail>();
+		List<PaymentCountDetail> pcdlist=new ArrayList<PaymentCountDetail>();
+		if(variablesMap.get("nbzkinid")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String rcdid=variablesMap.get("nbzkinid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, rcdid);
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("hkid")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String rcdid=variablesMap.get("hkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, rcdid);
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("zjxbid")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String rcdid=variablesMap.get("zjxbid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, rcdid);
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("nbjkid")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String rcdid=variablesMap.get("nbjkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, rcdid);
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("wbjkid")!=null){
+			ReceiptCountDetail  rcd =new ReceiptCountDetail();
+			String rcdid=variablesMap.get("wbjkid");
+			rcd=this.tableService.findEntityByID(ReceiptCountDetail.class, rcdid);
+			rcdlist.add(rcd);
+		}
+		if(variablesMap.get("fkid")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String pcdid=variablesMap.get("fkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, pcdid);
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("scid")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String pcdid=variablesMap.get("scid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, pcdid);
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("wbhkid")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String pcdid=variablesMap.get("wbhkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, pcdid);
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("nbzkid")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String pcdid=variablesMap.get("nbzkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, pcdid);
+			pcdlist.add(pcd);
+		}
+		if(variablesMap.get("jtjkid")!=null){
+			PaymentCountDetail  pcd=new PaymentCountDetail();
+			String pcdid=variablesMap.get("jtjkid");
+			pcd=this.tableService.findEntityByID(PaymentCountDetail.class, pcdid);
+			pcdlist.add(pcd);
+		}
+		if(rcdlist.size()>0){
+			
+			this.tableService.removeAllEntites(rcdlist);}
+		if(pcdlist.size()>0){
+			
+			this.tableService.removeAllEntites(pcdlist);}
+	}
+}

@@ -1,0 +1,64 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="/WEB-INF/tlds/spring.tld"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title><spring:message code="CustomerCodingMaintenance" text="客户编码维护"/></title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+<script type="text/javascript">
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id : 'gloabl',
+				renderTo : "table_paymentlog_table1",
+				width : globalClientWidth,
+				height : globalClientHeight,
+				title : '项目月（年）度运行报表',
+				iconCls : 'icon-node',
+				multiSelect : false,
+				hiddenQueryArea : false,
+				queryButtonColSpan : 2,
+				queryButtonNewLine:true,
+				showPager:true,
+				remoteOper: true,
+				lazyLoad:false,
+				loadMode:'ajax',
+				params:{},				
+				xmlFileName : '/eleasing/jsp/global/annual_operation.xml',
+				columns : [ 
+				    {type : 'indexcolumn'},
+				   	{field : 'id',header : 'id',visible:false},
+				   	{field : 'openid',header : '数据抓取ID',visible:false},
+				   	{field : 'wfid',header : '风场ID',visible:false},
+				   	{field : 'reporttype',header : '月报/年报'},
+				   	{field : 'reportdate',header : '编号'},
+				   	{field : 'windspeed',header : '平均风速'},
+				   	{field : 'temperature',header : '发电量（统计时段内）'},
+				   	{field : 'electricdate',header : '等效利用小时数'},
+				   	{field : 'dateavailability',header : '机组可利用率'},
+				   	{field : 'faultnums',header : '故障次数'},
+				   	{field : 'faultdate',header : '故障停机总时长'},
+				   	{field : 'mtbf',header : '平均无故障时间'},
+				   	{field : 'mttr',header : '故障排除时间'},
+				   	{field : 'maintainloss',header : '维护损失电量'},
+				  	{field : 'limitloss',header : '限功率损失电量'},
+				   	{field : 'faultloss',header : '故障损失电量'},
+				   	{field : 'totalloss',header : '损失电量合计'},
+				   	{field : 'power',header : '备注'},
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body>
+	<div id="mini_test_form">
+	        <div id="table_paymentlog_table1"></div>
+	</div>
+
+</body>
+</html>

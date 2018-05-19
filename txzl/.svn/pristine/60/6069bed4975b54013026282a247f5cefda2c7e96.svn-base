@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+
+select case v1.signStr  when 16 then 'dscr'
+         else to_char(v1.listid) end listid
+
+     ,v1.valueStr file1,v2.valueStr file2,v3.valueStr file3,v4.valueStr file4,
+       v5.valueStr file5,v6.valueStr file6,v7.valueStr file7,v8.valueStr file8
+from (select to_number(startyear)-1+rownum listid,rownum signStr,
+                valueStr 
+                from (select   'file'||rrd.file_order fileindex, 
+                                      rrd.start_year startyear,
+                                     rrd.year_1 year1,
+                                     rrd.year_2 year2,
+                                     rrd.year_3 year3,
+                                     rrd.year_4 year4,
+                                     rrd.year_5 year5,
+                                     rrd.year_6 year6,
+                                     rrd.year_7 year7,
+                                     rrd.year_8 year8,
+                                     rrd.year_9 year9,
+                                     rrd.year_10 year10,
+                                     rrd.year_11 year11，
+                                     rrd.year_12 year12,
+                                     rrd.year_13 year13,
+                                     
+                                     rrd.year_14 year14,
+                                     rrd.year_15 year15,
+                                     nvl(rrd.dscr,' ') dscr
+                               from T_RESERVE_RATIO_DATA rrd
+                              where rrd.proj_id = '{projectid}'
+                              and rrd.status = '1'
+                              order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file0'   ) v1
+                  left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+						                                   rrd.year_14 year14,
+						                                   rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file1') v2 on v2.listid = v1.listid
+                  left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+                                                           rrd.year_14 year14,
+                                                           rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file2') v3 on v3.listid = v1.listid
+                   left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+                                                           
+						                                     rrd.year_14 year14,
+						                                     rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file3') v4 on v1.listid = v4.listid
+                   left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+                                                           
+						                                     rrd.year_14 year14,
+						                                     rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file4') v5 on v5.listid = v1.listid
+                   left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+                                                           
+					                                     rrd.year_14 year14,
+					                                     rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file5') v6 on v1.listid = v6.listid
+                   left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11，
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+                                                           
+					                                     rrd.year_14 year14,
+					                                     rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file6') v7 on v7.listid = v1.listid
+                   left join (select to_number(startyear)-1+rownum listid,valueStr from (select   'file'||rrd.file_order fileindex, 
+                                                            rrd.start_year startyear,
+                                                           rrd.year_1 year1,
+                                                           rrd.year_2 year2,
+                                                           rrd.year_3 year3,
+                                                           rrd.year_4 year4,
+                                                           rrd.year_5 year5,
+                                                           rrd.year_6 year6,
+                                                           rrd.year_7 year7,
+                                                           rrd.year_8 year8,
+                                                           rrd.year_9 year9,
+                                                           rrd.year_10 year10,
+                                                           rrd.year_11 year11,
+                                                           rrd.year_12 year12,
+                                                           rrd.year_13 year13,
+						                                     rrd.year_14 year14,
+						                                     rrd.year_15 year15,
+                                                           rrd.dscr dscr
+                                                     from T_RESERVE_RATIO_DATA rrd
+                                                    where rrd.proj_id = '{projectid}'
+                                                    and rrd.status = '1'
+                                                    order by rrd.file_order 
+                  ) unpivot (valueStr for subject in ( year1,year2,year3,year4,year5,
+                                                       year6,year7,year8,year9,year10,
+                                                       year11,year12,year13,year14,year15,dscr
+                                                     ) 
+                            )
+                  where  fileindex = 'file7') v8 on v1.listid = v8.listid
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

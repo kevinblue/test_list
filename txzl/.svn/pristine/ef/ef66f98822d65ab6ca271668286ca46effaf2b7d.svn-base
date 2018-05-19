@@ -1,0 +1,119 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>借款计划还款</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript">
+var bid = "${param.bid}";
+var billid = "${param.billid}";
+
+jQuery(function() {
+		seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+			new ApTable({
+				id:'loan_rent_hire',
+				renderTo:'id_table_loan_rent_hire',
+				width:globalClientWidth,
+				height:globalClientHeight,
+				title:'',
+				iconCls:'icon-node',
+				multiSelect:false,
+				hiddenQueryArea:false,//是否将查询区域折叠起来
+				queryButtonColSpan:2,
+				queryButtonNewLine:false,
+				showPager:true,	
+  				remoteOper:true,
+				entityClassName:'com.tenwa.leasing.entity.finacial.LoanRentIncome',
+				xmlFileName:'/eleasing/jsp/finacial/loan_rent_plan/loan_rent_income_list.xml',
+  				params:{loanid:'${param.loanid}'},
+				tools:['add','-','edit','-','remove'],
+				afterShowWindowCallBack : function(miniTable,miniForm, operFlag){
+					//alert(mini.getbyName("feename").getValue());
+					mini.getbyName("planid").setText(mini.getbyName("planlist").getValue());
+				},
+				columns:[ 
+				    {type:'indexcolumn'},
+				   	{type:'checkcolumn'},  
+				   	{field:'id',header:'id',visible:false},
+				   	{field:'loancontractid',header:'借款合同号',visible:true,allowSort:true,formEditorConfig:{
+              			type:'text',
+              			defaultValue:'${param.loancontractid}',
+              			fieldVisible:true,
+              			readOnly:true
+              		}},
+				   	{field:'loanid',header:'借款合同号',visible:false,allowSort:true,formEditorConfig:{
+				   		required:true,
+				   		fieldVisible:false,
+				   		defaultValue:'${param.loanid}',
+              			type:'text'
+              		}}, 
+				   	{field:'hiredate',header:'核销日期',formEditorConfig:{
+				   		required:true,
+				   		type:'date'
+				   	}}, 
+				   	{field:'planlist',header:'期数',formEditorConfig:{
+				   		required:false,
+				   		newLine:true,
+				        fieldVisible:false,
+				   		type:'text'
+				   	}},
+				   	{field:'planid',header:'期数',visible : false,
+						formEditorConfig : {
+							width : 200,
+							type : 'queryinput',
+							required : true,
+							textField : 'planlist',
+							valueField : 'id',
+				            allowInput:false,
+					         fieldVisible:true,
+				             onSelect:function($me, queryInput, rowData){
+				                   mini.getbyName("currencyname").setValue(rowData.currencyname);
+				                   mini.getbyName("currency").setValue(rowData.currency);},
+							params : {
+								xmlFileName : '/eleasing/jsp/finacial/loan_rent_plan/loan_rent_plan_income.xml',
+								loanid:'${param.loanid}'
+							}
+						}}, 
+				   	{field:'rent',header:'租金',visible:true,dataType:"currency",summary:true,formEditorConfig:{
+				   		required:true,
+				   		vtype:'float',
+				   		fieldVisible:true
+				   	}},
+				   	{field:'corpus',header:'本金',visible:true,dataType:"currency",summary:true,formEditorConfig:{
+				   		required:true,
+				   		vtype:'float',
+				   		newLine:true,
+				   		fieldVisible:true
+				   	}},
+				   	{field:'interest',header:'利息',visible:true,dataType:"currency",summary:true,formEditorConfig:{
+				   		required:true,				   		
+				   		vtype:'float',
+				   		fieldVisible:true
+				   	}},
+				   	{field:'currencyname',header:'币种',visible:true,formEditorConfig:{
+				   		fieldVisible:false
+				   	}},
+				   	{field:'currency',header:'币种',visible:false,formEditorConfig:{
+				   		type:'combobox',
+				   		fieldVisible:true,
+				   		newLine:true,
+				   		readOnly:true,
+				   		required:true,
+				   		textField: 'name',
+						valueField: 'value',
+						params:{pid: 'currency_type',xmlFileName: '/combos/comboDict.xml'}
+				   	}}
+				]
+			});
+		});
+	});
+</script>
+</head>
+<body>
+<div id="id_table_loan_rent_hire"></div>
+</body>
+</html>

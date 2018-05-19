@@ -1,0 +1,136 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script type="text/javascript">
+
+var startdatenew ="${startdate}";
+var enddatenew ="${enddate}";
+console.info(startdatenew+"---"+enddatenew);
+ /* var startdatenew='${param.startdate}';
+var enddatenew='${param.enddate}'; */
+
+</script>
+<%-- <%
+	String applyid = request.getParameter("applyid");//ID
+	String opertype = request.getParameter("opertype");
+%>
+<script type="text/javascript">
+var applyid='<%=applyid%>'
+	var applydate="";
+</script> --%>
+<title>五级分类申请</title>
+<%-- <%@include file="/base/mini.jsp"%> --%>
+<link
+	href="${pageContext.request.contextPath}/css/tracywindy/tracywindy.css"
+	rel="stylesheet" type="text/css" />
+<link
+	href="${pageContext.request.contextPath}/css/tracywindy/workflow.css"
+	rel="stylesheet" type="text/css">
+<link
+	href="${pageContext.request.contextPath}/css/tracywindy/workFlowUtil.css"
+	rel="stylesheet" type="text/css">
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/workFlowUtil.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+</head>
+<script type="text/javascript">
+
+</script>
+<body style="overflow: auto;">
+	<!-- 撑满布局 -->
+	<div id="five_classfy_apply_audit_detail">
+		<div id="mini-panel" title="申请基本信息" showCollapseButton="true" style="width: 100%;">
+			<!-- <table class="fillTable" cellspacing="0" cellpadding="0" style="width:100%;" id="application_base_info">
+			<tr>
+		        <td style="padding:5px">
+		        	<a class="mini-button" iconCls="icon-close" onclick="onCancel">关闭</a>
+		        </td>
+		    </tr>
+		   </table> -->
+			<table class="fillTable" cellspacing="0" cellpadding="0"
+				style="width: 100%;">
+				<tr style="background: #468CC8; height: 32px">
+					<td style="padding-left: 10px" colspan='4'><font color="white">申请基本信息</font></td>
+				</tr>
+				<tr class="tr-odd">
+					<td class="td-content-title" width="12%">申请人：</td>
+					<td class="td-content" width="38%">
+					<input width="55%" name="fivecategoryapply.applyuser"  id="fivecategoryapply.applyuser" class="mini-textbox" readonly value="${requestScope['fivecategoryapply.applyuser']}" /></td>				
+					 <input width="55%" name="fivecategoryapply.docid"  style="display:none" class="mini-textbox" readonly value="${requestScope['fivecategoryapply.docid']}"/>
+					<td class="td-content-title" width="12%" >申请编号</td>
+		        	<td class="td-content" width="38%">
+		            <input width="55%" name="pid"  style="display:none" class="mini-textbox" readonly value="${requestScope['pid']}"/>
+		        	<input width="55%" id="fivecategoryapply.applynumber" name="fivecategoryapply.applynumber"  class="mini-textbox" readonly  value="${requestScope['fivecategoryapply.applynumber']}"/>
+		        	</td>
+										
+				</tr>
+				<tr class="tr-even">				
+					<%-- <td class="td-content-title" width="12%">申请年月：</td>
+					<td class="td-content" width="38%"><input width="55%" id="fivecategoryapply.applydate"
+						name="fivecategoryapply.applydate" class="mini-datepicker" type="date"
+						format="yyyy-MM" readonly required="true" allowinput="false"
+						value="${requestScope['applydate']}" /></td> --%>
+				</tr>
+				<tr class="tr-odd" style="height: 40px">
+					<td class="td-content-title" width="12%" height="70px">备注：</td>
+					<td class="td-content" colspan="3"><textarea
+							style="width: 81%; height: 90%" name="fivecategoryapply.applymemo"  id="fivecategoryapply.applymemo"
+							class="mini-textarea" value="${requestScope['fivecategoryapply.applymemo']}"></textarea>
+					</td>
+				</tr>
+				<tr class="tr-even">
+					<td class="td-content-title" width="12%">开始时间：</td>
+					<td class="td-content" width="38%"><input width="55%" id="fivecategoryapply.startdate"
+						name="fivecategoryapply.startdate" class="mini-textbox" readonly
+						value="${requestScope['fivecategoryapply.startdate']}" /></td>
+					<td class="td-content-title" width="12%">结束时间：</td>
+					<td class="td-content" width="38%"><input width="55%" id="fivecategoryapply.enddate"
+						name="fivecategoryapply.enddate" class="mini-textbox" readonly
+						value="${requestScope['fivecategoryapply.enddate']}" "/></td>
+				</tr>
+				
+			</table>
+		</div>
+	</div>
+	<!-- 页签 -->
+	<div id="tabDeatils" class="mini-tabs" activeIndex="0"
+		style="width: 100%;" bodyStyle="padding:0;border:0;">
+		<div title="申请详细信息" name="applicationcust">
+			<jsp:include page="five_classfy_auto_apply_detail.jsp"><jsp:param
+					value="true" name="isView" /></jsp:include>
+		</div>
+		<div title="资产分类认定表" name="applicationcust">
+			<jsp:include page="assets_five_category_confirm.jsp"><jsp:param
+					value="true" name="isView" /></jsp:include>
+		</div>
+	</div>
+
+<!-- 
+	<script type="text/javascript">
+	function onCancel(){
+		window.opener.location.href=window.opener.location.href;
+		window.close();
+	}
+		//初始化
+		mini.parse("id_table_application_detail");
+		var form = new mini.Form("id_table_application_detail");
+		jQuery(function() {
+			$(".mini-textbox-readOnly .mini-textbox-border").css("background",
+					"#F0F0F0");
+			$(".mini-buttonedit-readOnly .mini-buttonedit-border").css(
+					"background", "#F0F0F0");
+			$(".mini-buttonedit-readOnly .mini-buttonedit-button").css(
+					"display", "none");
+		});
+	</script> -->
+</body>
+</html>

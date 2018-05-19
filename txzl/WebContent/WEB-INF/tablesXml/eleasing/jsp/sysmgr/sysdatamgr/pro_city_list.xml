@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <!--国家 省份 城市    已审核  -->
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				select 
+					T.ID id,
+					T.NAME name,
+					T.PID pid 
+				from  
+				T_DISTRICT t 
+				where 1=1
+				and t.pid  is null
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	    <table_sql>
+	    	select 
+					T.ID id,
+					T.NAME name,
+					T.PID pid 
+				from  
+				T_DISTRICT t 
+				where 1=1
+				and isnull(t.pid,'')=''
+	   </table_sql>
+	  </sqlserver>	  	
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

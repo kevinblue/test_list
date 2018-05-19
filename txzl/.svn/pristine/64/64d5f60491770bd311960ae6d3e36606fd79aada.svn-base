@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        
+	          select 
+                  fa.id,
+                  fa.apply_user as applyuser,
+                  tu.realname_ as  applyusername,
+                  fa.apply_number as apply_number,
+                  fa.apply_memo as apply_memo,
+                  fa.start_date as start_date,
+                  fa.end_date as end_date      
+                  from Five_Category_Apply fa
+               left join T_USERS tu on tu.id_=fa.apply_user
+             where 1=1
+			                                     
+ 				/~apply_number: AND fa.apply_number like '%{apply_number}%'~/  				
+ 				/~applyusername: AND tu.realname_ like '%{applyusername}%' ~/
+ 				/~start_date: AND fa.start_date = '{start_date}' ~/
+               
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

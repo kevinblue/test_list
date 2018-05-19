@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+          select 
+          t.id id,
+          t.项目编号 项目编号,
+          c.project_name proj_name,
+          t.项目状态 项目状态,
+          t.项目阶段 项目阶段,
+          t.项目容量 项目容量,
+          t.机组数量 机组数量,
+          t.维度类型 维度类型,
+          t.纬度 纬度,
+          t.经度类型 经度类型,
+          t.经度 经度,
+          t.片区 片区,
+          t.项目名称 项目名称,
+          t.项目经理 项目经理,
+          t.业主单位 业主单位,
+          t.合同主体 合同主体,
+          substr(t.合同签订日期,0,10) 合同签订日期,
+          substr(t.质保期开始日期,0,10) 质保期开始日期,
+          t.质保期时长 质保期时长,
+          t.风场可用率 风场可用率,
+          t.机组可用率 机组可用率,
+          t.单台功率曲线 单台功率曲线,
+          t.风场功率曲线 风场功率曲线,
+          t.功率曲线说明 功率曲线说明
+          from t_proj_main_data t  
+          left join contract_info c on c.wind_machine = t.项目编号
+          where 1=1
+          /~项目编号: AND t.项目编号 like '%{项目编号}%' ~/
+          /~项目名称: AND t.项目名称 like '%{项目名称}%' ~/
+          /~业主单位: AND t.业主单位 like '%{业主单位}%' ~/
+          /~proj_name: AND c.project_name like '%{proj_name}%' ~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  
+  </table>
+</table-root>

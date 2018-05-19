@@ -1,0 +1,420 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+//备注：这些JS都是我周独夫所写，请你们务必好好参考。我乃周亚辉是也！哈哈
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true' || isViewHistoryTask ==true){showTools = false};
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "fund_put_config",
+			renderTo: "id_fund_put_config",
+			width: globalClientWidth - 30,
+			height: 360,
+			remoteOper : false,
+			showPager: false,
+			multiSelect: true,
+			showToolbar: showTools,
+			editFormPopupWindowWidth : 700,
+			data: mini.decode('${empty json_fund_put_config_str ? "[]" : json_fund_put_config_str }'),
+			operValidate:function(miniTable, rowDatas, operFlag){
+	              if(operFlag=="remove"){
+	            	  if(!rowDatas || rowDatas.length==0){
+	            		  mini.alert("请选择要"+(operFlag == "edit"?"修改":"删除")+"的数据!");
+	            		  return false;
+	            	  }
+	            	   for(var i=0;i<rowDatas.length;i++){
+	            		   if(parseFloat(rowDatas[i].factmoney)>0){
+		                        mini.alert("已经投放过的项目不能删除");
+		                        return false;
+		                   }
+	            	  }
+	               }
+				   return true;
+		   },
+			removeOperCallBack:function(miniTable, rowDatas){ 
+		           var guarantable=mini.get("payment_premise_condition");
+		           var guarantableData=guarantable.getData();
+				   for(j=0;j<rowDatas.length;j++){
+		               var paymentid=rowDatas[j].paymentid;
+		               var fundtype=rowDatas[j].fundtype;
+		               var devicename=rowDatas[j].devicename;
+		               for(var i=0;i<guarantableData.length;i++){
+		            	   var paymentidTmp=guarantableData[i].paymentid.replace(/[^0-9]/ig,"");//去除所有字符串只取数字
+		                    if(paymentid==paymentidTmp&&fundtype==guarantableData[i].feetype&&devicename==guarantableData[i].devicename){
+		                    	guarantable.removeRow(guarantableData[i]);
+		                    }
+		               }                
+				   }
+				   sumequipamt();
+			       return true;
+		    },
+			tools : [ 'add','-','edit','-','remove','-','copy','-',
+			   {
+			    html : '维护付款前提',
+				plain : true,
+				iconCls : 'icon-redo',
+				handler : function(miniTable, buttonText) {
+					var rows = miniTable.getSelecteds();
+					var arrayojb=[];
+					var fundtype=[];
+					var list = new Array();
+					if(rows.length>0){
+						  for(var i=0;i<rows.length;i++){
+							var paymentid= rows[i].paymentid;
+							 fundtype.push(rows[i].fundtype);
+							  var paymentpremise={};
+							    if(rows[i].feetype.length<=0){
+		                            mini.alert("请先测算租金,才可以维护付款前提！");	 
+	                            	return false;	
+	                              } 
+							     if(rows[i].paytypename.indexOf('收款')>-1){
+		                            mini.alert("只有收付方向为付款的数据才能发起付款前提按钮！");	 
+	                            	return false;	
+	                              } 
+							     rows[i].contractid=mini.getbyName("contract_info.proj_id").getValue();
+								 if(list.contains(paymentid)){
+										continue;
+								   }else{
+										list.push(paymentid);
+										paymentpremise=rows[i];
+								 }
+							     arrayojb.push(paymentpremise);
+						  }
+						var paymentjson=mini.encode(arrayojb);
+						var fundtypejson=mini.encode(fundtype);
+				        var urlFlag = getRootPath()+"/workflow/forms/reckon/rent_reckon/payment_premise_openlist.bi?paymentjson="+paymentjson+"&fundtypejson="+fundtypejson;
+				        urlFlag = encodeURI(urlFlag);
+				        mini.open({
+                   		        url: urlFlag,
+                   		        id:'table_id3',
+                   		        title: "维护付款前提", width: 800, height: 455,
+                   		        onload: function () {},
+                   		        ondestroy: function (action) {
+                   		        	if("savesuccess" == action){
+                   		        		window.location.reload();
+                   		        	}
+                   		        }
+                   		    });
+					}else{
+					   mini.alert("请选中数据！");
+					}
+			      }
+		     },  '-',  
+			          
+			   {  html : '更新租前息',
+				plain : true,
+				iconCls : 'icon-redo',
+				handler : function(miniTable, buttonText) {
+					if(miniTable.getData().length <= 0){
+						mini.alert('请先填写投放计划！！！！');
+						return;
+					}
+					mini.mask({
+						el: document.body,
+						cls: 'mini-mask-loading',
+						html: '正在测算中，请稍后...'
+					});
+					var o = {};
+					o.docId = flowUnid;
+					o.json_fund_put_config_str = mini.encode(miniTable.getData());
+					o.contract_id='${requestScope['contract_info.id'] }';
+					 var url="<%=request.getContextPath() %>/leasing/updateFundPutPlan.action";
+					 $.ajax({
+				        url: url,
+				        type: "post",
+				        data:  o ,
+				        success: function (text) {
+				        	var result = mini.decode(text);
+				        	if(result.updateinfo == '成功'){
+				        		mini.alert('测算成功！！！');
+				        		var rentPlanList =mini.decode(result.rentplanlist) ;
+				        		mini.get("grace_plan").setData(rentPlanList);
+				        		$("#id_json_grace_plan_str").val(mini.encode(rentPlanList));
+				        		mini.unmask(document.body);
+				        	}else{
+				        		mini.alert('测算失败！！！');
+				        		mini.unmask(document.body);
+				        	}
+				        },
+				        error: function (jqXHR, textStatus, errorThrown) {
+				        	mini.unmask(document.body);
+				            alert(jqXHR.responseText);
+				        }
+					  });
+				}
+			}],
+			addOperCallBack :function(miniTable,rowData){
+				var rowDatas = miniTable.getData();
+			},
+			afterShowWindowCallBack: function(miniTable,miniForm,operFlag){
+				var paymentid = mini.getbyName("paymentid");
+				if(operFlag=='add'){
+					paymentid.setValue(sumpaymentid(miniTable)+1);
+				}
+				if(operFlag=='edit'){
+					//mini.getbyName("paymentid").disable();
+					mini.getbyName("plandate").disable();
+		     		mini.getbyName("fundtype").disable();
+					mini.getbyName("devicename").disable(); 
+				}
+				var feetype = mini.getbyName("feetype");
+				feetype.setValue("feetype10");
+				var paytype = mini.getbyName("paytype");
+				paytype.setValue("pay_type_out");
+				var contractid = mini.getbyName("contractid");
+				contractid.setValue("${requestScope['contract_info.id']}");
+			},
+			completeCallBack:function(miniTable){
+				var datas = miniTable.getData();
+				var list = new Array();
+				var sumequipamt=0;
+				for(var j = 0 ; j< datas.length;j++){
+					var paymentid=datas[j].paymentid;
+					if(list.contains(paymentid)){
+						continue;
+					}else{
+						list.push(paymentid);
+						sumequipamt+=parseFloat(datas[j].planmoney);
+					}
+				}
+				mini.get("sumequipamt").setValue(sumequipamt);
+			},
+			confirmCopyCallBack:function(miniTable,rows){
+				var newRows = [];
+				var datas = miniTable.getData();
+				var temp=0;
+				for(var j = 0 ; j< datas.length;j++){
+					var data = datas[j];
+						if(Number(data.paymentid) > temp){
+							temp = Number(data.paymentid);
+						}
+				}
+				for(var i = 0 ; i< rows.length;i++){
+					var row = mini.clone(rows[i]);
+					row.paymentid = ++temp;
+					newRows.push(row);
+				}
+			   miniTable.addRows(newRows, 0); 
+			   miniTable.saveDataToInput();
+			   sumequipamt();
+			},
+		    updateOperCallBack:function(miniTable,rowData){
+		    	var rows = miniTable.getData();
+			    var planmoney=isNaN(mini.getbyName("planmoney").getValue())==true?(mini.getbyName("planmoney").getValue()).replace(/,/g, ""):mini.getbyName("planmoney").getValue();
+			    if(rowData){
+		    		var pid=rowData.id;
+		    		var paymentid=rowData.paymentid;
+		    		 for(var i=0;i<rows.length;i++){
+		    			 if(pid==rows[i].id&&paymentid==rows[i].paymentid){
+		    				 rowData.changefactmoney=rows[i].changefactmoney;
+		    				 rowData.changefactdate=rows[i].changefactdate;
+		    				 rowData.overmoney=parseFloat(planmoney)-parseFloat(rowData.factmoney);
+		    				 miniTable.updateRow(rows[i], rowData);
+		    			 }
+		    		 }
+		    		
+		    	}
+			    sumequipamt();
+			},
+			addOperCallBack:function(miniTable,rowData){
+				sumequipamt();
+			},
+			validateForm:function (miniTable, miniForm, editFormItemOperFlag, addIndex){
+				 var rowDatas = miniTable.getSelected();
+				if(editFormItemOperFlag=='edit'){
+			    var planmoney=isNaN(mini.getbyName("planmoney").getValue())==true?(mini.getbyName("planmoney").getValue()).replace(/,/g, ""):mini.getbyName("planmoney").getValue();
+			       if(parseFloat(planmoney)<parseFloat(rowDatas.factmoney)){
+			    	   mini.alert("投放金额必须大于已付"+(parseFloat(rowDatas.factmoney))+"金额，请仔细核对数据进行修改！");
+			    	   return false;
+			       }
+				}
+				return true; 
+			},
+			columns: [
+				{type: 'indexcolumn'},
+				{type: 'checkcolumn'},
+				{field: 'id', header: 'id', visible: false},
+				{field: 'docid', header: 'docid', visible: false},
+				{field: 'contractid', header: '合同号',visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						required: true,
+						fieldVisible:false,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paymentid', header: '期次',
+					formEditorConfig:
+					{
+						type:'int',
+						required: true,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'plandate', header: '投放日期',dateFormat :"yyyy-MM-dd",
+					formEditorConfig:
+					{
+						type:'date',
+						required: true,
+						labelWidth:100,
+						width: 200,
+						format:'yyyy-MM-dd'
+					}
+				},
+				{field: 'changefactdate', header: '实际投放日期',dateFormat :"yyyy-MM-dd",
+					formEditorConfig:
+					{
+						type:'date',
+						required: false,
+						fieldVisible:false,
+						labelWidth:100,
+						width: 200,
+						format:'yyyy-MM-dd'
+					}
+				},
+				{field: 'planmoney', header: '投放金额',dataType : "currency",align:'right',
+					formEditorConfig:
+					{
+						newLine:true,
+						required: true,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'changefactmoney', header: '已付款金额',summary : true,dataType : "currency",formEditorConfig:{fieldVisible:false}}, 
+				{field: 'factmoney', header: '未付款金额',summary : true,dataType : "currency",visible: false,formEditorConfig:{fieldVisible:false}},
+				{field: 'overmoney', header: '未付款金额',summary : true,dataType : "currency",formEditorConfig:{fieldVisible:false}},
+				{field: 'feetypename', header: '款项名称',visible: false},
+				{field: 'feetype', header: '款项名称',visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						fieldVisible:false,
+						required: true,
+						defaultValue:'feetype10',
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paytypename', header: '收付方向', visible: false},
+				{field: 'paytype', header: '收付方向', visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						fieldVisible:false,
+						required: true,
+						defaultValue:'pay_type_out',
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paycust', header: '收付对象',  visible: false,
+			       formEditorConfig:{
+		                width: 400,
+		                fieldVisible:false,
+		                colspan:3,
+		                type:'queryinput',
+		             	required: false,
+		            	textField: 'paycustname',
+		           		valueField: 'paycust',
+		           		allowInput: false,
+		               	params: {xmlFileName: '/eleasing/workflow/rent/rent_cal/fund_fund_pay_obj.xml'}
+				  }
+				},
+				{field: 'paycustname', header: '收付对象',visible: false
+				},
+				{field:'fundtypename', header:'类型', 
+				      formEditorConfig:{
+				          fieldVisible:false,
+				     fillFromFieldName:'fundtype',
+				          fillProperty:'name',
+			           entityClassName:'com.tenwa.business.entity.DictionaryData',	
+				 entityHeaderFieldName:'name'}},
+				{field: 'fundtype', header: '类型', visible:false,
+					  formEditorConfig:{
+				                  type:'combobox',
+				              required:true,
+				              newLine:false,
+				             textField:'name',
+				            valueField:'value',
+				          fieldVisible:true,
+				    params:{pid: 'fund_type', xmlFileName:'combos/comboDict.xml'}}
+				},
+				{field:'devicenamename', header:'设备名称', 
+				      formEditorConfig:{
+				          fieldVisible:false,
+				     fillFromFieldName:'devicename',
+				          fillProperty:'name',
+			           entityClassName:'com.tenwa.business.entity.DictionaryData',	
+				 entityHeaderFieldName:'name'}},
+				{field: 'devicename', header: '设备名称', visible:false,
+					  formEditorConfig:{
+				                  type:'combobox',
+				              required:true,
+				              newLine:true,
+				             textField:'name',
+				            valueField:'value',
+				          fieldVisible:true,
+				    params:{pid: 'device_name', xmlFileName:'combos/comboDict.xml'}}
+				},
+				{field: 'fpnote', header: '备注',
+					formEditorConfig:
+					{
+						type:'textarea',
+						newLine:true,
+						labelWidth:100,
+						height:70,
+						colspan:3,
+						width: 478
+					}
+				}
+			]
+		});
+	});
+});
+
+function sumpaymentid(miniTable){
+	var datas = miniTable.getData();
+	var list = new Array();
+	var sumpaymentid=0;
+	for(var j = 0 ; j< datas.length;j++){
+		var paymentid=datas[j].paymentid;
+		if(list.contains(paymentid)){
+			continue;
+		}else{
+			list.push(paymentid);
+			sumpaymentid++;
+		}
+	}
+	return sumpaymentid;
+}
+function sumequipamt(){
+	var datas = mini.get("fund_put_config").getData();
+	var list = new Array();
+	var sumequipamt=0;
+	for(var j = 0 ; j< datas.length;j++){
+		var paymentid=datas[j].paymentid;
+		if(list.contains(paymentid)){
+			continue;
+		}else{
+			list.push(paymentid);
+			sumequipamt+=parseFloat(datas[j].planmoney);
+		}
+	}
+	mini.get("sumequipamt").setValue(sumequipamt);
+}
+</script>
+<tr>
+ <td class="td-content-title"  >设备款：</td>
+ <td class="td-content">
+<input name="equipamt" id ="equipamt"  readonly="readonly" vtype="double" label ="设备款" vtype="double"  class="mini-textbox"   value="${empty requestScope['equipamt'] ? 0 : requestScope['equipamt'] }"></td>
+ 
+ <td class="td-content-title"  >投放总和：</td>
+ <td class="td-content">
+<input name="sumequipamt" id ="sumequipamt"  readonly="readonly" vtype="double" label ="投放总和：" vtype="double"  class="mini-textbox"   value="${empty requestScope['sumequipamt'] ? 0 : requestScope['sumequipamt'] }"></td>
+</tr>
+
+<div id="id_fund_put_config"></div>

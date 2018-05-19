@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审风控经办
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        
+		   
+   select res.subjectname,res.a,res.b,res.c,res.d
+   from  (select '资负' as subjectname,
+      		 max(decode(v1.rn, '1', v1.FINANCIAL_DATE, 0)) a,
+      		 max(decode(v1.rn, '2', v1.FINANCIAL_DATE, 0)) b,
+      		 max(decode(v1.rn, '3', v1.FINANCIAL_DATE, 0)) c,
+      		 max(decode(v1.rn, '4', v1.FINANCIAL_DATE, 0)) d
+ 			from (select v.*,
+               --row_number() over(order by v.financial_date desc) rn
+               dense_RANK() OVER(partition by v.subject_name order by v.financial_date desc) rn
+         		 from vi_all_financial v
+         		 left join vi_cust_info_company vc  on  vc.companyid=v.CUST_ID
+        		 where v.title_name = '资负表'
+         		and v.CUST_ID = '{custid}'
+        		 order by v.FINANCIAL_DATE desc) v1
+         
+  			union all
+		select  v1.subject_name,
+      		 max(decode(v1.rn, '1', v1.subject_data, 0)) a,
+      		 max(decode(v1.rn, '2', v1.subject_data, 0)) b,
+      		 max(decode(v1.rn, '3', v1.subject_data, 0)) c,
+     		 max(decode(v1.rn, '4', v1.subject_data, 0)) d
+ 			 from (select v.*,
+             
+               dense_RANK() OVER(partition by v.subject_name order by v.financial_date desc) rn
+         		 from vi_all_financial v
+          		 left join vi_cust_info_company vc  on  vc.companyid=v.CUST_ID
+        		 where v.title_name = '资负表'
+         			 and v.CUST_ID = '{custid}'
+         order by v.FINANCIAL_DATE desc) v1   group by v1.subject_name  )res       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

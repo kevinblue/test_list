@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	            SELECT distinct TRANSFER.INSTANCE_IDS_ FROM 
+					T_JBPM_WORKFLOW_INFO JWI 
+					LEFT JOIN JBPM4_DEPLOYMENT DEP ON JWI.JBPM4_DEPLOYMENT_DBID_ = DEP.DBID_
+					LEFT JOIN T_JBPM_DESIGNER_TRANSFER TRANSFER ON TRANSFER.ID_ = DEP.JBPM_WORKFLOW_DESIGNER_ID_
+					WHERE  JWI.ID_ = '{currentTaskId}'
+			 ]]> 
+			 <!-- order by t_dicts_datas.position -->
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

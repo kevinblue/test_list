@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        	SELECT 
+	        		PLLIST.ID,
+	        		PLLIST.CONTRACTID,
+	        		PLLIST.RENTLIST,
+	        		PLLIST.PLANDATE,
+	        		CASE PLLIST.PLANSTATUS
+		            WHEN 'PLANMANYSTATUSNO'    then '未回笼'
+		            WHEN 'PLANMANYSTATUSALL'   then '已回笼'
+		            WHEN 'PLANMANYSTATUSPART'  then '部分回笼'
+		            WHEN 'PLANMANYSTATUSOVER'  then '超额回笼'
+		            END  PLANSTATUSNAME,
+	        		PLLIST.RENT,
+	        		PLLIST.CORPUS,
+	        		PLLIST.INTEREST,
+	        		PLLIST.CORPUSOVERAGE,
+	        		PLLIST.CORPUSBUSINESS,
+	        		PLLIST.INTERESTBUSINESS,
+	        		PLLIST.YEARRATE,
+	        		PLLIST.cautionmoneyRemain,
+	        		PLLIST.RENTADJUST
+	        	FROM 
+	        	(
+					SELECT 
+						PL.ID,
+						PL.CONTRACT_ID CONTRACTID,
+						PL.RENT_LIST AS RENTLIST,
+						PL.PLAN_DATE AS PLANDATE,
+						CASE 
+						  WHEN INC.RENTALL IS NULL OR INC.RENT=0 THEN 'PLANMANYSTATUSNO' 
+						  WHEN PL.RENT-INC.RENTALL =0 THEN 'PLANMANYSTATUSALL' 
+						  WHEN PL.RENT-INC.RENTALL >0 THEN 'PLANMANYSTATUSPART' 
+						  WHEN PL.RENT-INC.RENTALL <0 THEN 'PLANMANYSTATUSOVER' 
+						END PLANSTATUS,
+						PL.RENT AS RENT,
+						PL.CORPUS AS CORPUS,
+						PL.INTEREST AS INTEREST,
+						PL.CORPUS_OVERAGE AS CORPUSOVERAGE,
+						PL.CORPUS_BUSINESS AS CORPUSBUSINESS,
+						PL.INTEREST_BUSINESS AS INTERESTBUSINESS,
+						PL.YEAR_RATE AS YEARRATE,
+						PL.cautionmoney_Remain  cautionmoneyRemain,
+						PL.RENT_ADJUST AS RENTADJUST
+						--***租金计划表更换标记***
+					FROM CONTRACT_FUND_RENT_PLAN PL
+					LEFT JOIN 
+					(
+						SELECT 
+							CONTRACT_ID,
+							PLAN_LIST,
+							MAX(HIRE_LIST)HIRE_LIST,
+							MAX(HIRE_DATE)HIRE_DATE,
+							SUM(RENT+CASE WHEN RENT_ADJUST IS NULL THEN 0 ELSE RENT_ADJUST END) RENTALL,
+							SUM(RENT)RENT,
+							SUM(RENT_ADJUST)RENT_ADJUST,
+							SUM(CORPUS)CORPUS,
+							SUM(INTEREST)INTEREST,
+							SUM(PENALTY)PENALTY 
+						FROM CONTRACT_FUND_RENT_INCOME 
+						WHERE 1=1 
+						/~contract_id: AND CONTRACT_ID ='{contract_id}'~/
+						GROUP BY CONTRACT_ID,PLAN_LIST
+					) INC
+						ON (
+							PL.CONTRACT_ID=INC.CONTRACT_ID 
+						AND PL.RENT_LIST=INC.PLAN_LIST
+						)
+					WHERE 1=1 
+					/~contract_id: AND PL.CONTRACT_ID = '{contract_id}'~/
+				) PLLIST 
+				LEFT JOIN T_DICTS_DATAS TDD ON(PLLIST.PLANSTATUS=TDD.CODE_)
+				<EXTRACTEND> ORDER BY CONTRACTID,RENTLIST ASC<EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

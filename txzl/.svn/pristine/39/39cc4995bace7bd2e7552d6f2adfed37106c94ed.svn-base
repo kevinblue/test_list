@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+				 select 
+				 	ci.id  id,
+	 				ci.contract_number  contractnumber,
+	 				ci.project_name  projectname,
+	 				ci.contract_id   contractid,
+			        ci.PROJ_TYPE projtype,
+			        ci.PROJ_SCALE projscale,
+			        ci.LEAS_TYPE leastype,
+			        ci.LEAS_FORM leasform,
+			        ci.PROJ_MANAGE projmanage,
+			        ci1.cust_name custname
+				from 
+					contract_info ci 
+		        LEFT JOIN 
+		        	PROJ_INFO P ON P.ID=ci.PROJ_ID
+		        left join 
+		        	cust_info ci1 on ci1.id = ci.cust_id
+		       	where 1=1
+		       		/~projname: and ci.PROJECT_NAME like '%{projname}%' ~/
+		       		/~custname: and ci1.cust_name like '%{custname}%' ~/
+		       		/~contractid: and ci.CONTRACT_ID like '%{contractid}%' ~/
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

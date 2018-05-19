@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql>   
+	        <![CDATA[
+       SELECT DUNNING.ID                   ID,
+              VI1.CONTRACT_NUMBER          CONTRACTNUMBER,
+              DUNNING.CONTACT_DATE         CONTACTDATE,
+              DUNNING.COMMITMENT_MONEY     COMMITMENTMONEY,
+              DUNNING.COMMITMENT_DATE      COMMITMENTDATE,
+              DUNNING.NEXT_COMMITMENT_DATE NEXTCOMMITMENTDATE,
+              DUNNING.COMMITMENT_INFO      COMMITMENTINFO,
+              DUNNING.OVERDUE_REASON       OVERDUEREASONS,
+              ORT.NAME_                    OVERDUEREASONSNAME,
+              DUNNING.DUNNING              DUNNING,
+              TUSERS.REALNAME_             DUNNINGNAME,
+              DUNNING.CONTRACT_ID          CONTRACTID,
+              DUNNING.CONTACT_WAY          CONTACTWAY,
+              DUNNING.CONTACT_PERSON          CONTACTPERSON,
+              VI1.CUST_NAME                CUSTNAME,
+              D1.NAME_                     RAWVALUE_CONTACTWAY
+         FROM OVERDUE_DUNNING_RECORD DUNNING
+         LEFT JOIN VI_CONTRACT_INFO VI1 ON DUNNING.CONTRACT_ID = VI1.ID
+         LEFT JOIN OVERDUE_DUNNING_INFO DUNNINGINFO ON VI1.ID = DUNNINGINFO.CONTRACT_ID
+         LEFT JOIN T_USERS TUSERS ON DUNNING.DUNNING = TUSERS.ID_
+         LEFT JOIN T_DICTS_DATAS D1 ON DUNNING.CONTACT_WAY = D1.ID_
+         LEFT JOIN T_DICTS_DATAS ORT ON ORT.ID_ = DUNNING.OVERDUE_REASON
+        WHERE 1=1
+				/~custid: AND vi1.custid = '{custid}' ~/
+				/~contractid: and dunning.contract_id='{contractid}'~/
+       		]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

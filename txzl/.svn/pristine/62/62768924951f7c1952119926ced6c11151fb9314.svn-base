@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	               SELECT * FROM(
+				      SELECT -1 AS VALUE,'第一位' AS NAME FROM DUAL
+				     UNION ALL
+				      SELECT POSITION_ AS VALUE,NAME_ AS NAME FROM T_DICTS
+				      WHERE 1=1 
+				      /~pid: and PID_ = '{pid}' ~/
+				     UNION ALL 
+				      SELECT 999999 AS VALUE,'最后' AS NAME FROM DUAL
+				)TTTT
+				ORDER BY TTTT.VALUE 
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	   <sqlserver>
+	      <table_sql>
+	         <![CDATA[
+	                SELECT * FROM(
+				      SELECT -1 AS VALUE,'第一位' AS NAME  
+				     UNION ALL
+				      SELECT POSITION_ AS VALUE,NAME_ AS NAME FROM T_DICTS
+				      WHERE 1=1 
+				      /~pid: and PID_ = '{pid}' ~/
+				     UNION ALL 
+				      SELECT 999999 AS VALUE,'最后' AS NAME  
+				)TTTT
+				<EXTRACTEND>order by value<EXTRACTEND>
+			 ]]> 
+	      </table_sql> 
+	   </sqlserver> 
+      <dataSource>dataSource</dataSource>
+    </data>
+  </table>
+</table-root>

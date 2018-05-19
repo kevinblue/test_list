@@ -1,0 +1,65 @@
+<#--  柱线图  1.图例 2.指标名称 3.柱值 4.线值 [5.J-js函数-参数] [6.均值线] -->
+<#include "common/style/colors.flt" >
+<?xml version="1.0" encoding="UTF-8"?>
+<chart bgColor='DFE8F6' unescapeLinks='0' showAboutMenuItem='0' showPrintMenuItem='0' showBorder='0' showExportDataMenuItem='1' exportDataMenuItemLabel="复制图表数据" exportDialogMessage='请等待...'  exportEnabled='1' exportAtClient='1' exportAction='download' exportFormats='JPG=保存图片'  exportFileName="${chart.chartTitle}" exportHandler='fcExporter_${chart.chartId}' ${chart.chart}>
+<#assign categories = []>
+<#list list as bean>
+	<#if categories?seq_index_of(bean[1]) == -1>
+		<#assign categories = categories + [bean[1]]>
+	</#if>
+</#list>
+<categories>
+<#list categories as category>
+	<category label="${category}"/>                       <#--  输出<category>部分 ( x轴内容 ) -->
+</#list>
+</categories>
+<#assign seriesNames = []>
+<#list list as bean>
+	<#if seriesNames?seq_index_of(bean[0]) == -1>
+		<#assign seriesNames = seriesNames + [bean[0]]>
+	</#if>
+</#list>
+<#list seriesNames as seriesName>
+	<dataset color='${colors[seriesName_index]}' seriesName="${seriesName}">
+	<#list categories as category>
+		<#assign flag = 0>
+		<#list list as bean>
+			<#if (bean[0] == seriesName && bean[1] == category)>
+				<#-- 输出<set>部分 ( 柱子 ) -->
+				<set value="${bean[2]}" <#if bean[4]?exists && bean[4]?trim!=''>link="${bean[4]}"</#if> />
+				<#assign flag = 1>
+				<#if bean[5]?exists && bean[5]?trim!=''><#assign avg = bean[5]></#if>
+			</#if>
+		</#list>
+		<#if (flag = 0)>
+				<#-- 输出空缺<set>部分 ( 柱子 ) -->
+				<set />
+		</#if>
+	</#list>
+	</dataset>
+</#list>
+<#list seriesNames as seriesName>
+<dataset color='${colors[seriesName_index]}' lineThickness="2" parentYAxis="S" seriesName="${seriesName}增长率" >
+	<#list categories as category>
+		<#assign flag = 0>
+		<#list list as bean>
+			<#if (bean[0] == seriesName && bean[1] == category)>
+				<#-- 输出<set>部分 ( 线 ) -->
+				<set value="${bean[3]}" <#if bean[4]?exists && bean[4]?trim!=''>link="${bean[4]}"</#if> />
+				<#assign flag = 1>
+			</#if>
+		</#list>
+		<#if (flag = 0)>
+				<#-- 输出空缺<set>部分 ( 线 ) -->
+				<set />
+		</#if>
+	</#list>
+</dataset>
+</#list>
+<#if avg?exists && avg?trim!=''>
+  <trendLines>
+  	<line startValue="${avg}" color="ff0000" displayValue=" " thickness="2" />   <#-- 输出均值线 -->
+  </trendLines>
+</#if>
+${chart.other}
+</chart>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        	select temp.* from(
+
+ select cic.*,detail.id_ custfile1id,detail.chinese_file_name_ custfile1name,
+ (case when detail.chinese_file_name_ is not null then 
+ detail.chinese_file_name_||'【上传日期:'||detail.upload_time_||'】'||'【上传人:'||u1.realname_||'】'||'【大小:'||round(detail.file_size_/1024,2)||'KB】' else '' end) custfile1, 
+ (case when detail2.chinese_file_name_ is not null then
+ detail2.chinese_file_name_||'【上传日期:'||detail2.upload_time_||'】'||'【上传人:'||u2.realname_||'】'||'【大小:'||round(detail2.file_size_/1024,2)||'KB】' else '' end) custfile2,
+ (case when detail3.chinese_file_name_ is not null then
+ detail3.chinese_file_name_||'【上传日期:'||detail3.upload_time_||'】'||'【上传人:'||u3.realname_||'】'||'【大小:'||round(detail3.file_size_/1024,2)||'KB】' else '' end) custfile3,
+ (case when detail4.chinese_file_name_ is not null then
+ detail4.chinese_file_name_||'【上传日期:'||detail4.upload_time_||'】'||'【上传人:'||u4.realname_||'】'||'【大小:'||round(detail4.file_size_/1024,2)||'KB】' else '' end) custfile4,
+ detail2.id_ custfile2id,detail2.chinese_file_name_ custfile2name,
+ detail3.id_ custfile3id,detail3.chinese_file_name_ custfile3name,
+ detail4.id_ custfile4id,detail4.chinese_file_name_ custfile4name from VI_CUST_INFO_COMPANY cic 
+ left join T_ATTACHMENT_INFO info on cic.id=info.cust_id_ and info.attachment_file_dict_id_='custfile1'
+ left join T_ATTACHMENT_INFO_DETAIL detail on  detail.attachment_info_id_=info.id_
+  left join T_ATTACHMENT_INFO info2 on cic.id=info2.cust_id_ and info2.attachment_file_dict_id_='custfile2'
+ left join T_ATTACHMENT_INFO_DETAIL detail2 on  detail2.attachment_info_id_=info2.id_
+  left join T_ATTACHMENT_INFO info3 on cic.id=info3.cust_id_ and info3.attachment_file_dict_id_='custfile3'
+ left join T_ATTACHMENT_INFO_DETAIL detail3 on  detail3.attachment_info_id_=info3.id_
+  left join T_ATTACHMENT_INFO info4 on cic.id=info4.cust_id_ and info4.attachment_file_dict_id_='custfile4'
+ left join T_ATTACHMENT_INFO_DETAIL detail4 on  detail4.attachment_info_id_=info4.id_
+ left join t_users u1 on detail.upload_user_id_=u1.id_
+ left join t_users u2 on detail2.upload_user_id_=u2.id_
+ left join t_users u3 on detail3.upload_user_id_=u3.id_
+ left join t_users u4 on detail4.upload_user_id_=u4.id_
+ 
+				) temp
+				where 1=1
+				 /~id: and temp.ID = '{id}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

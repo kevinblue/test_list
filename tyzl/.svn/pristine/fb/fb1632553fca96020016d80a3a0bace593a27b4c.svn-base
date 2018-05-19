@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+实际投放资金计划
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	           select 
+	            ci.id,
+	            cc.handling_charge_money-tabf.handling_charge_money as handling_charge_money,
+	            cc.management_money-tabf.management_money as management_money,
+	            cc.caution_money-tabf.caution_money as caution_money
+	            
+	            From 
+	            contract_info ci
+	            left join contract_condition cc on ci.id=cc.contract_id
+	            left join 
+	            (
+	               select 
+	               sup_contract_id,
+	               sum(cc.handling_charge_money) as handling_charge_money,
+	               sum(cc.management_money) as management_money,
+	               sum(cc.caution_money) as caution_money
+	              
+	               From 
+	               contract_info ci
+	              left join contract_condition cc on ci.id=cc.contract_id
+	              group by ci.sup_contract_id
+	            
+	            ) tabf on ci.id=tabf.sup_contract_id 
+	 			where 1=1 
+	            /~contractid:and ci.id='{contractid}'~/
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

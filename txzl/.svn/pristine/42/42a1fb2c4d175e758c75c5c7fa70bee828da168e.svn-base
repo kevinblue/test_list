@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	 
+		   SELECT  
+       pi.id as projid,
+        round(cc.clean_lease_money/10000,4) as cleanleasemoney,
+        cc.lease_term leaseterm,
+        tdd1.name_  periodtype,
+       ci.* ,
+       vv3.*
+       FROM VI_CONTRACT_INFO CI 
+       left join proj_info pi on ci.proj_id=pi.id
+       left join  contract_condition cc on ci.ID=cc.contract_id
+        left join t_dicts_datas tdd1 on tdd1.code_ = cc.period_type
+       left join (SELECT   ci.ID contractid,
+              cus.cust_name custname,
+             t1.name_ leasetype, 
+            round(cc.clean_lease_money/10000,4) leasemoney,
+             cc.Lease_Term listnum,
+             t2.name_ incometime,--支付周期
+             nvl(vv1.out_list,0) ouotlist,--逾期期数
+             nvl(round((vv1.rent-vv1.inc_rent)/10000,2),0) outmoney,--逾期金额
+             nvl(round(vv2.CURRENTOVERAGE/10000,2) ,round(cc.clean_lease_money/10000,2)) currentoverage,--应收租赁款余额
+              nvl(ffvalue.Surplus,0) Surplus,
+             nvl(ffvalue.rentnum,0) rentnum,
+             nvl(round(ffvalue.avgrent,2),0) avgrent
+                   FROM VI_CONTRACT_INFO CI 
+           left join proj_info pi on ci.proj_id=pi.id
+           left join  contract_condition cc on ci.ID=cc.contract_id
+           left join cust_info cus on cus.id = pi.cust_id
+           left join t_dicts_datas t1 on t1.code_ = pi.leas_form
+           left join t_dicts_datas t2 on t2.code_ = cc.Income_Number_Year
+           left join (select a.rentnum-case when b.hirenum is null then 0 else b.hirenum end  as Surplus,
+                    a.rentnum rentnum,
+                    a.avgrent avgrent,
+                    a.contractid contractid
+                from  contract_info info 
+                left join (select cfrp.contract_id contractid,
+                     max(nvl(cfrp.rent_list,0)) rentnum,
+                     avg(nvl(cfrp.rent,0)) avgrent
+                   from contract_fund_rent_plan cfrp
+                group by cfrp.contract_id) a on a.contractid=info.id
+                left join (select cfri.contract_id contractid, sum(nvl(cfri.hire_list,0)) hirenum 
+                         from  contract_fund_rent_income cfri
+                         group by cfri.contract_id) b on b.contractid=info.id
+                     -- where info.id='{selectedcontractid}'
+                      ) ffvalue on ffvalue.contractid = ci.ID
+           left join Vi_Contract_Out_List vv1 on vv1.contract_id = ci.ID
+           left join (select v2.CONTRACTID contractid, 
+                    sum(v2.CURRENTOVERAGE) CURRENTOVERAGE 
+                  from vi_contract_fund_rent_plan v2 
+                group by v2.CONTRACTID) vv2 on vv2.CONTRACTID = ci.ID
+                    WHERE 1=1) vv3 on vv3.contractid = ci.ID
+      WHERE 1=1
+		AND INSTR(FN_CONTRACT_BELONGINGS(CI.ID),'{_TENWA_USERID}')>0
+		
+			/~projid: AND pi.proj_id like '%{projid}%' ~/
+		/~contract_id: AND CI.CONTRACT_ID like '%{contract_id}%' ~/
+		/~contract_number: AND CI.CONTRACT_NUMBER like '%{contract_number}%' ~/
+		/~project_name: AND CI.PROJECT_NAME like '%{project_name}%' ~/
+		/~cust_name: AND CI.CUST_NAME like '%{cust_name}%' ~/
+		/~card_no: AND CI.CARD_NO like '%{card_no}%' ~/
+		/~condtion:and {condtion}~/
+		
+		
+		<EXTRACTEND>order by contract_id desc<EXTRACTEND> 
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+      <isPrepared>false</isPrepared>
+    </data>
+  </table>
+</table-root>

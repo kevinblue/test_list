@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<b:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:b="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.xsd 
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+                        ">
+	<util:properties id="jdbcProperties" location="classpath:quartz.properties" />
+	<b:bean id="sessionRegistry" class="org.springframework.security.authentication.concurrent.SessionRegistryImpl" />
+	<http auto-config="false" 
+	    entry-point-ref="casEntryPoint" 
+	    realm="Contacts Realm"
+		access-denied-page="/accessDenied.jsp" 
+		create-session="never"
+		session-fixation-protection="migrateSession">
+		<intercept-url pattern="/**/*.jpg" filters="none" />
+		<intercept-url pattern="/**/*.png" filters="none" />
+		<intercept-url pattern="/**/*.gif" filters="none" />
+		<intercept-url pattern="/**/*.css" filters="none" />
+		<intercept-url pattern="/**/*.js" filters="none" />
+
+		<intercept-url pattern="/" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/webServices/**" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/images/**" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/login.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/logoutSuccess.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/acl/changeLocale.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/acl/uploadLicenseInfo.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/**/licenseUpload.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/**" access="ROLE_USER" />
+		<concurrent-session-control session-registry-ref="sessionRegistry"  max-sessions="2" />
+		<custom-filter ref="resourcePermissionFilter" after="AUTHENTICATION_PROCESSING_FILTER" />
+		<custom-filter position="CAS_PROCESSING_FILTER" ref="casProcessingFilter" />
+		<custom-filter before="LOGOUT_FILTER" ref="requestSingleLogoutFilter" />
+		<!--  
+		<custom-filter before="LOGOUT_FILTER" ref="singleLogoutFilter" />
+		-->
+	</http>
+	<b:bean id="loggerListener" class="org.springframework.security.authentication.event.LoggerListener" />
+	<b:bean id="resourcePermissionFilter" class="com.tenwa.kernal.web.filter.ResourcePermissionFilter" />
+	<!-- sso 
+	<b:bean id="sessionAuthenticationStrategy"  class="org.springframework.security.web.authentication.session.ConcurrentSessionControlStrategy">  
+		<b:property name="sessionRegistry" ref="sessionRegistry" />  
+		<b:property name="maximumSessions" value="1" />  
+	</b:bean> 
+	-->
+	<b:bean id="casEntryPoint" class="org.springframework.security.cas.web.CasProcessingFilterEntryPoint">
+		<b:property name="loginUrl" value="#{jdbcProperties['sso.casServer']}/cas/login" />
+		<b:property name="serviceProperties" ref="serviceProperties" />
+	</b:bean>
+	<b:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">
+		<b:property name="service" value="#{jdbcProperties['sso.localClient']}/j_spring_cas_security_check" />
+		<b:property name="sendRenew" value="false" />
+	</b:bean>
+	<b:bean id="casProcessingFilter"  class="org.springframework.security.cas.web.CasProcessingFilter">  
+        <b:property name="authenticationManager" ref="casAuthenticationManager" />  
+        <b:property name="authenticationFailureHandler"  ref="authenticationFailureHandler" />  
+        <b:property name="authenticationSuccessHandler" ref="authenticationSuccessHandler" />  
+        <b:property name="filterProcessesUrl" value="/j_spring_cas_security_check" />  
+    </b:bean>  
+    <b:bean id="authenticationSuccessHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
+       <b:property name="alwaysUseDefaultTargetUrl"  value="true" ></b:property>
+       <b:property name="defaultTargetUrl"  value="/acl/index.acl" ></b:property>
+    </b:bean>
+    <b:bean id="authenticationFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+       <b:property name="defaultFailureUrl" value="/login.jsp"></b:property>
+    </b:bean>
+    <security:authentication-manager alias="casAuthenticationManager">
+        <security:authentication-provider ref="casAuthenticationProvider"></security:authentication-provider>
+    </security:authentication-manager>
+    <b:bean id="casAuthenticationProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+       <b:property name="userDetailsService"  ref="userDetailsService" ></b:property>
+       <b:property name="serviceProperties"  ref="serviceProperties" ></b:property>
+       <b:property name="ticketValidator" >
+         <b:bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+            <b:constructor-arg index="0" value="#{jdbcProperties['sso.casServer']}/cas"></b:constructor-arg>
+         </b:bean>
+       </b:property>
+       <b:property name="key"  value="leasing-cas-auth-key" ></b:property>
+    </b:bean>
+    <b:bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"></b:bean>
+    <b:bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter">
+       <b:constructor-arg value="#{jdbcProperties['sso.casServer']}/cas/logout?url=#{jdbcProperties['sso.localClient']}/login.jsp"></b:constructor-arg>
+       <b:constructor-arg>
+          <b:bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler">
+          </b:bean>
+       </b:constructor-arg>
+       <b:property name="filterProcessesUrl" value="/j_spring_cas_security_logout"></b:property>
+    </b:bean>
+</b:beans>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+项目信审风控经办
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+					SELECT distinct
+					       a.id,
+					       tdt.display_name_  displayname,
+					       a.flow_unid,
+					       a.model_name,
+					       a.file_key filekey,
+					       a.file_name as filename,
+					       u.realname_ as realname,
+					       a.create_date as createdate,
+					       nvl(savestate.save_state, '') savestate
+					  from base_file a
+					  left join t_attachment_info_detail detail
+					    on detail.historyprocessinstance_id_ = a.flow_unid
+					  left join t_attachment_info info
+					    on info.id_ = detail.attachment_info_id_
+					  left join t_jbpm_activity_detail activity
+					    on activity.id_ = detail.activitydetail_id_
+					  left join t_jbpm_designer_transfer tdt
+					    on tdt.id_ = detail.jbpmworkflowdesigner_id_
+					  left join base_file_template b
+					    on a.file_template = b.id
+					  left join t_users u
+					    on a.creator_ = u.id_
+					  left join (select distinct tt.save_state, tt.file_id
+					               from t_record_file_save_state tt) savestate
+					    on savestate.file_id = a.id
+					 where (a.invalid_ = '是' or a.invalid_ = '0')
+					 and  tdt.display_name_ is not null
+			         /~filekey: AND file_key = '{filekey}'~/
+			         /~flowUnid: and flow_unid = '{flowUnid}' ~/ 
+			         /~modelname: and model_name = '{modelname}' ~/   
+			         order by tdt.display_name_,A.CREATE_DATE asc          
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

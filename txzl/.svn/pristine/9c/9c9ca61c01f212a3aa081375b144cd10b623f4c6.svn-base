@@ -1,0 +1,85 @@
+package com.tenwa.business.job;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
+
+import com.mysql.jdbc.PreparedStatement;
+import com.mysql.jdbc.ResultSet;
+import com.mysql.jdbc.Statement;
+import com.sun.tools.xjc.reader.xmlschema.bindinfo.BIConversion.User;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.kernal.annotation.QuartzJob;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.UUIDUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.report.dao.ReportDao;
+
+@QuartzJob(description="抵质押物及租赁物保险情况提醒")
+public class QuartzJobInsuranceOfGoodsAndIease implements Job{
+	@Resource(name = "reportDao")
+	private ReportDao reportDao;
+
+	@Override
+	public void execute(JobExecutionContext arg0) throws JobExecutionException {
+		//使用spring的事物
+		BaseService baseService = (BaseService)WebUtil.getApplicationContext().getBean("baseService");
+        //使用springAOP事物管理的service做一些事情
+		System.out.println(">>>当前时间:"+DateUtil.getSystemDateTime());
+		try {
+				
+				String SQL_MESSAGE = "insert into BASE_MESSAGE"+
+				               "(ID,"+
+				                 " MSG_TITLE,"+
+				                 "SUBJECT_,"+ 
+				                  "SEND_DATE,"+
+				                 "CREATE_DATE,"+ 
+				                  "MSG_TYPE,"+
+				                  "FROMUSER,"+
+				                  "CREATOR_)"+
+				                 "select"+
+				                 "sys_guid(),"+
+				                 "'保险到期提醒',"+
+				                "'尊敬的客户！您的保险单号为:'||ins.insurance_id||'的保单将于'|| to_char(add_months(sysdate,1),'yyyy_mm_dd')||'到期，请及时续保。',"+
+				                 "to_char(sysdate+1,'yyyy-mm-dd')||' 09:00:00',"+
+				                 "to_char(sysdate,'yyyy-mm-dd HH24:MI:SS'),"+
+				                 "'msgtype.2',"+
+				                 "'Administrator',"+
+				                "'Administrator'"+ 
+				               "from insurance_info  ins "+
+				                "where 1=1"+      
+				               " and  ins.INSURER_END_DATE = to_char(add_months(sysdate,1),'yyyy-mm-dd')  "+      
+				                "and  not exists"+      
+				                " (select 1 from BASE_MESSAGE bm  where instr(to_char(bm.subject_),'您的保险单号为:'||ins.insurance_id)>0 )"; 
+				reportDao.getJdbcTemplate().execute(SQL_MESSAGE);
+				String SQL_BASE_MESSAGE_TO_USER = 
+						"insert into BASE_MESSAGE_TO_USER"+
+                       "(ID, READ_STATUS, CREATE_DATE, MSG_ID, READ_USER, CREATOR_)"+
+			            " select "+  
+			          " sys_guid(), '1',"+
+			            " to_char(sysdate,'yyyy-mm-dd HH24:MI:SS'),"+    
+			            " bm2.id, ci.id, 'Administrator'"+     
+			             " from BASE_MESSAGE bm2"+    
+			             " left join  insurance_info ii2"+    
+			             "on bm2.subject_ like '%'||ii2.insurance_id||'%'"+    
+			              " left join contract_info cri "+   
+			              "on ii2.contract_id=cri.id "+    
+			           " left join cust_info ci 		"+
+			           "on  cri.cust_id = ci.id "+
+						" where bm2.id not in (select bmtu.msg_id from BASE_MESSAGE_TO_USER bmtu  )"+ 		  
+			           	 "and bm2.msg_title='保险到期提醒'";	 
+				reportDao.getJdbcTemplate().execute(SQL_BASE_MESSAGE_TO_USER);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			System.out.println("抵质押物及租赁物保险情况提醒失败！");
+			e1.printStackTrace();
+		}
+	}
+}

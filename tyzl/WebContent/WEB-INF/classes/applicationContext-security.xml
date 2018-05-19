@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<b:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:b="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+    <b:bean id="sessionRegistry"   class="org.springframework.security.authentication.concurrent.SessionRegistryImpl" /> 
+    <!-- session-fixation-protection="migrateSession" -->
+    <http realm="Contacts Realm" access-denied-page="/accessDenied.jsp" create-session="never" session-fixation-protection="migrateSession"> 
+        <intercept-url pattern="/**/*.jpg" filters="none"/>   
+        <intercept-url pattern="/**/*.png" filters="none"/>   
+        <intercept-url pattern="/**/*.gif" filters="none"/>   
+        <intercept-url pattern="/**/*.css" filters="none"/>   
+        <intercept-url pattern="/**/*.js" filters="none"/> 
+
+        <intercept-url pattern="/" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/webServices/**" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/services/**" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/images/**" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/file/**" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/login.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/validatecode/getValidatecode.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/acl/changeLocale.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/acl/acl/downloadNoticeUploadFile.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/acl/uploadLicenseInfo.acl*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/**/licenseUpload.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/**" access="ROLE_USER"/>
+        <form-login  
+          login-page="/login.jsp" 
+          default-target-url="/acl/index.acl" 
+          authentication-failure-url="/login.jsp?login_password_error=true"
+        />
+        <http-basic/>
+        <logout logout-success-url="/login.jsp" invalidate-session="true" logout-url="/j_spring_security_logout"/>
+        <!--  
+          Spring Security默认就会启用session-fixation-protection，这会在登录时销毁用户的当前session，然后为用户创建一个新session，并将原有session中的所有属性都复制到新session中
+           session-fixation-protection="none" 防止伪造sessionid攻击. 用户登录成功后会销毁用户当前的session.创建新的session,并把用户信息复制到新session中 
+           session-fixation-protection的值共有三个可供选择，none，migrateSession和newSession。默认使用的是migrationSession，如同我们上面所讲的，它会将原有session中的属性都复制到新session中。上面我们也见到了使用none来禁用session-fixation功能的场景，最后剩下的newSession会在用户登录时生成新session，但不会复制任何原有属性。
+           <remember-me key="framework"/>
+           <concurrent-session-control max-sessions="10" expired-url="/userHasLogin.jsp"/>
+        -->
+        <concurrent-session-control session-registry-ref="sessionRegistry"  max-sessions="50" />
+         <custom-filter ref="resourcePermissionFilter" after="AUTHENTICATION_PROCESSING_FILTER" />  
+    </http>
+    <authentication-manager>
+        <authentication-provider user-service-ref="userDetailsService">
+           <password-encoder hash="md5" >
+               <security:salt-source user-property="id"/>
+           </password-encoder>
+        </authentication-provider>
+    </authentication-manager>
+    <!-- Automatically receives AuthenticationEvent messages -->
+    <b:bean id="loggerListener" class="org.springframework.security.authentication.event.LoggerListener"/>
+    <b:bean id="resourcePermissionFilter" class="com.tenwa.kernal.web.filter.ResourcePermissionFilter"/>
+</b:beans>

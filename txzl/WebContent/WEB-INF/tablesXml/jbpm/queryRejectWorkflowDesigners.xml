@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		        SELECT
+		            TT.ID                 AS ID_,
+	                '{sourceDesignerId}'  AS SOURCEDESIGNERID,
+	                '{workflownameparent}' as WORKFLOWNAMEPARENT,
+	                TT.REJECTDESIGNERID   AS REJECTDESIGNERID,
+	                TT.TYPENAME           AS TYPENAME_,
+	                TT.TYPEPOSITION       AS TYPEPOSITION_,
+	                TT.POSITION           AS POSITION_,
+	                TT.DISPLAYNAME        AS DISPLAY_NAME_,
+	                TT.CODE               AS CODE_,
+	                TT.KEY_ 				  AS KEY_,
+	                TT.VERSION 			  AS VERSION_,
+	                TT.DESCRIPTION        AS DESCRIPTION_,
+	                TT.QUERYCONDITIONS    AS QUERY_CONDITIONS_,
+	                SUM(TT.ISGRANT)       AS ISGRANT,
+	                (SELECT count(*) FROM t_Exclusion_Info EI WHERE EI.WORK_FLOW_NAME_A = '{workflownameparent}' and   ei.work_flow_name_b =  TT.KEY_ ) isreject 
+	               FROM(
+	                  SELECT 
+	                             DR.ID_                  AS ID,
+	                             '{sourceDesignerId}'    AS SOURCEDESIGNERID,
+	                             R.ID_             	     AS REJECTDESIGNERID,
+	                             R.TYPENAME              AS TYPENAME ,
+	                             R.TYPEPOSITION          AS TYPEPOSITION,
+	                             R.DISPLAY_NAME_         AS DISPLAYNAME,
+	                             R.CODE_                 AS CODE,
+	                             R.KEY_                  AS KEY_,
+	                             R.VERSION_              AS VERSION,
+	                             R.POSITION_             AS POSITION,
+	                             R.DESCRIPTION_          AS DESCRIPTION,
+	                             DR.QUERY_CONDITIONS_    AS QUERYCONDITIONS,
+	                             (CASE WHEN D.ID_='{sourceDesignerId}' THEN 1 ELSE 0 END) AS ISGRANT
+	                             FROM(
+	                                 SELECT 
+	                                   TWR.ID_, TWR.DISPLAY_NAME_, TWR.WORKFLOW_NAME_, 
+	                                   TWR.KEY_, TWR.CODE_, TWR.POSITION_, 
+	                                   TWR.KEY_ONE_, TWR.KEY_TWO_, TWR.KEY_THREE_, TWR.KEY_FOUR_, 
+	                                   TWR.KEY_FIVE_, TWR.KEY_SIX_, TWR.KEY_SEVEN_, TWR.KEY_EIGHT_, 
+	                                   TWR.KEY_NINE_, TWR.KEY_TEN_, 
+	                                   TWR.VERSION_, TWR.WORKFLOW_DEFINITION_, TWR.DESCRIPTION_, 
+	                                   TWR.JPDL_VERSION_, TWR.CREATE_TIME_, TWR.UPDATE_TIME_, 
+	                                   TWR.DEPLOYED_TIME_, TWR.MAX_DOT_X_, TWR.MAX_DOT_Y_, 
+	                                   TWR.CREATE_DATE_, TWR.MODIFY_DATE_, TWR.TYPE_,TWR. CREATOR_,
+	                                   TWR.MODIFICATOR_,
+	                                   TDD.ID_        AS TYPEID,
+	                                   TDD.NAME_      AS TYPENAME,
+	                                   TDD.POSITION_  AS TYPEPOSITION
+	                                 FROM T_JBPM_DESIGNER_TRANSFER TWR
+	                                 LEFT JOIN T_DICTS_DATAS TDD
+	                                 ON TDD.ID_ = TWR.TYPE_
+	                                 WHERE 1 = 1
+									  /~queryText: AND (
+									        UPPER(TWR.WORKFLOW_NAME_) LIKE '%{queryText}%' 
+									    OR  UPPER(TWR.CODE_) LIKE '%{queryText}%' 
+									    OR  UPPER(TDD.CODE_) LIKE '%{queryText}%' 
+									    OR  UPPER(TDD.NAME_) LIKE '%{queryText}%' 
+									  )~/
+									  /~globalQueryText: AND (
+									        UPPER(TWR.WORKFLOW_NAME_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TWR.CODE_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TDD.CODE_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TDD.NAME_) LIKE '%{globalQueryText}%' 
+									  )~/
+									  
+	                             )R LEFT JOIN(
+	                                SELECT 
+	                                  ID_, QUERY_CONDITIONS_, KEYS_, PARAMS_, CREATE_DATE_, 
+	                                  MODIFY_DATE_, SOURCE_DESIGNER_ID_, 
+	                                  REJECT_DESIGNER_ID_, CREATOR_, MODIFICATOR_ 
+	                                FROM  T_WORKFLOWDESIGNERS_REJECTS WHERE SOURCE_DESIGNER_ID_='{sourceDesignerId}'
+	                             )DR ON R.ID_ = DR.REJECT_DESIGNER_ID_
+	                             LEFT JOIN(
+									SELECT ID_  FROM T_JBPM_DESIGNER_TRANSFER WHERE ID_='{sourceDesignerId}'
+								 )D ON D.ID_= DR.SOURCE_DESIGNER_ID_
+				 )TT 
+				 GROUP BY TT.ID,TT.REJECTDESIGNERID,TT.TYPENAME,TT.DISPLAYNAME,TT.CODE,TT.KEY_,TT.VERSION,TT.DESCRIPTION,TT.TYPEPOSITION,TT.POSITION,TT.QUERYCONDITIONS
+				 ORDER BY TT.TYPEPOSITION,TT.POSITION
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+	  <table_sql> 
+	    <![CDATA[
+		        SELECT
+		            TT.ID                 AS ID_,
+	                '{sourceDesignerId}'  AS SOURCEDESIGNERID,
+	                '{workflownameparent}' as WORKFLOWNAMEPARENT,
+	                TT.REJECTDESIGNERID   AS REJECTDESIGNERID,
+	                TT.TYPENAME           AS TYPENAME_,
+	                TT.TYPEPOSITION       AS TYPEPOSITION_,
+	                TT.POSITION           AS POSITION_,
+	                TT.DISPLAYNAME        AS DISPLAY_NAME_,
+	                TT.CODE               AS CODE_,
+	                TT.KEY_ 				  AS KEY_,
+	                TT.VERSION 			  AS VERSION_,
+	                TT.DESCRIPTION        AS DESCRIPTION_,
+	                TT.QUERYCONDITIONS    AS QUERY_CONDITIONS_,
+	                SUM(TT.ISGRANT)       AS ISGRANT,
+	                (SELECT count(*) FROM t_Exclusion_Info EI WHERE EI.WORK_FLOW_NAME_A = '{workflownameparent}' and   ei.work_flow_name_b =  TT.KEY_ ) isreject 
+	               FROM(
+	                  SELECT 
+	                             DR.ID_                  AS ID,
+	                             '{sourceDesignerId}'    AS SOURCEDESIGNERID,
+	                             R.ID_             	     AS REJECTDESIGNERID,
+	                             R.TYPENAME              AS TYPENAME ,
+	                             R.TYPEPOSITION          AS TYPEPOSITION,
+	                             R.DISPLAY_NAME_         AS DISPLAYNAME,
+	                             R.CODE_                 AS CODE,
+	                             R.KEY_                  AS KEY_,
+	                             R.VERSION_              AS VERSION,
+	                             R.POSITION_             AS POSITION,
+	                             R.DESCRIPTION_          AS DESCRIPTION,
+	                             DR.QUERY_CONDITIONS_    AS QUERYCONDITIONS,
+	                             (CASE WHEN D.ID_='{sourceDesignerId}' THEN 1 ELSE 0 END) AS ISGRANT
+	                             FROM(
+	                                 SELECT 
+	                                   TWR.ID_, TWR.DISPLAY_NAME_, TWR.WORKFLOW_NAME_, 
+	                                   TWR.KEY_, TWR.CODE_, TWR.POSITION_, 
+	                                   TWR.KEY_ONE_, TWR.KEY_TWO_, TWR.KEY_THREE_, TWR.KEY_FOUR_, 
+	                                   TWR.KEY_FIVE_, TWR.KEY_SIX_, TWR.KEY_SEVEN_, TWR.KEY_EIGHT_, 
+	                                   TWR.KEY_NINE_, TWR.KEY_TEN_, 
+	                                   TWR.VERSION_, TWR.WORKFLOW_DEFINITION_, TWR.DESCRIPTION_, 
+	                                   TWR.JPDL_VERSION_, TWR.CREATE_TIME_, TWR.UPDATE_TIME_, 
+	                                   TWR.DEPLOYED_TIME_, TWR.MAX_DOT_X_, TWR.MAX_DOT_Y_, 
+	                                   TWR.CREATE_DATE_, TWR.MODIFY_DATE_, TWR.TYPE_,TWR. CREATOR_,
+	                                   TWR.MODIFICATOR_,
+	                                   TDD.ID_        AS TYPEID,
+	                                   TDD.NAME_      AS TYPENAME,
+	                                   TDD.POSITION_  AS TYPEPOSITION
+	                                 FROM T_JBPM_DESIGNER_TRANSFER TWR
+	                                 LEFT JOIN T_DICTS_DATAS TDD
+	                                 ON TDD.ID_ = TWR.TYPE_
+	                                 WHERE 1 = 1
+									  /~queryText: AND (
+									        UPPER(TWR.WORKFLOW_NAME_) LIKE '%{queryText}%' 
+									    OR  UPPER(TWR.CODE_) LIKE '%{queryText}%' 
+									    OR  UPPER(TDD.CODE_) LIKE '%{queryText}%' 
+									    OR  UPPER(TDD.NAME_) LIKE '%{queryText}%' 
+									  )~/
+									  /~globalQueryText: AND (
+									        UPPER(TWR.WORKFLOW_NAME_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TWR.CODE_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TDD.CODE_) LIKE '%{globalQueryText}%' 
+									    OR  UPPER(TDD.NAME_) LIKE '%{globalQueryText}%' 
+									  )~/
+									  
+	                             )R LEFT JOIN(
+	                                SELECT 
+	                                  ID_, QUERY_CONDITIONS_, KEYS_, PARAMS_, CREATE_DATE_, 
+	                                  MODIFY_DATE_, SOURCE_DESIGNER_ID_, 
+	                                  REJECT_DESIGNER_ID_, CREATOR_, MODIFICATOR_ 
+	                                FROM  T_WORKFLOWDESIGNERS_REJECTS WHERE SOURCE_DESIGNER_ID_='{sourceDesignerId}'
+	                             )DR ON R.ID_ = DR.REJECT_DESIGNER_ID_
+	                             LEFT JOIN(
+									SELECT ID_  FROM T_JBPM_DESIGNER_TRANSFER WHERE ID_='{sourceDesignerId}'
+								 )D ON D.ID_= DR.SOURCE_DESIGNER_ID_
+				 )TT 
+				 GROUP BY TT.ID,TT.REJECTDESIGNERID,TT.TYPENAME,TT.DISPLAYNAME,TT.CODE,TT.KEY_,TT.VERSION,TT.DESCRIPTION,TT.TYPEPOSITION,TT.POSITION,TT.QUERYCONDITIONS
+			 <EXTRACTEND> order by TYPEPOSITION_,POSITION_<EXTRACTEND>
+			 ]]> 
+			 </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

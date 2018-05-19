@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+    <!-- V8凭证查询  -->
+      <table_sql> 
+	        <![CDATA[
+				select VOUCHER_V8.id,
+				       VOUCHER_V8.EVIDENCE_MESSAGE             as evidence_message,
+				       VOUCHER_V8.EVIDENCE_TYPE                as evidencetype,
+				       VOUCHER_V8.Dept_Id                      as dept_uuid,
+				       dict1.prop_one_                         as dept_id,
+				       dict1.NAME_                             as dept_name,
+				       VOUCHER_V8.PERIODYEAR				   as periodyear,
+				       VOUCHER_V8.F1						   as f1,
+				       VOUCHER_V8.F2 						   as f2,
+				       VOUCHER_V8.F3                           as vouchernumber,
+				       VOUCHER_V8.F5						   as f5,
+				       VOUCHER_V8.F6 						   as f6,
+				       VOUCHERASS_STACTS_CONFIG.Subjects_Code  as subjects_code,
+				       VOUCHERASS_STACTS_CONFIG.Subjects_Name  as subjects_name,
+				       VOUCHERASS_STACTS_CONFIG.Subjects_Id    as subjects_id,
+				       VOUCHERASS_STACTS_CONFIG.Subjects_Owner as subjects_owner,
+				       VOUCHER_V8.F7 						   as f7,
+				       VOUCHER_V8.F8 						   as f8,
+				       VOUCHER_V8.F9 						   as f9,
+				       VOUCHER_V8.F10 						   as f10,
+				       VOUCHER_V8.F12 						   as f12,
+				       VOUCHER_V8.F15 						   as f15,
+				       VOUCHER_V8.F16                          as t_depts_uuid,
+				       T_DEPTS.Code_                           as f16,
+				       T_DEPTS.NAME_                           as f63,
+				       VOUCHER_V8.F18 						   as f18,
+				       contract_info.contract_number           as contract_number,
+				       VOUCHER_V8.F19 						   as f19,
+				       CUST_INFO.Cust_Number                   as cust_number,
+				       CUST_INFO.Cust_Name                     as f66,
+				       VOUCHER_V8.F49                          as f49uuid,
+				       dict1.prop_one_                         as f49,
+				       dict1.NAME_                             AS f49name,
+				       VOUCHER_V8.F52 						   as f52,
+				       VOUCHER_V8.F59 						   as f59,
+				       VOUCHER_V8.F68 						   as f68,
+				       VOUCHER_V8.F69 						   as f69,
+				       VOUCHER_V8.Module_Name                  as modlename,
+				       VOUCHER_V8.Status_ 					   as status_,
+				       VOUCHER_V8.V8_Flag                      as v8flag,
+				       VOUCHER_V8.V8_Memo                      as v8memo,
+				       VOUCHER_V8.Exp_Date                     as expdate,
+				       VOUCHER_V8.Generate_Date                as generatedate
+			  from VOUCHER_V8
+			  left join T_DICTS_DATAS dict1 on dict1.Id_ = VOUCHER_V8.Dept_Id
+			  left join contract_info on contract_info.id = VOUCHER_V8.F21
+			  left join VOUCHERASS_STACTS_CONFIG on VOUCHERASS_STACTS_CONFIG.Id = VOUCHER_V8.F6
+			  left join T_DEPTS on T_DEPTS.Id_ = VOUCHER_V8.F16
+			  left join CUST_INFO on CUST_INFO.Id = VOUCHER_V8.F19
+		  WHERE 1=1
+			   /~vouchernumber:and VOUCHER_V8.F3 = '{vouchernumber}'~/
+			   
+		 
+			]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+				
+SELECT t.*,
+       case
+         when substr(factdate, 0, 4) =
+              substr(to_char(sysdate, 'yyyy-mm-dd'), 0, 4) then
+          round(yeartxe / (12 - to_number(substr(factdate, 6, 2)) + 1), 2)
+         else
+          round(yeartxe / 12, 2)
+       end monthtxe
+  FROM (SELECT c.id id,
+               ci.contract_number contractnumber,
+               ci.project_name projectname,
+               ci.id contractid,
+               ci.proj_id projid,
+               c.fact_date factdate,
+               c.fact_money factmoney,
+               c.max_date maxdate,
+               fsi.start_date_ startdate,
+               fsi.base_rate_one baserateone,
+               fsdi.start_date_ depositstartdate,
+               fsdi.base_rate_deposit_one baseratedepositone,
+               nowyear.cash_deposit_date cashdepositdate,
+               preend.cash_deposit_amount preendcashdepositamount,
+               nowyear.cash_deposit_amount nowyearcashdepositamount,
+               nowend.cash_deposit_amount nowendcashdepositamount,
+               case
+                 when c.contract_id = '000000005981ca140159837037251636' or
+                      c.contract_id = '000000005981ca1401598287399203c6' then
+                  preend.cash_deposit_interest
+                 else
+                  '0'
+               end preendcashdepositinterest,
+               case
+                 when c.contract_id = '000000005981ca140159837037251636' or
+                      c.contract_id = '000000005981ca1401598287399203c6' then
+                  nowend.cash_deposit_interest
+                 else
+                  '0'
+               end nowendcashdepositinterest,
+               --当年收到保证金时，当年年底值减去保证金收款时的折现，否则为当年底减去前年底的值
+               case
+                 when substr(c.fact_date, 0, 4) =
+                      substr(to_char(sysdate, 'yyyy-mm-dd'), 0, 4) then
+                  case
+                  --当为金杰一期和巴里坤项目时，计算保证金利息的摊销额
+                    when c.contract_id = '000000005981ca140159837037251636' or
+                         c.contract_id = '000000005981ca1401598287399203c6' then
+                     case
+                     --当没有计算保证金摊销不为0时，计算存款利率摊销，否则为0
+                       when to_number(nvl(nowend.cash_deposit_interest, '0')) +
+                            to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                            to_number(nvl(nowyear.cash_deposit_interest, '0')) -
+                            to_number(nvl(nowyear.cash_deposit_amount, '0')) <> 0 then
+                       
+                        to_number(nvl(nowend.cash_deposit_interest, '0')) +
+                        to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                        to_number(nvl(nowyear.cash_deposit_interest, '0')) -
+                        to_number(nvl(nowyear.cash_deposit_amount, '0')) +
+                        to_number(c.fact_money) *
+                        to_number(fsdi.base_rate_deposit_one) / 100
+                       else
+                        0
+                     end
+                    else
+                    
+                     to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                     to_number(nvl(nowyear.cash_deposit_amount, '0'))
+                  end
+               
+                 else
+                  case
+                    when c.contract_id = '000000005981ca140159837037251636' or
+                         c.contract_id = '000000005981ca1401598287399203c6' then
+                     case
+                       when to_number(nvl(nowend.cash_deposit_interest, '0')) +
+                            to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                            to_number(nvl(preend.cash_deposit_interest, '0')) -
+                            to_number(nvl(preend.cash_deposit_amount, '0')) <> 0 then
+                       
+                        to_number(nvl(nowend.cash_deposit_interest, '0')) +
+                        to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                        to_number(nvl(preend.cash_deposit_interest, '0')) -
+                        to_number(nvl(preend.cash_deposit_amount, '0')) +
+                        to_number(c.fact_money) *
+                        to_number(fsdi.base_rate_deposit_one) / 100
+                       else
+                        0
+                     end
+                    else
+                    
+                     to_number(nvl(nowend.cash_deposit_amount, '0')) -
+                     to_number(nvl(preend.cash_deposit_amount, '0'))
+                  end
+               end yeartxe
+          FROM CASH_DEPOSIT_BASE c
+          LEFT JOIN contract_info ci
+            on c.contract_id = ci.id
+        
+          LEFT JOIN (SELECT start_date_, base_rate_one
+                      FROM FUND_STANDARD_INTEREST
+                     WHERE start_date_ in
+                           (SELECT max(start_date_)
+                              FROM FUND_STANDARD_INTEREST)) fsi
+            on 1 = 1
+        
+          LEFT JOIN (SELECT start_date_, base_rate_deposit_one
+                      FROM FUND_STANDARD_DEPOSIT_INTEREST
+                     WHERE start_date_ in
+                           (SELECT max(start_date_)
+                              FROM FUND_STANDARD_DEPOSIT_INTEREST)) fsdi
+            on 1 = 1
+          LEFT JOIN (SELECT *
+                      FROM CASH_DEPOSIT
+                     WHERE substr(cash_deposit_date, 6, 2) = 12
+                       and substr(cash_deposit_date, 0, 4) + 1 =
+                           substr(to_char(sysdate, 'yyyy-mm-dd'), 0, 4)) preend
+            on c.id = preend.charge_id
+          LEFT JOIN (SELECT *
+                      FROM CASH_DEPOSIT
+                     WHERE substr(cash_deposit_date, 6, 2) <> 12
+                       and substr(cash_deposit_date, 0, 4) =
+                           substr(to_char(sysdate, 'yyyy-mm-dd'), 0, 4)
+                    
+                    ) nowyear
+            on c.id = nowyear.charge_id
+          LEFT JOIN (SELECT *
+                      FROM CASH_DEPOSIT
+                     WHERE substr(cash_deposit_date, 6, 2) = 12
+                       and substr(cash_deposit_date, 0, 4) =
+                           substr(to_char(sysdate, 'yyyy-mm-dd'), 0, 4)
+                    
+                    ) nowend
+            on c.id = nowend.charge_id
+         WHERE 1 = 1) t
+
+ where 1 = 1
+
+				
+                       /~projectname: AND t.projectname  like '%{projectname}%' ~/
+                     
+                     order by  t.factdate desc
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

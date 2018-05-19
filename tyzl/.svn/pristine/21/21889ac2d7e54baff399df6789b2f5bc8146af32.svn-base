@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[	        
+				select 
+		        fii.id  fundinvoiceid,
+		        ci.contract_id    as contractid,
+		        ci.contract_put_number contractputnumber,--导出投放编号
+		        cinfo.cust_name   as custname,
+		        cffc.payment_id   as pid,
+		        cffp.plan_money   as planmoney,
+		        cffc.fact_date    as factdate,
+		        cffc.fact_money   as factmoney,
+		        cffc.fact_money-nvl(exporttab.exportmoney,0) as balanceexportmoney,
+		        nvl(planexport.invoicemoney,0)  as planexportmoney,
+		        tds.name_         as feetype,
+		        --发票类型
+		        --case tds.id_ when 'feetype1' then tds1.id_ when 'feetype3' then tds2.id_ when 'feetype5' then tds3.id_ 
+                -- when 'feetype7' then tds4.id_ when 'feetype4' then tds5.id_ when 'feetype6' then tds6.id_  end as invoicetype,
+                 case tds.id_ when 'feetype1' then tds1.name_ when 'feetype3' then tds2.name_ when 'feetype5' then tds3.name_ 
+                 when 'feetype7' then tds4.name_ when 'feetype4' then tds5.name_ when 'feetype6' then tds6.name_ 
+                 when 'feetype18' then tds7.name_ 
+                 when 'feetype19' then tds8.name_ end 
+                 as invoicetype,
+                 --发票税率
+		        --case tds.id_ when 'feetype1' then tds11.prop_one_ when 'feetype3' then tds22.prop_one_ when 'feetype5' then tds33.prop_one_
+		        --when 'feetype7' then tds44.prop_one_ when 'feetype4' then tds55.prop_one_ when 'feetype6' then tds66.prop_one_ end as taxrate,
+		        case tds.id_ when 'feetype1' then tds11.prop_one_ when 'feetype3' then tds22.prop_one_ when 'feetype5' then tds33.prop_one_
+		        when 'feetype7' then tds44.prop_one_ when 'feetype4' then tds55.prop_one_ when 'feetype6' then tds66.prop_one_  
+		        when 'feetype18' then tds77.prop_one_ 
+		        when 'feetype19' then tds88.prop_one_ end as taxrate,
+		        cit.tax_reg_code  as taxregcode,
+	            cit.tax_bank      as taxbank,
+	            cit.tax_acc       as taxacc,
+	            cit.invoice_phone as taxtel,
+		        cit.invoice_add   as taxaddr,
+		        case nvl(fii.invoice_status,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' end as status
+		        
+		        from fund_invoice_info fii
+		        left join contract_fund_fund_charge cffc on fii.cffc_id=cffc.id
+		        left join contract_fund_fund_plan cffp on cffc.payment_id=cffp.id
+		        left join t_dicts_datas tds on cffc.fee_type=tds.id_
+		        left join contract_info ci on cffc.contract_id=ci.id
+		        left join contract_info pci on pci.id=ci.sup_contract_id
+		        left join contract_invoice_type cit on pci.id=cit.contract_id
+		        
+		        left join t_dicts_datas tds1 on cit.SERVICE_INVOICE_TYPE=tds1.id_
+				left join t_dicts_datas tds2 on cit.HAND_INVOICE_TYPE=tds2.id_
+				left join t_dicts_datas tds3 on cit.FIRSTPAYMENT_INVOICE_TYPE=tds3.id_
+				left join t_dicts_datas tds4 on cit.INSURANCELESSOR_INVOICE_TYPE=tds4.id_
+				left join t_dicts_datas tds5 on cit.NOMINAL_INVOICE_TYPE=tds5.id_
+				left join t_dicts_datas tds6 on cit.RETURNAMT_INVOICE_TYPE=tds6.id_
+		        LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+		        --新添加
+				left join t_dicts_datas tds7 on cit.ASSETS_MONEY = tds7.id_
+				left join t_dicts_datas tds8 on cit.ADVISER_MONEY = tds8.id_
+		 
+		        --税率
+		        left join t_dicts_datas tds11 on cit.service_rate = tds11.id_
+		        left join t_dicts_datas tds22 on cit.hand_rate =tds22.id_
+		        left join t_dicts_datas tds33 on cit.firstpayment_rate =tds33.id_
+		        left join t_dicts_datas tds44 on cit.insurancelessor_rate = tds44.id_
+		        left join t_dicts_datas tds55 on cit.nominal_rate = tds55.id_
+		        left join t_dicts_datas tds66 on cit.rent_rate = tds66.id_
+		         --资产管理税率   财务咨询费率
+		        left join t_dicts_datas tds77 on cit.asset_sratio = tds77.id_
+		        left join t_dicts_datas tds88 on cit.adviser_ratio= tds88.id_
+		        
+		        left join cust_info cinfo on ci.cust_id=cinfo.id
+		        left join 
+                (select down.fund_invoice_id, nvl(sum(down.invoice_money),0) as exportmoney from fund_invoice_download_info down group by  down.fund_invoice_id
+                )exporttab on fii.id=exporttab.fund_invoice_id
+                left join
+                (
+                 select cc.payment_id,sum(fdi.invoice_money) as invoicemoney
+				 from fund_invoice_download_info fdi
+				 left join fund_invoice_info fi on fdi.fund_invoice_id=fi.id
+				 left join contract_fund_fund_charge cc on fi.cffc_id=cc.id
+				 group by cc.payment_id
+				) planexport on cffc.payment_id=planexport.payment_id
+        
+				where 1=1
+				--实收开票
+				and fii.cffc_id is not null
+				--开票种类为发票
+				and fii.bill_type='invoice'
+				--状态为已申请
+				and fii.invoice_status=2
+				--剩余导出金额
+				and cffc.fact_money-nvl(exporttab.exportmoney,0)<>0
+				and fii.id in (<<ids>>)
+	        
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

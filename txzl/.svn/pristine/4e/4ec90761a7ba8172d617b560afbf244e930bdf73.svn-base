@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+	 select p.id as id,
+       tdd.ID_ as registypeid,
+       tdd.NAME_ as registypename,
+       cio.ID as contractid,
+       cio.proj_id as projid,
+       cio.PROJECT_NAME as projectname,
+       cio.CONTRACT_NUMBER as connameidname, --业务合同编号
+       p.GUARANTEE_ID as guaranteeid, --担保合同编号
+       p.PLEDGE_NAME as pledgename,
+       p.REGIS_NUM as regisnum,
+       p.REGIS_UNIT as regisunit,
+       ci.id as assuror,
+       ci.CUST_NAME as assurorname,
+       p.ASSUROR_UNION as assurorunion,
+       p.SALES_REVENUE as salesrevenue,
+       p.PLEDGE_OWNNER as pledgeownner,
+       p.PLEDGE_VALUE as pledgevalue,
+       p.PLEDGEDE_QUITY as pledgedequity, --股权质押比例
+      --股权质押，从抵质押物所在企业取财报数据，经评模型数据不带，
+      --动产抵押，财报数据不抓去，金评模型数据不抓取
+      --除股权质押都不需要净资产财报
+       case when  tdd.ID_='regis_type.07' then
+       round(fd.subject_data, 2) 
+       else 0 end as subjectdata, --净资产
+      
+       round(to_number(case when  tdd.ID_='regis_type.07' then
+       round(fd.subject_data, 2) 
+       else 0 end) * to_number(p.PLEDGEDE_QUITY) / 100,
+             2) as pledgenowvalue, --股权质押现值
+    --登记类型应收账款质押。带经评模型数据
+         --除电费收费权，都不需要经评模型数据
+      case  when tdd.ID_='regis_type.08' then dfyz.xsze
+      else
+       '' end xsze, --销售总额
+      
+            case
+                 when tdd.ID_ = 'regis_type.08' then                
+               round(   fn_dfxz(to_char(to_number(substr(p.DEBT_END, 0, 4)) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          to_char(to_number(to_char(sysdate, 'yyyy')) -
+                                  to_number(substr(p.DEBT_start, 0, 4)) + 1),
+                          
+                          p.SALES_REVENUE,
+                          8 / 100) +
+                  fn_dfxz(to_char(to_number(to_char(sysdate, 'yyyy')) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          to_char(to_number(to_char(sysdate, 'yyyy')) -
+                                  to_number(substr(p.DEBT_start, 0, 4))),
+                          
+                          p.SALES_REVENUE,
+                          8 / 100) * (12 - to_number(to_char(sysdate, 'mm'))) / 12,2)
+                 else
+                  0
+               end dfxz, --电费应收账款现值
+       p.PLEDGE_VALUE_NOW as pledgevaluenow,
+       vv.year_rate       as conyearrate,--合同当前利率
+       p.PURCHASING_TIME as purchasingtime,
+       p.DEPRECIA_LIFE as deprecialife,
+       p.SALVAGE_RATE as salvagerate,
+       p.CURRENT_YEAR as currentyear,
+  to_number(substr(p.CURRENT_YEAR, 6, 2)) - to_number(substr(p.PURCHASING_TIME, 6, 2)),
+        to_number(p.PLEDGE_VALUE_NOW) -
+       (to_number(p.PLEDGE_VALUE_NOW) *
+        (1 - to_number(p.SALVAGE_RATE) / 100) *
+        ((substr(p.CURRENT_YEAR, 0, 4) - substr(p.PURCHASING_TIME, 0, 4))*12+to_number(substr(p.CURRENT_YEAR, 6, 2)) - to_number(substr(p.PURCHASING_TIME, 6, 2))) /
+       (to_number(p.DEPRECIA_LIFE)*12)) as dzywjz,
+     (nvl(to_number(case when  tdd.ID_='regis_type.07' then
+       round(fd.subject_data, 2) 
+       else 0 end) * to_number(p.PLEDGEDE_QUITY) / 100, 0) + to_number(nvl(case  when tdd.ID_='regis_type.08' then dfyz.xsze
+      else
+       '' end, 0)) + (to_number(p.PLEDGE_VALUE_NOW) -
+       (to_number(p.PLEDGE_VALUE_NOW) *
+        (1 - to_number(p.SALVAGE_RATE) / 100) *
+        ((substr(p.CURRENT_YEAR, 0, 4) - substr(p.PURCHASING_TIME, 0, 4))*12+to_number(substr(p.CURRENT_YEAR, 6, 2)) - to_number(substr(p.PURCHASING_TIME, 6, 2))) /
+       (to_number(p.DEPRECIA_LIFE)*12))))  dzywjiazhi,--抵质押物价值，抵质押分母
+100 * to_number(case  when tdd.ID_='regis_type.08' then dfyz.xsze
+      else
+       '' end) * (1 + to_number(vv.year_rate)/100) / (nvl(to_number(case when  tdd.ID_='regis_type.07' then
+       round(fd.subject_data, 2) 
+       else 0 end) * to_number(p.PLEDGEDE_QUITY) / 100, 0) + to_number(nvl(case  when tdd.ID_='regis_type.08' then dfyz.xsze
+      else
+       '' end, 0)) + (to_number(p.PLEDGE_VALUE_NOW) -
+       (to_number(p.PLEDGE_VALUE_NOW) *
+        (1 - to_number(p.SALVAGE_RATE) / 100) *
+        ((substr(p.CURRENT_YEAR, 0, 4) - substr(p.PURCHASING_TIME, 0, 4))*12+to_number(substr(p.CURRENT_YEAR, 6, 2)) - to_number(substr(p.PURCHASING_TIME, 6, 2))) /
+       (to_number(p.DEPRECIA_LIFE)*12)))) allrate, --综合抵质押率
+p.ASSUROR_TOTALVAL as assurortotalval, p.DESCRIPTION_ONE as descriptionone, p.DEBT_START as debtstart, p.DEBT_END as debtend, p.PLEDGE_START as pledgestart, p.DEBT_END as pledgeend, p.REGIS_TIME as registime, p.pledge_status as pledgestatus, p.PREPARER as preparer
+  from PLEDGE p
+  left join T_DICTS_DATAS tdd
+    on p.REGIS_TYPE_ID = tdd.ID_
+  left join CONTRACT_INFO cio
+    on p.contract_id = cio.id
+  left join CUST_INFO ci
+    on p.ASSUROR = ci.id
+      --查询财务报表的所有者权益合计*股权质押比例，得出股权质押现值
+  LEFT JOIN (SELECT financial_data.*,cust_info.cust_name
+               FROM financial_data 
+               LEFT JOIN cust_info on financial_data.cust_id=cust_info.id
+              WHERE fina_sub_id = '7ECBF249468F4AC48C1DAE26AF3E8DA2'
+                and financial_date in
+                    (SELECT max(fd.financial_date)
+                       FROM financial_data fd
+                      WHERE fd.fina_sub_id = '7ECBF249468F4AC48C1DAE26AF3E8DA2' and fd.cust_id=financial_data.cust_id
+                     )
+                      
+                      ) fd
+    on fd.cust_name = p.PLEDGE_OWNNER 
+    --查询经评模型的销售总额，计算电费收款权应收账款质押现值
+  LEFT JOIN (select temd.proj_id, temd.subject_5 as xsze
+               from T_EVALUATION_MODEL_DATA temd
+              where temd.status = '1' --数据有效状态
+                and temd.file_order = '0' --第0个文件为标准状态
+                and temd.table_title = '2' --租赁模式
+             ) dfyz
+    on dfyz.proj_id = cio.proj_id
+    --合同当前利率查询
+left join (select v.year_rate,v.contract_id
+  from (select c.*,               
+                row_number() over(partition by c.contract_id order by c.plan_date asc) rownum1
+           from contract_fund_rent_plan_before c
+          WHERE 
+       to_char(sysdate, 'yyyy-mm-dd') <= plan_date) v
+ where v.rownum1 = 1) vv on vv.contract_id=cio.id
+ where 1 = 1 and p.pledge_status=1
+
+	
+	       		/~regisnum: and p.REGIS_NUM like '%{regisnum}%' ~/     	
+				/~regisunit: and p.REGIS_UNIT like '%{regisunit}%'~/
+				/~assurorname: and ci.CUST_NAME like '%{assurorname}%'~/
+				/~registypename: and tdd.NAME_ like '%{registypename}%'~/
+				/~projectname: and cio.PROJECT_NAME like '%{projectname}%'~/
+				
+								
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

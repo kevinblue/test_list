@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+纳税人备用账号信息列表
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+select c.id                  id,
+       c.create_date         as createdate,
+       t.name_               as taxname,
+       c.spare_tax_acc       as sparetaxacc,
+       c.spare_tax_bank      as sparetaxbank,
+       c.spare_invoice_add   as spareinvoiceadd,
+       c.spare_invoice_phone as spareinvoicephone,
+       c.invoice_id          as contractinvoicetype,
+         c.taxreg_code        as taxregcode
+ 
+  from contract_tax_people c
+  left join t_dicts_datas t
+    on t.id_ = c.tax_reg_type
+    where c.invoice_id='{id}'
+    order by c.create_date desc
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+ 
+    </data>
+  </table>
+</table-root>

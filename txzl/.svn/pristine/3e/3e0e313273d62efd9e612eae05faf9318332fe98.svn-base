@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+			<![CDATA[
+	              select 
+	              d.id as id,
+	              d.proj_id projid,
+	              d.doc_name as docname,
+	              d.doc_num as docnum,
+	              d.OFFICIAL_REPLY as officialreply,
+             	  d.REPLY_DATE as replydate,
+             	  d.reply_dept as replydept,
+             	  d.expiry_date as expirydate,
+              	  d.remarks as remarks, 
+              	  d.reply_content replycontent
+              	  from PROJ_APPROVAL_DOC d	
+				  left join proj_develope_info dd on dd.id = d.proj_id
+				  where 1=1 
+				  /~projid: and d.proj_id = '{projid}'~/ 
+				]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+			<Data_Authority>default</Data_Authority>
+		</data>
+	</table>
+</table-root>

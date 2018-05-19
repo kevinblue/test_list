@@ -1,0 +1,236 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+
+
+	/* var tools = [];
+	<permission:action code="cust_saleInfo_add">
+	tools.push('add');
+	</permission:action>
+	<permission:action code="cust_saleInfo_edit">
+	tools.length > 0 ? tools.push('-', 'edit') : tools.push('edit');
+	</permission:action>
+	<permission:action code="cust_saleInfo_remove">
+	tools.length > 0 ? tools.push('-', "remove") : tool.push('remove');
+	</permission:action> */
+
+	function importMiniTableCallBack(message, tableid) {	
+		var info = eval("(" + message + ")");
+		mini.alert(info.message);
+		mini.get("id_minitableimport").hide();
+		mini.unmask(document.body);
+		mini.get(tableid).reload();
+		
+		var tabledate = info.tabledate;
+		//console.info(info);
+		if ("" != tabledate) {
+			var grid = mini.get(tableid);
+			grid.set({
+				data : mini.decode(tabledate)
+			});
+		}		
+	}
+	
+	jQuery(function() {
+		var showTools = true;
+		if('${param.isView}' == 'true'){showTools = false;}
+		seajs.use(
+						[ "js/apcomponent/aptable/aptable.js" ],
+						function(ApTable) {
+							new ApTable(
+									{
+										id : 'table_id8',										
+										width : globalClientWidth - 20,
+										height : 420,
+										iconCls : 'icon-node',
+										frozenStartColumn : 0,
+										frozenEndColumn : 1,
+										importTargetClass:'com.tenwa.leasing.entity.proj.ProjProgress',
+										importDataIndex : '2',
+										importHeaderIndex : '1',
+										exportTitle:'项目建设进度',
+										importprojDevelop :projid,
+										importOrExPortCallBack:'SetprojDevelopProgress',
+										renderTo : 'content_table_id8',
+										hiddenQueryArea : true,
+										frozenStartColumn : 1,
+										frozenEndColumn : 3,
+										editFormPopupWindowWidth : 700,
+										//showToolbar : showTools,
+										remoteOper : true,
+										entityClassName : 'com.tenwa.leasing.entity.proj.ProjProgress',
+										pageSize : 15,
+										showPager : true,
+										lazyLoad : false,
+										loadMode : 'ajax',
+										xmlFileName : '/eleasing/workflow/proj/proj_search/proj_progress.xml',
+										params : {
+											projid : projid
+										},
+										tools : ['add','-','edit','-','remove','-','exportExcel','-','importExcel' ],
+										showToolbar: showTools,
+										columns : [
+												{
+													type : 'indexcolumn'
+												},
+												{
+													type : 'checkcolumn'
+												},
+												{
+													field : 'id',
+													header : '记录编号',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : true,
+														fieldVisible : false
+													}
+												},
+												{
+													field : 'projid',
+													header : '项目ID',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : false,
+													formEditorConfig : {
+														readOnly : true,
+														fieldVisible : false,
+														value : projid
+													}
+												},
+											 	{
+													field : 'task',
+													header : '任务名称',
+													visible : true,
+													formEditorConfig : {
+														type : 'text',
+														labelWidth : 100,
+														width : 200,
+														fieldVisible : false,
+														fillFromFieldName:'taskname',
+												          fillProperty:'name',
+												       entityClassName:'com.tenwa.business.entity.DictionaryData',	
+												 entityHeaderFieldName:'name'
+													}
+												}, 
+												{
+													field : 'taskname',
+													header : '任务名称',
+													visible : false,
+													formEditorConfig : {
+														type : 'combobox',
+														textField : 'name',
+														valueField : 'value',
+														required:true,
+														fieldVisible : true,
+														params : {
+															pid : 'taskname',
+															xmlFileName : '/combos/comboDict.xml'
+														}
+													}
+												},
+												{
+													field : 'begintime',
+													header : '开始时间',
+													headerAlign : 'center',
+													dateFormat : "yyyy-MM-dd ",
+													width : 100,
+													allowSort : true,
+													formEditorConfig : {
+														type : 'date',
+														readOnly : false,
+														required:true,
+														defaultValue : mini
+																.formatDate(
+																		new Date(),
+																		"yyyy-MM-dd"),
+														labelWidth : 100,
+														width : 200,
+														otherAttributes:'onvaluechanged="judgedate"'
+													}
+												}, {
+													field : 'endtime',
+													header : '结束时间',
+													headerAlign : 'center',
+													visible : true,
+													dateFormat : "yyyy-MM-dd ",
+													width : 100,
+													allowSort : true,
+													formEditorConfig : {
+														type : 'date',
+														newLine:true,
+														required:true,
+														readOnly : false,
+														fieldVisible : true,
+														labelWidth : 100,
+														width : 200,
+														otherAttributes:'onvaluechanged="durationtime"'
+													}
+												}, {
+													field : 'durationtime',
+													header : '持续时间（天）',
+													headerAlign : 'center',
+													visible : true,
+													width : 100,
+													allowSort : true,
+													formEditorConfig : {
+														type : 'text',
+														readOnly : false,
+														fieldVisible : true,
+														labelWidth : 100,
+														width : 200
+													}
+												}, {
+													field : 'schedule',
+													header : '完工进度',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														readOnly : false,
+														colspan : 3,
+														width : "100%",
+														newLine:true,
+														fieldVisible : true
+													}
+												},
+												{
+													field : 'completedprojectcase',
+													header : '已完工项目情况说明',
+													headerAlign : 'center',
+													width : 100,
+													allowSort : true,
+													visible : true,
+													formEditorConfig : {
+														type : 'textarea',
+														readOnly : false,
+														colspan : 3,
+														width : "100%",
+														newLine:true,
+														fieldVisible : true
+													}
+												}
+										]
+									});
+						});
+	});
+	function judgedate(e){ 		
+		var start=mini.getbyName("begintime").getValue();	
+		
+		mini.getbyName("endtime").setMinDate(start);  			
+	}
+	
+	function durationtime(e){ 		
+		var start=mini.getbyName("begintime").getValue();
+		var end=mini.getbyName("endtime").getValue();		
+		var time = end.getTime() - start.getTime() ; //日期的long型值之差				
+		var days=Math.floor(time/(24*60*60*1000)+1); 			
+		mini.getbyName("durationtime").setValue(days);
+	}
+	
+</script>
+<div id='content_table_id8'></div>

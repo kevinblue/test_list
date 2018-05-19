@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批清单列表
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        SELECT 
+	        	A.ID,A.CONTRACT_ID,A.CONTRACT_NUMBER,
+				A.PROJECT_NAME,A.CUST_NAME,A.CARD_NO,
+				A.INDUSTRY_TYPE,tu1.realname_ PROJMANAGE,A.DEPARTMENT ,
+				A.CONTRACTSTATUS,
+				(CASE 
+       						WHEN 
+       							NOT EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+       							AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出')
+       						THEN 
+       							'未归还'
+       						WHEN 
+       							NOT EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出')
+       							AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+       						THEN 
+       							'已归还'
+       						WHEN 
+       							EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+       							AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出')
+       						THEN 
+       							'部分归还'
+       						ELSE ''
+       						END
+       						) AS signdatestatus
+			FROM  VI_CONTRACT_INFO A
+			left join t_users tu1 on tu1.id_ = A.proj_manage
+ 			WHERE 1=1
+ 			AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID )
+			/~contract_id: AND A.CONTRACT_ID like '%{contract_id}%' ~/
+			/~contract_number: AND A.CONTRACT_NUMBER like '%{contract_number}%' ~/
+			/~project_name: AND A.PROJECT_NAME like '%{project_name}%' ~/
+			/~cust_name: AND A.CUST_NAME like '%{cust_name}%' ~/
+			/~card_no: AND A.CARD_NO like '%{card_no}%' ~/
+			/~signdatestatus: AND (
+				('0' = '{signdatestatus}' 
+					AND NOT EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+       				AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出'))
+				OR
+				('1' = '{signdatestatus}' 
+					AND NOT EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出')
+       				AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+				)
+				OR 
+				('2' = '{signdatestatus}' 
+					AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='未借出')
+       				AND EXISTS(SELECT 1 FROM CONTRACT_DOC_LIST_BORROW  C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.id AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出')
+       			)
+       			OR
+       			('3'='{signdatestatus}' 
+       				AND (EXISTS (SELECT 1 FROM CONTRACT_DOC_LIST_BORROW C,CONTRACT_DOC_LIST B WHERE C.CONTRACT_DOC_LIST_ID=B.ID AND B.CONTRACT_ID=A.ID AND C.IS_BACK='已借出'))
+       			)
+			)~/
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

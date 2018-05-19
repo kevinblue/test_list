@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- id实体英文名 -->
+<!-- name实体中文名 -->
+<!-- dataUrl实体controllurl -->
+<!-- type为实体类型，如find，add, updata，fuzzy四种类型,必须以这几个字段开头，
+	后面可以字符，表示不同的类型， 比如find1，findhaha等，如果有两个find类型，则必须在url中指定type类型，
+	比如，www.baidu.com?xml=areainfo&type=findhaha -->
+<!-- typeMode，type的显示方式，如openType枚举 openNewWindow, accordion, model-->
+<!-- groupStyle,为全局样式，传递样式文本， -->
+<module-info>
+	<entity id="AreaInfo" name="区域信息" dataUrl="" type="" typeModel="" groupStyle="">
+			<!-- id属性为实体中字段，如果是关联实体，则为关联实体名称 -->
+			<!-- name表单显示名称，默认为Entity的@FieldName(name="地区名称") -->
+			<!-- type显示类型，hidden(隐藏), combox，data,set(一对多子查询)等 不同的类型有不同的属性比如url -->
+			<!-- type类型为set时候，attribute里面两个属性，前一个为xml后一个为type -->
+			<!-- attribute type内容属性 已字符串开始，如 url:'abc.action'，data:['a','b'], data:{'a':'c','d','e'} -->
+			<!-- sort排序，默认从0，1，2，3，4排序 -->
+			<!-- column取最内层属性 -->
+			<!-- columnStyel为局部样式文件 -->
+			<!-- columnValidation为验证方式，第一个为验证类型，规则为，web,number;， -->
+			<columns id="1" name="" type="" attribute="" sort="" columnsStyle="" columnValidation="web,number;server:url">
+				<columns id="1" name="123" type="" attribute="12345" sort="">
+				</columns>
+				<columns id="13456" name="" type="" attribute="">
+				</columns>
+			</columns>
+		<add>
+			<columns id="" name="" >
+			</columns>
+		</add>
+		<updata>
+		</updata>
+	</entity>
+</module-info>

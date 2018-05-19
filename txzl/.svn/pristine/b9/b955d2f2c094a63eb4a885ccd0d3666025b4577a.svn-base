@@ -1,0 +1,77 @@
+package com.tenwa.leasing.controller.pledge;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.tenwa.business.service.TableService;
+import com.tenwa.kernal.utils.QueryUtil;
+import com.tenwa.leasing.entity.contract.ContractInfo;
+import com.tenwa.leasing.service.asset.AssetsMngService;
+import com.tenwa.leasing.service.contractcomm.ContractInfoExtends;
+import com.tenwa.leasing.service.pledge.PledgeCommMethod;
+
+@Controller(value = "pledgeInformation")
+@RequestMapping(value = "/**/acl")
+public class PledgeInformation {
+	
+	@Resource(name = "tableService")
+	private TableService tableService;
+	
+	@Resource(name = "pledgeCommMethod")
+	private PledgeCommMethod pledgeCommMehtodService;
+	
+	@Resource(name = "contractInfoExtends")
+	private ContractInfoExtends contractInfoExtends;
+	
+	@Resource(name = "assetsMngService")
+	private AssetsMngService assetsMngService;
+
+	@SuppressWarnings("rawtypes")
+	@RequestMapping(value = "/showPledgeInformation.acl")	
+	public String showAccountReceivable(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		
+		Map<String, String> model = QueryUtil
+				.getRequestParameterMapByAjax(request);
+		String opertype = model.get("opertype");
+		//this.tableService.findEntityByID(entityClass, id)
+		Map<String, String> variablesMap = new HashMap<String, String>();
+			String contractid = model.get("contract_id");
+						
+			
+			ContractInfo contractinfo = this.tableService
+					.findEntityByID(ContractInfo.class, contractid);
+			
+	        variablesMap = this.tableService
+					.getEntityPropertiesToStringMap(contractinfo, null, "contract_info");			
+	  /*    variablesMap.put("contract_info.proj_id", contractinfo.getProjId().getProjId());//项目编号
+			variablesMap.put("contract_info.projdate", contractinfo.getProjId().getProjDate());//项目日期
+			variablesMap.put("contract_info.custname", contractinfo.getCustId().getCustName());//客户名称
+			variablesMap.put("contract_info.custnumber", contractinfo.getCustId().getCustNumber());//客户编号
+			*/
+			//1将合同基本信息放入variablesMap
+			contractInfoExtends.getContractBaseInfo(variablesMap, contractinfo, contractinfo.getCustId());
+			//2加载pledge未注销和已注销数据
+			pledgeCommMehtodService.loadPledge(contractid, variablesMap);
+			
+		for (Entry entry : variablesMap.entrySet()) {
+			request.setAttribute(entry.getKey().toString(), entry.getValue());
+		}
+		if ("view".equals(opertype)) {
+			return "solutions/workflow/forms/law_mng/pledge/pledge_cancle_manager03.jsp";
+			
+		}else{
+			return null;
+		}
+	
+		
+	}
+}

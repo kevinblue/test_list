@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root xmlns="http://www.tracywindy.org/table"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+	<table>
+		<data>
+			<alldb>
+				<table_sql> 
+	        <![CDATA[
+				select 
+				  c.ID                  AS id,
+				  c.CONTRACT_NUMBER   	AS contractnumber,
+				  c.CONTRACT_NAME   	AS contractname,
+				  c.OTHER_NAME   		AS othername,
+				  c.OTHER_NUMBER   		AS othernumber,
+				  c.CONTRACT_MONEY   	AS contractmoney,
+				  c.CONTRACT_EXPLAIN   	AS contractexplain,
+				  c.SIGN_DATE   		AS signdate,
+				  c.CONTRACT_LEADER   	AS contractleader,
+				  c.ARCHIVES_SARK  		AS archivesark,
+				  c.SAVE_DATE  			AS savedate,
+				  c.ARCHIVES_NUMBER 	AS archivesnumber,
+				  c.ARCHIVES_EXPLAIN 	AS archivesexplain
+				  FROM CONTENT_MATERIAL c
+				where 1=1
+					/~contractnumber: and c.CONTRACT_NUMBER like '%{contractnumber}%'~/ 
+					/~contractname: and c.CONTRACT_NAME  like '%{contractname}%'~/ 		
+					/~othername: and c.OTHER_NAME like '%{othername}%'~/ 
+					/~othernumber: and c.OTHER_NUMBER like '%{othernumber}%'~/ 
+					/~contractleader: and c.CONTRACT_LEADER   like '%{contractleader}%'~/ 	
+					/~archivesnumber: and c.ARCHIVES_NUMBER like '%{archivesnumber}%'~/
+					
+					/~signdateStart: and c.SIGN_DATE    >= '{signdateStart}' ~/ 
+	       		   /~signdateEnd: and c.SIGN_DATE    <= '{signdateEnd}' ~/ 
+	       		   /~savedateStart: and c.SAVE_DATE    >= '{savedateStart}' ~/ 
+	       		   /~savedateEnd: and c.SAVE_DATE    <= '{savedateEnd}' ~/ 
+			 ]]>
+				</table_sql>
+			</alldb>
+			<dataSource>dataSource</dataSource>
+			<show_sql>true</show_sql>
+		</data>
+	</table>
+</table-root>

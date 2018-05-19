@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        select *from 
+	        (
+				select
+				ci.id as cid,
+				ci.contract_put_number as contractputnumber,
+				cffp.id           as id,
+				fii.id            as fundinvoiceid,
+				cffp.payment_id   as paymentid,
+				ci.contract_id    as contractid,
+				CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+				cinfo.cust_name   as custname,
+				cffp.plan_date    as plandate,
+				cffp.plan_money   as planmoney,
+				tds.name_         as feetype,
+				case tds.id_ when 'feetype1' then tds1.name_ when 'feetype3' then tds2.name_ when 'feetype5' then tds3.name_ 
+                 when 'feetype7' then tds4.name_ when 'feetype4' then tds5.name_ when 'feetype6' then tds6.name_ 
+                 when 'feetype18' then tds7.name_ 
+                 when 'feetype19' then tds8.name_ end 
+                 as invoicetype,
+  			    cit.tax_reg_code  as taxregcode,
+		        cit.tax_bank      as taxbank,
+		        cit.tax_acc       as taxacc,
+		        cit.invoice_phone as phone,
+		        cit.invoice_add   as regaddress,
+				case nvl(fii.invoice_status,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' end as status,
+				TDD2.NAME_        AS LEASEFORM
+				from contract_fund_fund_plan cffp
+				left join fund_invoice_info fii on cffp.id=fii.cffp_id and fii.bill_type='invoice'
+				left join t_dicts_datas tds on cffp.fee_type=tds.id_
+				left join contract_info ci on cffp.contract_id=ci.id
+				left join contract_info pci on pci.id=ci.sup_contract_id
+				left join contract_invoice_type cit on pci.id=cit.contract_id
+				left join t_dicts_datas tds1 on cit.SERVICE_INVOICE_TYPE=tds1.id_
+				left join t_dicts_datas tds2 on cit.HAND_INVOICE_TYPE=tds2.id_
+				left join t_dicts_datas tds3 on cit.FIRSTPAYMENT_INVOICE_TYPE=tds3.id_
+				left join t_dicts_datas tds4 on cit.INSURANCELESSOR_INVOICE_TYPE=tds4.id_
+				left join t_dicts_datas tds5 on cit.NOMINAL_INVOICE_TYPE=tds5.id_
+				left join t_dicts_datas tds6 on cit.RETURNAMT_INVOICE_TYPE=tds6.id_
+				--新添加
+				left join t_dicts_datas tds7 on cit.ASSETS_MONEY = tds7.id_
+				left join t_dicts_datas tds8 on cit.ADVISER_MONEY = tds8.id_
+				LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+				left join cust_info cinfo on ci.cust_id=cinfo.id
+				left join 
+				(
+				select cffc.payment_id,nvl(sum(cffc.fact_money),0) as factmoney,count(fii2.id) as invoicenun,nvl(sum(invoicelist.invoicemoney),0) as invoicemoney from contract_fund_fund_charge cffc 
+				left join fund_invoice_info fii2 on cffc.id=fii2.cffc_id and fii2.bill_type='invoice'
+				left join
+				(select fd.fund_invoice_id,nvl(sum(fd.invoice_money),0) as invoicemoney from  FUND_INVOICE_DOWNLOAD_INFO fd 
+				group by fd.fund_invoice_id 
+				) invoicelist on fii2.id=invoicelist.fund_invoice_id
+				group by cffc.payment_id
+				) chargelist on cffp.id=chargelist.payment_id
+				where 1=1
+				--在所有合同中除去主合同（求所有的子合同）
+				and ci.sup_contract_id is not null and ci.sup_contract_id!=ci.id
+			    and ci.contract_status>=21
+				and tds.prop_one_='invoice'
+				--实收金额为0 
+				--and nvl(chargelist.factmoney,0)=0
+				--实收开票记录为0
+                and nvl(chargelist.invoicenun,0)=0
+                --增加本金一次性开票是否包含首付款判断
+				--and ((select td.description_ From t_dicts_datas td where td.id_='iscorpusone.01')='否' or (cffp.fee_type!='feetype5' or cit.invoice_type not in('invoice_mode.01')))
+				
+				--/~contractid: and ci.contract_id like '%{contractid}%' ~/
+				--/~contractnumber: AND CI.CONTRACT_NUMBER LIKE '%{contractnumber}%' ~/
+				/~contractputnumber: AND CI.CONTRACT_PUT_NUMBER LIKE '%{contractputnumber}%' ~/
+			    /~custname: and cinfo.cust_name like '%{custname}%' ~/
+			    /~plandateStart: and cffp.plan_date >='{plandateStart}' ~/
+                /~plandateEnd: and cffp.plan_date <='{plandateEnd}' ~/
+                /~feetype: and cffp.fee_type = '{feetype}' ~/
+                /~leaseform: AND CI.LEAS_FORM = '{leaseform}' ~/
+            ) list
+            where 1=1
+            --and list.status!='已申请'
+            /~status: and list.status in ('<<status>>') ~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

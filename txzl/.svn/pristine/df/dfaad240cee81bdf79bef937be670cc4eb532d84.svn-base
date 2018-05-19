@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+扫码系统的档案附件
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	      insert into CONTRACT_FILING
+  (id,
+   filing_status,
+   FILING_SN,
+   filing_name,
+   comein_date,
+   CREATOR_,
+   CREATE_DATE,
+   contract_id)
+  (select sys_guid(),
+          '未归档',
+          b.id,
+          c.contract_name,
+          c.signing_time,
+          '{userid}',
+          '{creattime}',
+          c.contract_id
+     from base_file b
+     left join CONTRACT_NUMBER_SETTING c
+       on c.id = b.file_key
+    where b.invalid_='是' and 
+     c.contract_id = '{contractid}'
+      and not exists
+    (select 1 from CONTRACT_FILING cf where cf.FILING_SN = b.id)) union
+  (select sys_guid(),
+          '未归档',
+          t.id_,
+          subStr(t.chinese_file_name_,
+                 0,
+                 INSTR(t.chinese_file_name_, '.', -1) - 1),
+          t.upload_time_,
+          '{userid}',
+          '{creattime}',
+          ci.id
+     from t_attachment_info_detail t
+     left join t_attachment_info ta
+       on t.attachment_info_id_ = ta.id_
+     left join t_dicts_datas t1
+       on t1.id_ = ta.attachment_file_dict_id_
+     left join proj_info p
+       on ta.identifier_two_ = p.proj_id
+     left join contract_info ci
+       on ci.proj_id = p.id
+    where ta.attachment_file_dict_id_ in
+          ('root.FileType.Type6.01',
+           'FinancialAdjustment.01',
+           'root.FileType.Type6.01',
+           'LegalRegulation.01',
+           'BusinessAdjustmentReconsider.01',
+           'BusinessAdjustment.01',
+           'root.FileType.Proposal01',
+           'ProjectQuotationScheme.01')
+      and ci.id = '{contractid}'
+      and not exists
+    (select 1 from CONTRACT_FILING cf where cf.FILING_SN = t.id_)) union
+  (select sys_guid(),
+          '未归档',
+          a.id,
+          subStr(a.file_name, 0, INSTR(a.file_name, '.', -1) - 1),
+          a.create_date,
+          '{userid}',
+          '{creattime}',
+          ci.id
+     from (select *
+             from base_file b
+            where b.model_name = '项目批复文件'
+              and b.invalid_ = '是'
+              and b.file_key in (select id from PROJ_APPROVAL_DOC)) a
+     left join PROJ_APPROVAL_DOC p
+       on a.file_key = p.id
+     left join proj_develope_info pdi
+       on p.proj_id = pdi.id
+     left join proj_info pi
+       on pi.develop_id = pdi.id
+     left join contract_info ci
+       on ci.proj_id = pi.id
+    where ci.id = '{contractid}'
+      and not exists
+    (select 1 from CONTRACT_FILING cf where cf.FILING_SN = a.id)) union
+  (select sys_guid(),
+          '未归档',
+          a.id,
+          subStr(a.file_name, 0, INSTR(a.file_name, '.', -1) - 1),
+          a.create_date,
+          '{userid}',
+          '{creattime}',
+          p.contract_id
+     from (select *
+             from base_file b
+            where b.model_name = '设备信息'
+              and b.invalid_ = '是'
+              and b.file_key in (select id from PLEDGE)) a
+     left join PLEDGE p
+       on a.file_key = p.id
+    where p.contract_id = '{contractid}'
+      and not exists 
+    (select 1 from CONTRACT_FILING cf where cf.FILING_SN = a.id))
+
+        
+			]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

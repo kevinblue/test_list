@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	        	SELECT stockholder.ID id,
+				  stockholder.STOCKHOLDER_NAME stockholdername, 
+				  stockholder.ORG_CODE orgcode,
+				  stockholder.CAPITAL_TYPE capitaltype,
+				  stockholder.CAPITAL_MONEY capitalmoney,
+				  stockholder.REG_CAPITAL regcapital,
+				  stockholder.SHAREHOLDING shareholding,
+				  stockholder.LEGAL_REPRESENTATIVE legalrepresentative,
+				  stockholder.ADDR_ addr,
+				  stockholder.BIZ_SCOPE_PRIMARY bizscopeprimary,
+				  stockholder.CSH_MEMO cshmemo,
+				  stockholder.CUST_ID custid,
+				  stockholder.STOCKHOLDER_TYPE stockholdertype,
+				  dict.name_  rawValue_stockholdertype,
+				  stockholder.CREATOR_ creator,
+				  stockholder.MODIFICATOR_ modificator
+				FROM CUST_STOCKHOLDER stockholder
+					left join cust_info custinfo
+						on stockholder.cust_id = custinfo.id
+					left join t_dicts_datas dict on (dict.id_=stockholder.stockholder_type)   
+					left join
+		            t_users users1
+	            	on stockholder.creator_ = users1.id_ 
+		            left join
+		            	t_users users2
+		            on 
+		            	stockholder.modificator_ = users2.id_ 
+				where 1=1
+				 /~id: and stockholder.ID = '{id}'~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

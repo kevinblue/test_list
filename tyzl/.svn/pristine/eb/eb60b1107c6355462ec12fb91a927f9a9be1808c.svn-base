@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	 select *from (
+        select 
+        planrent.cid,
+        planrent.contractputnumber1 contractputnumber,--投放编号
+        planrent.id            as id,
+        rii.id                 as rentinvoicid,
+        planrent.contractid    as contractid,
+        planrent.CONTRACTNUMBER,
+        cinfo.cust_name        as custname,
+        planrent.rentlist      as rentlist,
+        chargelist.id          as pid,
+        chargelist.plandate    as plandate,
+        case planrent.plantype when  'rent' then chargelist.planmoney when  'corpus' then chargelist.plancorpus when  'interest' then chargelist.planinterest end as planmoney,
+        planrent.hiredate      as incomedate,
+        planrent.plantype      as plantypeid,
+        case planrent.plantype when  'rent' then '租金' when  'corpus' then '本金' when  'interest' then '利息' end as plantype,
+        planrent.planmoney     as incomemoney,
+        --发票类型
+        tds1.name_             as rentinvoicetype,
+        planrent.taxregcode    as taxregcode,
+        planrent.taxbank       as taxbank,
+        planrent.taxacc        as taxacc,
+        planrent.phone         as phone,
+        planrent.regaddress    as regaddress,
+  
+        case nvl(rii.invoice_status,0) when  0 then '未申请' when  1 then '已退回' when  2 then '已申请' when  -1 then '不开票' end as status,
+        planrent.LEASEFORM
+        from 
+        (---- 租金开票
+          select 
+          ci.id as cid,
+          ci.contract_put_number contractputnumber1,--投放编号
+          cit.rent_invoice_type invoice_type,--租金发票类型
+          cfri.id as id,cfri.plan_id,
+          ci.contract_id    as contractid,
+          CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+          ci.cust_id        as cust_id,
+          cfri.plan_list    as rentlist,cfri.hire_date    as hiredate,'rent'        as plantype,
+          --cit.invoice_type     as invoice_type,
+          cfri.rent         as planmoney,
+          cit.tax_reg_code  as taxregcode,
+          cit.tax_bank      as taxbank,
+          cit.tax_acc       as taxacc,
+          cit.invoice_phone as phone,
+          cit.invoice_add   as regaddress,
+          TDS.NAME_         AS LEASEFORM
+          from contract_fund_rent_income cfri
+          left join contract_info ci on cfri.contract_id=ci.id
+          --主合同号跟发票类型关联
+          left join contract_info pci on pci.id=ci.sup_contract_id
+          left join contract_invoice_type cit on pci.id=cit.contract_id
+          left join t_dicts_datas tdsr on cit.rent_invoice_type = tdsr.id_
+          left join contract_condition cc on ci.id=cc.contract_id
+         -- left join contract_invoice_type cit on ci.id=cit.contract_id
+          left join t_dicts_datas tds on ci.leas_form = tds.id_
+          where 1=1
+          --在所有合同中除去主合同（求所有的子合同）
+          and ci.sup_contract_id is not null and ci.sup_contract_id!=ci.id
+          and  cit.invoice_type='invoice_mode.02'
+          and ci.contract_status>=31
+           
+          union all
+          --本金开票
+          
+          select 
+          ci.id as cid,
+          ci.contract_put_number contractputnumber1,--投放编号
+          cit.corpus_invoice_type invoice_type,--本金开票
+          cfri.id as id,
+          cfri.plan_id,
+          ci.contract_id    as contractid,
+          CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+          ci.cust_id        as cust_id,
+          cfri.plan_list    as rentlist,
+          cfri.hire_date    as hiredate,
+          'corpus'        as plantype,
+          --cit.invoice_type     as invoice_type,
+          cfri.corpus         as planmoney,
+          cit.tax_reg_code  as taxregcode,
+          cit.tax_bank      as taxbank,
+          cit.tax_acc       as taxacc,
+          cit.invoice_phone as phone,
+          cit.invoice_add   as regaddress,
+          TDS.NAME_         AS LEASEFORM
+          from contract_fund_rent_income cfri
+          left join contract_info ci on cfri.contract_id=ci.id
+          --主合同号跟发票类型关联
+          left join contract_info pci on pci.id=ci.sup_contract_id
+          left join contract_invoice_type cit on pci.id=cit.contract_id
+          left join t_dicts_datas tdsc on cit.corpus_invoice_type = tdsc.id_
+          --left join contract_invoice_type cit on ci.id=cit.contract_id
+          left join t_dicts_datas tds on ci.leas_form = tds.id_
+          where 1=1
+          --在所有合同中除去主合同（求所有的子合同）
+          and ci.sup_contract_id is not null and ci.sup_contract_id!=ci.id
+          and  cit.invoice_type='invoice_mode.04'
+          and ci.contract_status>=31
+           
+          union all
+          --利息开票
+          
+          select 
+          ci.id as cid,
+          ci.contract_put_number contractputnumber1,--投放编号
+          cit.interest_invoice_type invoice_type,--利息开票
+          cfri.id as id,
+          cfri.plan_id,
+          ci.contract_id    as contractid,
+          CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+          ci.cust_id        as cust_id,
+          cfri.plan_list    as rentlist,
+          cfri.hire_date    as hiredate,
+          'interest'        as plantype,
+          --cit.invoice_type     as invoice_type,
+          --case when cc.vat_type='vat_one' then round(cfri.interest*1.17,2) else cfri.interest   end  as planmoney,
+          cfri.interest         as planmoney,
+          cit.tax_reg_code  as taxregcode,
+          cit.tax_bank      as taxbank,
+          cit.tax_acc       as taxacc,
+          cit.invoice_phone as phone,
+          cit.invoice_add   as regaddress,
+          TDS.NAME_         AS LEASEFORM
+          from contract_fund_rent_income cfri
+          left join contract_info ci on cfri.contract_id=ci.id
+           --主合同号跟发票类型关联
+          left join contract_info pci on pci.id=ci.sup_contract_id
+          left join contract_invoice_type cit on pci.id=cit.contract_id
+          left join contract_condition cc on ci.id=cc.contract_id
+          left join t_dicts_datas tdsi on cit.interest_invoice_type = tdsi.id_
+          --left join contract_invoice_type cit on ci.id=cit.contract_id
+          left join t_dicts_datas tds on ci.leas_form = tds.id_
+          where 1=1
+          --在所有合同中除去主合同（求所有的子合同）
+          and ci.sup_contract_id is not null and ci.sup_contract_id!=ci.id
+          and  cit.invoice_type  in('invoice_mode.04','invoice_mode.03','invoice_mode.01')
+          and ci.contract_status>=31
+          
+        ) planrent 
+          
+        left join t_dicts_datas tds1 on planrent.invoice_type=tds1.id_
+        left join cust_info cinfo on planrent.cust_id=cinfo.id
+        left join rent_invoice_info rii on planrent.id=rii.cfri_id  and planrent.plantype=rii.tax_type and   rii.bill_type='invoice'
+        left join 
+        (
+           select cfrp.id,rii.id as numb,cfrp.plan_date as plandate,
+           cfrp.rent   as planmoney,
+           cfrp.corpus as plancorpus,
+           cfrp.interest    as planinterest
+           From contract_fund_rent_plan cfrp
+           left join contract_condition cc on cfrp.contract_id=cc.contract_id
+           left join rent_invoice_info rii on cfrp.id=rii.cfrp_id
+        )chargelist on planrent.plan_id=chargelist.id
+        where 1=1
+        --计划提交记录为0 
+        and chargelist.numb is null
+ 
+     )list
+     where 1=1
+ 
+     /~status: and list.status in ('<<status>>') ~/
+     /~contractid: and list.contractid like '%{contractid}%' ~/
+     /~contractnumber: and list.contractnumber like '%{contractnumber}%' ~/
+	 /~custname: and list.custname like '%{custname}%' ~/
+	 /~incomedateStart: and list.incomedate >='{incomedateStart}' ~/
+     /~incomedateEnd: and list.incomedate <='{incomedateEnd}' ~/
+     /~plantype: and list.plantype like '%{plantype}%' ~/
+     /~leaseform: and list.leaseform = '{leaseform}' ~/
+     
+     order by list.contractid,list.rentlist
+     
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

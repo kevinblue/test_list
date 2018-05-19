@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+					SELECT 
+	          T_DICTS_DATAS.NAME_ AS ADVISE ,
+	          T_DICTS_DATAS.POSITION_
+	        FROM T_DICTS_DATAS 
+	        LEFT JOIN T_DICTS ON T_DICTS_DATAS.PID_ = T_DICTS.ID_ 
+	        WHERE T_DICTS.CODE_ ='JbpmCommonAdvise'
+	       <EXTRACTEND> ORDER BY POSITION_ <EXTRACTEND>
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>false</show_sql>
+    </data>
+  </table>
+</table-root>

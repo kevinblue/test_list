@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[			
+			select 
+			tus.realname_   as managername,
+			ci.contract_put_number as contractputnumber,
+			tds.name_       as deptname,
+			cinfo.cust_name as custname,
+			listplan.m_plancorpus,
+			listplan.before_plancorpus+listplan.m_plancorpus as contract_plancorpus,
+			nvl(listincome.m_incomecorpus,0) as m_incomecorpus,
+			nvl(listincome.before_incomecorpus,0) as before_incomecorpus,
+			nvl(listincome.after_incomecorpus,0) as after_incomecorpus,
+			case when nvl(listplan.before_plancorpus,0)+nvl(listplan.m_plancorpus,0)>0 then
+			round((nvl(listincome.m_incomecorpus,0)+nvl(listincome.before_incomecorpus,0)+nvl(listincome.after_incomecorpus,0))*100/(listplan.before_plancorpus+listplan.m_plancorpus),2)||'%' else '0.00%' end as m_rate
+			From 
+			contract_info ci 
+			left join t_users tus on ci.proj_manage=tus.id_
+			left join t_depts tds on ci.proj_dept=tds.id_
+			left join cust_info cinfo on ci.cust_id=cinfo.id
+			left join 
+			(
+			select 
+			vcp.contractid,
+			SUM (CASE WHEN TO_CHAR (TO_DATE (vcp.plandate, 'yyyy-MM-dd'), 'yyyy-mm') =TO_CHAR (SYSDATE, 'yyyy-mm') THEN vcp.CORPUS ELSE 0 END) m_plancorpus,
+			SUM (CASE WHEN TO_CHAR (TO_DATE (vcp.plandate, 'yyyy-MM-dd'), 'yyyy-mm') <TO_CHAR (SYSDATE, 'yyyy-mm') THEN vcp.CURCORPUSOVERAGE ELSE 0 END) before_plancorpus
+			
+			From VI_CONTRACT_FUND_RENT_PLAN vcp
+			group by vcp.contractid
+			)listplan on ci.id=listplan.contractid
+			left join 
+			(
+			select 
+			cfi.contract_id,
+			SUM (CASE WHEN TO_CHAR (TO_DATE (cfp.plan_date, 'yyyy-MM-dd'), 'yyyy-mm') =TO_CHAR (SYSDATE, 'yyyy-mm') 
+			          and  TO_CHAR (TO_DATE (cfi.hire_date, 'yyyy-MM-dd'), 'yyyy-mm') =TO_CHAR (SYSDATE, 'yyyy-mm')
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) m_incomecorpus,
+			SUM (CASE WHEN TO_CHAR (TO_DATE (cfp.plan_date, 'yyyy-MM-dd'), 'yyyy-mm') <TO_CHAR (SYSDATE, 'yyyy-mm') 
+			          and  TO_CHAR (TO_DATE (cfi.hire_date, 'yyyy-MM-dd'), 'yyyy-mm') =TO_CHAR (SYSDATE, 'yyyy-mm')
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) before_incomecorpus,
+			SUM (CASE WHEN TO_CHAR (TO_DATE (cfp.plan_date, 'yyyy-MM-dd'), 'yyyy-mm') >TO_CHAR (SYSDATE, 'yyyy-mm') 
+			          and  TO_CHAR (TO_DATE (cfi.hire_date, 'yyyy-MM-dd'), 'yyyy-mm') =TO_CHAR (SYSDATE, 'yyyy-mm')
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) after_incomecorpus
+			
+			From contract_fund_rent_income cfi
+			left join contract_fund_rent_plan cfp on cfi.plan_id=cfp.id
+			group by cfi.contract_id
+			) listincome on ci.id=listincome.contract_id
+			where 1=1
+			and ci.contract_status>30 and ci.contract_status<100
+			/~contractid: and ci.contract_id like '%{contractid}%' ~/
+			/~contractnumber: and ci.contract_number like '%{contractnumber}%' ~/
+			/~managername: and tus.realname_ like '%{managername}%' ~/
+			/~deptname: and tds.name_ like '%{deptname}%' ~/
+	        
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+	  <sqlserver>
+		  <table_sql> 
+		        <![CDATA[
+		        	select 
+			tus.realname_   as managername,
+			ci.contract_put_number as contractputnumber,
+		    tds.name_       as deptname,
+			cinfo.cust_name as custname,
+			listplan.m_plancorpus,
+			listplan.before_plancorpus+listplan.m_plancorpus as contract_plancorpus,
+			isnull(listincome.m_incomecorpus,0) as m_incomecorpus,
+			isnull(listincome.before_incomecorpus,0) as before_incomecorpus,
+			isnull(listincome.after_incomecorpus,0) as after_incomecorpus,
+			case when isnull(listplan.before_plancorpus,0)+isnull(listplan.m_plancorpus,0)> 0 then
+			convert(varchar(100),round((isnull(listincome.m_incomecorpus,0)+isnull(listincome.before_incomecorpus,0)+isnull(listincome.after_incomecorpus,0))*100/(isnull(listplan.before_plancorpus,0)+isnull(listplan.m_plancorpus,0)),2))+'%' 
+			else '0%' end as m_rate
+			From 
+			contract_info ci 
+			left join t_users tus on ci.proj_manage=tus.id_
+			left join t_depts tds on ci.proj_dept=tds.id_
+			left join cust_info cinfo on ci.cust_id=cinfo.id
+			left join 
+			(
+			select 
+			vcp.contractid,
+			SUM (CASE WHEN convert(char(6),cast (vcp.plandate as datetime),112) =convert(char(6),getdate(),112) THEN vcp.CORPUS ELSE 0 END) m_plancorpus,
+			SUM (CASE WHEN convert(char(6),cast (vcp.plandate as datetime),112) <convert(char(6),getdate(),112) THEN vcp.CURCORPUSOVERAGE ELSE 0 END) before_plancorpus
+			
+			From VI_CONTRACT_FUND_RENT_PLAN vcp
+			group by vcp.contractid
+			)listplan on ci.id=listplan.contractid
+			left join 
+			(
+			select 
+			cfi.contract_id,
+			SUM (CASE WHEN convert(char(6),cast (cfp.plan_date as datetime),112) =convert(char(6),getdate(),112)
+			          and  convert(char(6),cast (cfi.hire_date as datetime),112) =convert(char(6),getdate(),112)
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) m_incomecorpus,
+			SUM (CASE WHEN convert(char(6),cast (cfp.plan_date as datetime),112) =convert(char(6),getdate(),112)
+			          and  convert(char(6),cast (cfi.hire_date as datetime),112) =convert(char(6),getdate(),112)
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) before_incomecorpus,
+			SUM (CASE WHEN convert(char(6),cast (cfp.plan_date as datetime),112) =convert(char(6),getdate(),112)
+			          and  convert(char(6),cast (cfi.hire_date as datetime),112) =convert(char(6),getdate(),112)
+			          THEN cfi.corpus 
+			          ELSE 0 END
+			    ) after_incomecorpus
+			
+			From contract_fund_rent_income cfi
+			left join contract_fund_rent_plan cfp on cfi.plan_id=cfp.id
+			group by cfi.contract_id
+			) listincome on ci.id=listincome.contract_id
+			where 1=1
+			and ci.contract_status>30 and ci.contract_status<100
+			/~contractid: and ci.contract_id like '%{contractid}%' ~/
+			/~contractnumber: and ci.contract_number like '%{contractnumber}%' ~/
+			/~managername: and tus.realname_ like '%{managername}%' ~/
+			/~deptname: and tds.name_ like '%{deptname}%' ~/
+				 ]]> 
+		  </table_sql>
+	  </sqlserver>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

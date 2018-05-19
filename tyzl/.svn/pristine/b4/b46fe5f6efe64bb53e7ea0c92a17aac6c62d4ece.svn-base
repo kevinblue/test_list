@@ -1,0 +1,107 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<%@ taglib uri="/minidict" prefix="mini"%>
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	if('<mini:param name="isView"/>' == 'true' || isViewHistoryTask == true){showTools = false;};
+	tenwa.createTable({
+		id: "contract_guarantee_equip",
+		renderTo: "id_table_contract_guarantee_equip",
+		width: globalClientWidth - 30,
+		height: 365,
+		lazyLoad: true,
+		title: "",
+		remoteOper : false,
+		showPager: false,
+		showToolbar: showTools,
+		tools: ['add', '-', 'edit', '-', 'remove'],
+		data: JsonUtil.decode('<mini:param  name="json_contract_guarantee_equip_str" defaultValue="[]"/>'),
+		columns: [
+			{type: 'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id', visible: false},
+			{field: 'equipname', header: '抵押物名称',
+				     formEditorConfig:{
+				             required:true,
+				              colspan:3,
+				           labelWidth:100,
+				                width:'100%',
+				            maxLength:120}},
+			{field:'guarantorname', header:'抵押人',
+				     formEditorConfig:{
+				         fieldVisible:false,
+				    fillFromFieldName:'guarantor',
+				         fillProperty:'name'}},
+			{field:'guarantor', header:'抵押人',visible:false,
+				 	 formEditorConfig:{
+				              newLine:true,
+				                 type:'queryinput',
+				             required:true,
+				            textField:'name',
+				           valueField:'value',
+				         fieldVisible:true,
+				              colspan:3,
+				                width:"100%",
+				               params:{cust_type:'cust_type.guarantor',xmlFileName:'/eleasing/workflow/contract/contract_approval/contract_custinfo.xml'}}},
+			{field:'equipinvoice', header:'发票号',
+				     formEditorConfig:{
+							  newLine:true,
+							maxLength:50}},
+			{field:'guarantyvalue', header:'抵质押物价值',
+				     formEditorConfig:{
+							 required:true,
+							    vtype:'float',
+						   labelWidth:100,
+						    maxLength:20}},
+			{field:'equipguaranteetypename', header:'抵质押方式', 
+					 formEditorConfig:{
+				         fieldVisible:false,
+				    fillFromFieldName:'equipguaranteetype',
+				         fillProperty:'name'}},
+			{field:'equipguaranteetype', header:'抵质押方式', visible:false,
+				 	 formEditorConfig:{
+				              newLine:true,
+				                 type:'combobox',
+				             required:true,
+				            textField:'name',
+				           valueField:'value',
+				           allowInput:false,
+				         fieldVisible:true,
+				              colspan:3,
+				                width:"100%",
+				               params:{pid:'guarantee_type',xmlFileName:'combos/comboDict.xml'}}},
+			{field:'presentvalue', header:'现值',
+				     formEditorConfig:{
+							  newLine:true,
+							    vtype:'float',
+							maxLength:20}},
+			{field:'notaryflag', header:'是否抵质押公证', visible:true,
+					 formEditorConfig:{
+				         showNullItem:"true", 
+				         nullItemText:"",
+				            emptyText:"",
+				                 type:'combobox',
+				           valueField:'text',
+				            textField:'text',
+				         fieldVisible:true,
+				                 data:[{text:'是'},{text:'否'}]}},
+			{field:'recordmech', header:'登记机关',
+				     formEditorConfig:{
+							  newLine:true,
+							maxLength:120}},
+			{field:'purchaselife', header:'购买年限',
+				     formEditorConfig:{
+							}},
+			{field:'cgenote', header:'备注',
+					  formEditorConfig:{
+				               newLine:true,
+				                  type:'textarea',
+			 	               colspan:3,
+		                        height:70,
+				                 width:"100%",
+				             maxLength:300}}
+		]
+	});
+});
+</script>
+<div id="id_table_contract_guarantee_equip" style="width:100%;height:100%;"></div>

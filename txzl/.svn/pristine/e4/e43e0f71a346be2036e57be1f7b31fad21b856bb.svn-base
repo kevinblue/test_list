@@ -1,0 +1,56 @@
+package com.tenwa.leasing.action.proj.proj_factoring;
+import java.util.Map;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.jbpm.action.JbpmBaseAction;
+import com.tenwa.jbpm.entity.JBPMWorkflowHistoryInfo;
+import com.tenwa.kernal.annotation.WorkflowAction;
+import com.tenwa.leasing.service.Proj.projApproval.ProjApprovalService;
+import com.tenwa.leasing.utils.WorkflowUtil;
+
+/**
+ * 
+ * @author admin
+ * @date 2016-11-15
+ * @info项目立项的Action
+ * @Copyright 
+ * Tenwa
+ */
+@WorkflowAction(name = "projFactoringEndAction", description = "流程结束动作", workflowName = "保理业务立项")
+@Component(value = "projFactoringEndAction")
+public class ProjFactoringEndAction implements JbpmBaseAction {
+	@Resource(name = "baseService")
+	private BaseService baseService;
+	
+	@Resource(name = "projApprovalService")
+	private ProjApprovalService projApprovalService;
+	
+	@Override
+	public void start(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		 
+	}
+	
+	@Override
+	public String delete(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+
+	@Override
+	public void end(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+	    //删除流程互斥
+		WorkflowUtil.deleteWorkFlowConflict(this.baseService, variablesMap);  
+		projApprovalService.saveFactoringProjectInfo(variablesMap);
+	}
+
+	@Override
+	public String save(HttpServletRequest request, Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+		return null;
+	}
+	
+	@Override
+	public void back(HttpServletRequest request,
+			Map<String, String> variablesMap,JBPMWorkflowHistoryInfo jbpmWorkflowHistoryInfo) throws Exception {
+	}
+}

@@ -1,0 +1,292 @@
+/* CSS Document */
+body,h1,h2,h3,h4,h5,h6,p,ul,ol,li,form,img,dl,dt,dd,table,th,td,blockquote,fieldset,div,strong,label,em{margin:0;padding:0;border:0;}
+ul,ol,li{list-style:none;}
+input,button{margin:0;font-size:12px;vertical-align:middle;}
+body{font-size:12px;font-family:Arial, Helvetica, sans-serif; margin:0 auto;}
+html{
+}
+table{border-collapse:collapse;border-spacing:0;}
+
+.clearfloat{height:0;font-size:1px;clear:both;line-height:0;}
+
+a{color:#333;text-decoration:none;}
+a:hover{color:#ef9b11; text-decoration:underline;}
+
+
+H2 {
+	FONT-WEIGHT: normal; FONT-SIZE: 100%
+}
+
+.hidden {
+	DISPLAY: none
+}
+.pnav-title {
+	PADDING-LEFT: 26px; 
+	BACKGROUND: url(../../images/bg06.jpg) no-repeat; 
+	MARGIN-BOTTOM: 10px; WIDTH: 166px; LINE-HEIGHT: 29px; HEIGHT: 29px
+}
+.pnav-list {
+	MARGIN: 0px 0px 10px 9px; WIDTH: 183px
+}
+.pnav-list A {
+	DISPLAY: inline-block; FONT-WEIGHT: bold; BACKGROUND: url(../../images/bg07.jpg) no-repeat; MARGIN-BOTTOM: 6px; WIDTH: 21px; LINE-HEIGHT: 21px; FONT-FAMILY: Arial; HEIGHT: 21px; TEXT-ALIGN: center
+}
+.pnav-list A {
+	COLOR: #69696a
+}
+.pnav-list A:visited {
+	COLOR: #69696a
+}
+.pnav-cnt {
+	BACKGROUND: url(../../images/bg11.png) repeat-y; 
+	WIDTH: 182px;BORDER-BOTTOM: #dcdddd 1px solid
+}
+.pnav-box {
+	BACKGROUND: url(../../images/bg08.jpg) no-repeat
+}
+.box-title {
+	PADDING-LEFT: 5px; LINE-HEIGHT: 32px; HEIGHT: 32px;font-size:13px;font-weight:bold;
+}
+.box-title .btn-unfold {
+	MARGIN-TOP: 10px
+}
+.box-title .btn-fold {
+	MARGIN-TOP: 10px
+}
+.btn-unfold {
+	BACKGROUND: url(../../images/bg10.png) no-repeat; 
+	FLOAT: left; WIDTH: 13px; MARGIN-RIGHT: 5px; HEIGHT: 13px
+}
+.btn-fold {
+	BACKGROUND: url(../../images/bg09.png) no-repeat; 
+	FLOAT: left; WIDTH: 13px; MARGIN-RIGHT: 5px; HEIGHT: 13px
+}
+.box-list {
+	PADDING-RIGHT: 0px; 
+	PADDING-LEFT: 0px; 
+	PADDING-BOTTOM: 2px; 
+	PADDING-TOP: 2px;
+}
+.box-list LI {
+	PADDING-LEFT: 10px; 
+	LINE-HEIGHT: 25px;
+}
+.box-list LI .btn-unfold {
+	MARGIN-TOP: 5px
+}
+.box-list LI .btn-fold {
+	MARGIN-TOP: 5px
+}
+.box-list H2 {
+	COLOR: #1e50a2
+}
+.box-list H2 A {
+	COLOR: #1e50a2
+}
+.box-list H2 A:visited {
+	COLOR: #1e50a2
+}
+.box-list .off {
+	COLOR: #727171
+}
+.box-list .off:visited {
+	COLOR: #727171
+}
+/**new sheets**/
+html,body {
+	font:12px Arial, Helvetica, sans-serif;
+	color: #000;
+	/*background-color: #EEF2FB;*/
+	margin: 0px;
+	overflow:hidden;
+}
+.frame-left{
+   float:left;
+   width:183px;
+   margin:0px;
+   overflow:auto;
+}
+.frame-left-content{
+  background:#f0f9fd;
+  /*border:1px solid #B7D5DF;*/
+  border-top:1px solid #B7D5DF;
+}
+.frame-middle{
+   float:left;
+   width:10px;
+   margin:0px;
+   background:#FFFFFF;
+    display:none;
+}
+
+.frame-middle a.expanded{
+  /*background:url(../../images/arrowRight.gif) no-repeat;*/
+  background:url(../../images/mini-left.gif) no-repeat;
+  height:35px;
+  width:5px;
+  text-align:center;
+  margin-left:2px;
+  position:relative;
+  top:49%;
+  display:inline-block;
+  display:none;
+  
+}
+.frame-middle a.collapsed{
+  /*background:url(../../images/arrowLeft.gif) no-repeat;*/
+  background:url(../../images/mini-right.gif) no-repeat;
+  height:35px;
+  width:5px;
+  display:inline-block;
+  text-align:center;
+  margin-left:2px;
+  position:relative;
+  top:49%;
+  display:none;
+}
+.frame-right{
+   float:left;
+   margin:0px;
+   padding:0px;
+   overflow:auto;
+}
+.frame-right-title{
+   line-height:30px;
+   height:30px;
+   font-size:12px;
+   color:#42586C;
+   background: #EDF6FA;
+   border-right:1px solid #B7D5DF;
+}
+.frame-right-title img{
+   height:16px;
+   width:16px;
+   position:relative;
+   top:4px;
+   margin-right:10px;
+}
+#id_menu_container {
+	width: 182px;
+	margin-left:1px;
+}
+H1 {
+	font-size: 12px;
+	margin: 0px;
+	width: 182px;
+	cursor: pointer;
+	height: 30px;
+	line-height: 20px;	
+}
+H1 a {
+	display: block;
+	width: 182px;
+	color: #000;
+	height: 30px;
+	text-decoration: none;
+	moz-outline-style: none;
+	background-image: url(../../images/menu_bgs.gif);
+	background-repeat: no-repeat;
+	line-height: 30px;
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+}
+.content{
+	width: 182px;
+	height: 26px;
+	
+}
+.MM ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+	display: block;
+}
+.MM li {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	color: #333333;
+	list-style-type: none;
+	display: block;
+	text-decoration: none;
+	height: 26px;
+	width: 182px;
+	padding-left: 0px;
+}
+.MM {
+	width: 182px;
+	margin: 0px;
+	padding: 0px;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	clip: rect(0px,0px,0px,0px);
+}
+.MM a:link {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	color: #333333;
+	background-image: url(../../images/menu_bg1.gif);
+	background-repeat: no-repeat;
+	height: 26px;
+	width: 182px;
+	display: block;
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+	text-decoration: none;
+}
+.MM a.linkclicked{
+	background-image: url(../../images/menu_bg2.gif);
+}
+.MM a:visited {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	color: #333333;
+	background-image: url(../../images/menu_bg1.gif);
+	background-repeat: no-repeat;
+	display: block;
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+	height: 26px;
+	width: 182px;
+	text-decoration: none;
+}
+.MM a:active {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	color: #333333;
+	background-image: url(../../images/menu_bg1.gif);
+	background-repeat: no-repeat;
+	height: 26px;
+	width: 182px;
+	display: block;
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+	text-decoration: none;
+}
+.MM a:hover {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	font-weight: bold;
+	color: #006600;
+	/*background-image: url(../../images/menu_bg1.gif);*/
+	background-repeat: no-repeat;
+	text-align: center;
+	display: block;
+	margin: 0px;
+	padding: 0px;
+	height: 26px;
+	width: 182px;
+	text-decoration: none;
+}

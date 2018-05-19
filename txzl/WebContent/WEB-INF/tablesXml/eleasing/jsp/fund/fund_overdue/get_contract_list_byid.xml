@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+	        <![CDATA[
+	        select 
+	          	vi1.id contractid,
+				vi1.project_name projectname,
+	          	vi1.contract_id contractid1,
+	          	vi1.contract_number contractnumber,
+	          	vi1.cust_name custname,
+	          	condition.CLEAN_LEASE_MONEY cleanleasemoney,
+	          	vi1.department department,
+	          	tusers.realname_ realname
+			from vi_contract_info vi1 
+	        left join contract_condition condition
+	        on vi1.id = condition.CONTRACT_ID
+	        left join contract_info contract
+	        on vi1.id =contract.id
+	        left join T_USERS tusers
+	        on contract.PROJ_REGISTRAR = tusers.id_
+		    where 1=1
+			/~contractid: AND vi1.id = '{contractid}' ~/
+       		]]> 
+    </table_sql>
+    </alldb>
+    <dataSource>dataSource</dataSource>
+    <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

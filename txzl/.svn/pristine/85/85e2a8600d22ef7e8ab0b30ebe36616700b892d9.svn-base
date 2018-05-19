@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同审批
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+         select *from (
+     SELECT P.ID Id,
+     p.doc_id as docid,
+     nvl( p.save_status,' ') as savestatus,
+    P.EQUIP_NAME  AS EQUIPNAME,
+    P.MODEL_      AS MODEL,
+    P.EQUIP_NUM   AS EQUIPNUM,
+    P.PRICE       AS PRICE,
+    P.EQUIP_PRICE AS EQUIPPRICE,
+    P.TOTAL,
+    P.UNIT,
+    P.NOWTOTAL,
+    P.BRAND_               AS BRAND,
+    P.VNDR                 AS VNDR,
+    CI3.CUST_NAME          AS VNDRNAME,
+    P.MANUFACTURER         AS MANUFACTURER,
+    CI2.CUST_NAME          AS MANUFACTURERNAME,
+    P.DEVICE_TYPE          AS DEVICETYPE,
+    DICT.NAME_             AS DEVICETYPENAME,
+    P.EQUIP_DELIVERY_PLACE AS EQUIPDELIVERYPLACE,
+    P.EQUIP_DELIVERY_DATE  AS EQUIPDELIVERYDATE,
+    P.EQUIP_PLACE          AS EQUIPPLACE,
+    P.CENOTE               AS CENOTE,
+    p.equip_id             AS EQUIPID,
+    p.contract_id as contractid,
+    P.ORIGINALTOTAL AS ORIGINALTOTAL,
+    P.EQUIP_PERIOD  AS  EQUIPPERIOD
+    FROM CONTRACT_EQUIP_TMP P
+    LEFT JOIN CUST_INFO CI2
+    ON P.MANUFACTURER = CI2.ID
+    LEFT JOIN CUST_INFO CI3
+    ON P.VNDR = CI3.ID
+    LEFT JOIN T_DICTS_DATAS DICT
+    ON P.DEVICE_TYPE = DICT.ID_
+    LEFT JOIN T_DICTS_DATAS DICT1
+    ON P.VNDR_TYPE = DICT1.ID_
+     ) P
+       WHERE 1=1
+       and savestatus !='删除'
+       /~conid: AND contractid='{conid}' ~/
+       /~docid: AND docid='{docid}' ~/
+       
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

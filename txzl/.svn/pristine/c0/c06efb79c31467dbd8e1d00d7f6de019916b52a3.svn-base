@@ -1,0 +1,240 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<script type="text/javascript">
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true' || isViewHistoryTask ==true){showTools = false};
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id: "fund_put_config",
+			renderTo: "id_fund_put_config",
+			width: globalClientWidth - 30,
+			height: 360,
+			remoteOper : false,
+			showPager: false,
+			multiSelect: true,
+			showToolbar: showTools,
+			editFormPopupWindowWidth : 700,
+			data: mini.decode('${empty json_fund_put_config_str ? "[]" : json_fund_put_config_str }'),
+			tools : [ 'add','-','edit','-','remove','-','copy','-',{
+				html : '更新租前息',
+				plain : true,
+				iconCls : 'icon-redo',
+				handler : function(miniTable, buttonText) {
+					if(miniTable.getData().length <= 0){
+						mini.alert('请先填写投放计划！！！！');
+						return;
+					}
+					mini.mask({
+						el: document.body,
+						cls: 'mini-mask-loading',
+						html: '正在测算中，请稍后...'
+					});
+					var o = {};
+					o.docId = flowUnid;
+					o.json_fund_put_config_str = mini.encode(miniTable.getData());
+					o.contract_id='${requestScope['contract_info.id'] }';
+					 var url="<%=request.getContextPath() %>/leasing/updateFundPutPlan.action";
+					 $.ajax({
+				        url: url,
+				        type: "post",
+				        data:  o ,
+				        success: function (text) {
+				        	var result = mini.decode(text);
+				        	if(result.updateinfo == '成功'){
+				        		mini.alert('测算成功！！！');
+				        		var rentPlanList =mini.decode(result.rentplanlist) ;
+				        		mini.get("grace_plan").setData(rentPlanList);
+				        		$("#id_json_grace_plan_str").val(mini.encode(rentPlanList));
+				        		mini.unmask(document.body);
+				        	}else{
+				        		mini.alert('测算失败！！！');
+				        		mini.unmask(document.body);
+				        	}
+				        },
+				        error: function (jqXHR, textStatus, errorThrown) {
+				        	mini.unmask(document.body);
+				            alert(jqXHR.responseText);
+				        }
+					  });
+				}
+			}],
+			addOperCallBack :function(miniTable,rowData){
+				var rowDatas = miniTable.getData();
+				/* rowDatas.sort(function(a,b){return a.startlist - b.endlist;});
+				miniTable.setData(rowDatas);  */
+			},
+			afterShowWindowCallBack: function(miniTable,miniForm,operFlag){
+				var paymentid = mini.getbyName("paymentid");
+				paymentid.setValue(miniTable.getData().length+1);
+				var feetype = mini.getbyName("feetype");
+				feetype.setValue("feetype10");
+				var paytype = mini.getbyName("paytype");
+				paytype.setValue("pay_type_out");
+				var contractid = mini.getbyName("contractid");
+				contractid.setValue("${requestScope['contract_info.id']}");
+			},
+			confirmCopyCallBack:function(miniTable,rows){
+				var newRows = [];
+				var datas = miniTable.getData();
+				var temp=0;
+				for(var j = 0 ; j< datas.length;j++){
+					var data = datas[j];
+						if(Number(data.paymentid) > temp){
+							temp = Number(data.paymentid);
+						}
+				}
+				for(var i = 0 ; i< rows.length;i++){
+					var row = mini.clone(rows[i]);
+					row.paymentid = ++temp;
+					newRows.push(row);
+				}
+			   miniTable.addRows(newRows, 0); 
+			   miniTable.saveDataToInput();
+			},
+			validateForm:function (miniTable, miniForm, editFormItemOperFlag, addIndex){
+				/* var rowDatas = miniTable.getData();
+				var list = Number(mini.getbyName("list").getValue());
+				var date = mini.getbyName("date").getValue().format("yyyy-MM-dd");
+				var datetime=new Date(date).getTime();
+				for(var i=0;i<rowDatas.length;i++){
+					var tmpdate=Number(new Date(rowDatas[i].date).getTime()) ;
+					var tmplist=Number(rowDatas[i].list);
+					if(tmplist<list&&tmpdate>=datetime){
+						mini.alert("日期设置不合法！！");
+						return false;
+					}else if(tmplist>list&&tmpdate<=datetime){
+						mini.alert("日期设置不合法！！");
+						return false;
+					}
+				}
+				var leaseamtdate=mini.get("leaseamtdate").getValue().format("yyyy-MM-dd");//付款日
+				var startdate=mini.get("startdate").getValue().format("yyyy-MM-dd");//起租日
+				var leaseamtdatetime=new Date(leaseamtdate).getTime();
+				var startdatetime=new Date(startdate).getTime();
+				if(datetime<leaseamtdatetime||datetime>startdatetime){
+					mini.alert("租前息收款日期必须介于付款日和起租日之间！！");
+					return false;
+				}*/
+				return true; 
+			},
+			columns: [
+				{type: 'indexcolumn'},
+				{type: 'checkcolumn'},
+				{field: 'id', header: 'id', visible: false},
+				{field: 'docid', header: 'docid', visible: false},
+				{field: 'contractid', header: '合同号',visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						required: true,
+						fieldVisible:false,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paymentid', header: '期次',
+					formEditorConfig:
+					{
+						type:'int',
+						required: true,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'plandate', header: '投放日期',dateFormat :"yyyy-MM-dd",
+					formEditorConfig:
+					{
+						type:'date',
+						required: true,
+						labelWidth:100,
+						width: 200,
+						format:'yyyy-MM-dd'
+					}
+				},
+				{field: 'planmoney', header: '投放金额',dataType : "currency",summary : true,align:'right',
+					formEditorConfig:
+					{
+						type:'thousand',
+						newLine:true,
+						required: true,
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'feetypename', header: '款项名称',visible: false},
+				{field: 'feetype', header: '款项名称',visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						fieldVisible:false,
+						required: true,
+						defaultValue:'feetype10',
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paytypename', header: '收付方向', visible: false},
+				{field: 'paytype', header: '收付方向', visible: false,
+					formEditorConfig:
+					{
+						readOnly:true,
+						fieldVisible:false,
+						required: true,
+						defaultValue:'pay_type_out',
+						labelWidth:100,
+						width: 200
+					}
+				},
+				{field: 'paycust', header: '收付对象',  visible: false,
+			       formEditorConfig:{
+		                width: 400,
+		                fieldVisible:false,
+		                colspan:3,
+		                type:'queryinput',
+		             	required: false,
+		            	textField: 'paycustname',
+		           		valueField: 'paycust',
+		           		allowInput: false,
+		               	params: {xmlFileName: '/eleasing/workflow/rent/rent_cal/fund_fund_pay_obj.xml'}
+				  }
+				},
+				{field: 'paycustname', header: '收付对象',visible: false
+				},
+				{field:'fundtypename', header:'类型', 
+				      formEditorConfig:{
+				          fieldVisible:false,
+				     fillFromFieldName:'fundtype',
+				          fillProperty:'name',
+			           entityClassName:'com.tenwa.business.entity.DictionaryData',	
+				 entityHeaderFieldName:'name'}},
+				{field: 'fundtype', header: '类型', visible:false,
+					  formEditorConfig:{
+				                  type:'combobox',
+				              required:true,
+				              newLine:false,
+				             textField:'name',
+				            valueField:'value',
+				          fieldVisible:true,
+				    params:{pid: 'fund_type', xmlFileName:'combos/comboDict.xml'}}
+				},
+				{field: 'fpnote', header: '备注',
+					formEditorConfig:
+					{
+						type:'textarea',
+						newLine:true,
+						labelWidth:100,
+						height:70,
+						colspan:3,
+						width: 478
+					}
+				}
+			]
+		});
+	});
+});
+
+
+
+
+</script>
+<div id="id_fund_put_config"></div>

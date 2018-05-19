@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+合同资金计划的合同计，
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+	           
+ 				select ci.id,ci.contract_id contractid,ci.contract_number contractnumber,ci.project_name projectname,tu.realname_ projmanagename,
+ 				cu.cust_name custname,
+ 				nvl(cp.planmoney,0)planmoney,nvl(cp.factmoney,0)factmoney,nvl(cp.feeadjust,0)feeadjust,nvl(cp.overmoney,0)overmoney
+ 				,
+		        ci.PROJ_MANAGE projmange,
+		        ci.PROJ_DEPT projdept
+ 				from contract_info ci
+                left outer join (
+                select contractid,sum(planmoney) planmoney,sum(factmoney)factmoney,sum(feeadjust)feeadjust,sum(overmoney) overmoney
+                from vi_contract_fund_fund_plan
+                where 1=1 
+                /~paytype: and  paytype='{paytype}'~/
+                /~isnoequip:and  feetype<>'feetype10'~/
+                group by contractid) cp on ci.id=cp.contractid
+                left outer join t_users tu on tu.id_=ci.proj_manage
+               left outer join cust_info cu on cu.id=ci.cust_id
+                where 1=1
+                and ci.contract_status >=15
+				and ci.contract_status < 100
+                /~contractnumber:and ci.contract_number like '%{contractnumber}%'~/
+				/~projectname:and ci.project_name like '%{projectname}%'~/
+				/~custname:and cu.cust_name like '%{custname}%'~/
+				/~projmanagename:and tu.realname_ like '%{projmanagename}%'~/
+				/~planmoneyMin: and cp.planmoney>={planmoneyMin}~/
+				/~planmoneyMax: and cp.planmoney<={planmoneyMax}~/
+				/~ismaymoney:<<ismaymoney>>~/
+				<EXTRACTEND>order by contractid desc<EXTRACTEND>   
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>default</Data_Authority>
+    </data>
+  </table>
+</table-root>

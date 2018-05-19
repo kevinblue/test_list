@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+		insert into BASE_MESSAGE_TO_USER bm
+  (ID, READ_STATUS, CREATE_DATE, MSG_ID, READ_USER, CREATOR_)
+  select sys_guid(), '1', bm.create_date, bm.id, dd.user_id_, bm.creator_
+    from (select bb.*
+            from BASE_MESSAGE bb
+           where bb.msg_title = '租后现场巡视提醒'
+             and bb.id not in
+                 (select bmtu.msg_id from BASE_MESSAGE_TO_USER bmtu)) bm
+  
+    left join (SELECT ci.proj_manage user_id_, ci.project_name project_name
+                 FROM contract_info ci) dd
+      on instr(to_char(bm.subject_), dd.project_name) > 0
+
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+    </data>
+  </table>
+</table-root>

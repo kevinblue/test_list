@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/~userid: and creator_='{userid}'~/
+
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+			 select * from (
+				select ci.id,ci.cust_name as name,cic.org_code as code,cic.creator_,ci.id as custid,cic.PROVINCE_
+				from cust_info_company cic
+				left join  cust_info ci  on cic.cust_id=ci.id 
+				union all
+				select ci.id,ci.cust_name as name,cip.id_card_no as  code,cip.creator_,ci.id as custid,cip.PROVINCE_
+				from cust_info_person cip 
+				left join cust_info ci  on cip.cust_id =ci.id )
+				  
+				where 1=1 
+				AND PROVINCE_ IN (
+				 	select       
+				    tt.ID  provice	
+					from DUNNING_DISTRICT td
+					left join t_users tu on td.dunning=tu.id_
+				    left join T_DISTRICT tt on td.district=tt.id
+				    WHERE 1=1 /~userid: and tu.ID_='{userid}'~/
+				 ) 
+
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

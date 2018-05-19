@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  -->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+		select 
+    
+      fcad.id as id,
+      
+      fcad.LATE_CAUSE as latecause,
+      fcad.IMPORTANT_MATTERS as importantmatters,
+      fcad.CUST_VISIT as custvisit,
+      fcad.ACCIDENT_LITIGATION_SITUATION accidentlitigationsituation,
+      fcad.LAST_CLASSIFICATION_RESULT lastclassificationresult,
+      fcad.apply_id applyid,
+      
+      fcad.CLASSIFICATION_RESULT classificationresult,
+      tdd.name_ classificationresultname,
+      
+      fcad.ADJUSTMENT_REASON adjustmentreason,
+      openlist.contractid contractno,
+      openlist.contractnumber,
+      openlist.custname,
+      openlist.cardno,
+      openlist.projectname,
+      openlist.projdept,
+      openlist.insideindustryname,
+      openlist.leaseform,
+      openlist.provincename,
+      openlist.projmanage,
+      openlist.startdate,
+      openlist.incomenumber,
+      openlist.currentoverage,
+      openlist.curinterestoverage,
+      openlist.firstrent,
+      openlist.cautionmoney,
+      openlist.out_list,
+      openlist.out_date,
+      openlist.custid,
+       openlist.cid contractid
+      
+      from FIVE_CATEGORY_APPLY_DETAIL fcad
+      right join t_dicts_datas tdd on fcad.classification_result=tdd.id_
+      right join FIVE_CATEGORY_APPLY fca on fca.id=fcad.apply_id
+      right join (select   
+             
+              ci.id  cid,               
+              ci.contract_id contractid, 
+              ci.contract_number contractnumber,                                           
+                cust.cust_name custname,
+                custd.cardno,
+                ci.project_name projectname,
+                tdd1.name_ insideindustryname,
+                tdd2.name_ leaseform, 
+                tu.realname_ as projmanage,
+                --ci.project_name projectname,
+                tdi.name provincename,
+                cd.start_date startdate, 
+                cd.income_number incomenumber, 
+                cd.caution_money cautionmoney,         
+                vcfrp.CURRENTOVERAGE, 
+                vcfrp.CURINTERESTOVERAGE, 
+                vcol.out_list, 
+                vcol.out_date, 
+                (select rent from contract_fund_rent_plan where contract_id=ci.id and rent_list=1) firstrent,  --每期偿还金额      
+                   td.name_ as projdept ,--部门名称
+                   ci.cust_id custid
+            from contract_info ci 
+            left join cust_info cust 
+            on ci.cust_id=cust.id
+            left join CONTRACT_CONDITION  cd
+            on ci.id = cd.contract_id 
+            left join t_users tu on ci.proj_manage=tu.id_
+              left join t_depts td on ci.proj_dept=td.id_ 
+              left join t_dicts_datas  tdd1 on ci.industry_type=tdd1.id_
+              left join t_dicts_datas  tdd2 on ci.leas_form=tdd2.id_
+              left join (
+              
+                   select cust_id,ID_CARD_NO cardno,PROVINCE_ from cust_info_person 
+                   union all 
+                   select cust_id,ORG_CODE cardno,PROVINCE_ from cust_info_company
+                   
+              ) custd on cust.id=custd.cust_id 
+              left join T_DISTRICT tdi on custd.province_=tdi.id
+              left join (select contractid,sum(CURRENTOVERAGE) CURRENTOVERAGE,sum(CURINTERESTOVERAGE) CURINTERESTOVERAGE  from 
+              vi_contract_fund_rent_plan group by contractid) vcfrp on ci.id=vcfrp.CONTRACTID 
+              left join vi_contract_out_list vcol on ci.id=vcol.contract_id
+            where ci.contract_status>=21 and  ci.contract_status<=31) openlist on openlist.cid=fcad.contract_id
+         left join vi_contract_assets_manager vcam on vcam.id=openlist.cid    
+      		
+      	where vcam.dunning_id='{_TENWA_USERID}'
+			
+				 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

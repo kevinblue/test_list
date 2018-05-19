@@ -1,0 +1,224 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>1104报表历史数据查询</title>
+<%@include file="/base/mini.jsp"%>
+    <link href="${pageContext.request.contextPath}/css/jquery-easyui/easyui.css" rel="stylesheet" type="text/css">
+    <link href="${pageContext.request.contextPath}/css/jquery-easyui/icon.css" rel="stylesheet" type="text/css">
+	<link href="${pageContext.request.contextPath}/css/tracywindy/tracywindy.css" rel="stylesheet" type="text/css">
+	<link href="${pageContext.request.contextPath}/css/tracywindy/button.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jquery/jquery.min.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jquery/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyUtils.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyJsonUtil.js"></script>
+</head>
+<body >
+   <div>
+    	<div class="mini-panel" title="1104报表历史数据查询" showCollapseButton="false" style="width: 100%;">
+    	<div id="id_export_message" style="display:none;text-align:center;width:90%;">导出过程中请稍后.....</div>
+    	 	<a class='mini-button query-button' iconCls='icon-search' onclick="search('implement')">实时查询</a>
+		    <a href="javascript:void(0);" class="btn btn-primary" onclick="doExport();"><span>导出</span></a>
+	        <div class="fieldset-body" id="form1">
+	            <table class="miniext-form-table" style="width:95%">
+	                <tr>
+	                <input name="buttondata" id="buttondata" style="display: none" class="mini-textbox" value=""/>
+	                	<td class="miniext-form-td">报表分类：</td>
+	                    <td ><input id="reportclassify" name="reportclassify" class="mini-combobox miniext-form-fit" textField="text"  
+	                     valueField="value"    data="[{text:'月报',value:'0'},{text:'季报',value:'1'},{text:'年报',value:'2'}]"  
+	                      allowInput="false"  onvaluechanged="onreportclassifychanged"   /> </td>
+	                    <td class="miniext-form-td">报表名称：</td>
+		                <td >
+					<input id="reportname" name="reportname" class="mini-combobox miniext-form-fit"   allowInput="false" 
+					    textField="name"   valueField="id"  dataField="datas"
+					    onbeforeshowpopup="onreportnamechanged" />
+		               </td>
+	                    <td class="miniext-form-td">年份：</td>
+	                     <td >
+	                <input  id="reportyear" name="reportyear" class="mini-datepicker miniext-form-fit" format="yyyy"/>
+	                </td>
+	                </tr>   
+	                <tr>
+	                    <td class="miniext-form-td"  id="classify">月份：</td>
+	                    <td>
+	                    <input id="reporttype" name="reporttype" class="mini-combobox miniext-form-fit" textField="name" 
+	                  	   valueField="value"  
+						   allowInput="false" 
+						  />
+	                    </td>
+	                    <td colspan="4">
+	                    	<a class='mini-button query-button' iconCls='icon-search' onclick="search">搜索</a>
+	                    	<a  class='mini-button query-button' onclick="clear" iconCls='icon-remove' style='color:#FFA5A5;border: 1px solid #FFA5A5;'>清空</a>
+	                    </td>
+	                </tr>  
+	            </table>
+	        </div>
+	    </div>
+    </div>
+     <!-- 按钮部分 -->
+    <div id="miniuiextbuttons"></div>
+    <!--撑满页面-->
+    <div class="mini-fit"  id="list_view_div">   
+    </div>
+    <div style="display:none">
+		<iframe id="iframe_export" src="about:blank" style="display:none">		
+		</iframe>
+	</div>
+      <script type="text/javascript">
+      mini.parse();
+      var form = new mini.Form("form1");
+      function validationForm(){
+    	  var flag=false;
+    	  var reportclassify=mini.get("reportclassify").getValue();
+    	  var reportname=mini.get("reportname").getValue();
+    	  if(reportclassify!=''){
+    		    if(reportname==''){
+    		    	mini.alert("请选择报表名称!");
+    	    		  flag=false;
+    		    }else{
+    		    	 flag=true;
+    		    }
+    	  }else{
+   		  mini.alert("请选择报表分类!");
+    		  flag=false;
+    	  }
+    	  return flag;
+      }
+       function search(e) {
+    	   if(!validationForm()){
+    		   return false;
+    	   }
+    	   var yearstr=mini.get("reportyear").getValue();
+    	   var newyear='';
+    	   if(yearstr!=null||yearstr!=''){
+    	    newyear=mini.formatDate(yearstr, "yyyy");
+    	   }
+    	   var data = form.getData();
+    	    if(newyear!=null||newyear!=''){
+    	    	data.reportyear=newyear;
+    	    }
+    	    if(e=='implement'){
+    	    	data.implement=e;
+    	    	mini.get("buttondata").setValue(e);//实时查询
+    	    }else{
+    	    	mini.get("buttondata").setValue("");//历史查询
+    	    }
+    	   $.ajax({
+				url:getRootPath()+"/report/config/queryReportHisData.action",
+				data: data,
+				type: "post",
+				cache: false, 
+				async : false,
+				success:function(result){
+					$("#list_view_div").empty().append(result);
+					   mini.parse();
+		               var grid = mini.get("datagrid1");
+		               var custData = form.getData(true,true);
+		               miniui_ext.addOnEnter("form1");
+		               grid.load(custData);
+				}
+			});
+        }
+        function clear(e) {
+        	form.clear();
+        	custData = form.getData(true,true);
+ 		    grid.load(custData);
+        } 
+        var classify=mini.getbyName("reportclassify").getValue();
+        
+    	function onreportnamechanged(){
+    	    var reportnameCombo = mini.get("reportname");
+    	    var url ="${urlPrefix}/eleasing/jsp/report/report_tablename.xml&reportclassify="+classify;
+    	    reportnameCombo.setUrl(url);
+    	}
+        //客户类型改变时动态获取
+       var datas= new Array();
+       function onreportclassifychanged(){
+    	  classify = mini.getbyName("reportclassify").getValue();
+    	  mini.getbyName("reportname").setText('');
+    	  mini.getbyName("reportname").setValue('');
+    	  if(classify==0){ 
+    		  $("#classify").empty().append("月份");
+    		  mini.getbyName("reporttype").setData("[{value:'01',name:'1月'},{value:'02',name:'2月'},{value:'03',name:'3月'},{value:'04',name:'4月'},"+
+    		                                        " {value:'05',name:'5月'},{value:'06',name:'6月'},{value:'07',name:'7月'},{value:'08',name:'8月'},"+
+    		                                        " {value:'09',name:'9月'},{value:'10',name:'10月'},{value:'11',name:'11月'},{value:'12',name:'12月'}]");
+    	  }else if (classify==1){
+    		  $("#classify").empty().append("季度");
+    		  mini.getbyName("reporttype").setData("[{value:'03',name:'第一季度'},{value:'06',name:'第二季度'},{value:'09',name:'第三季度'},{value:'12',name:'第四季度'}]");
+    	  }else if(classify==2){
+    		  $("#classify").empty().append("上/下半年");
+    		  mini.getbyName("reporttype").setData("[{value:'06',name:'上半年'},{value:'12',name:'下半年'}]");
+    	  }else{
+    		  $("#classify").empty().append("月份");
+    	  }
+       }
+   	function doExport (){
+		var d = new Date();
+		var day = d.getHours();
+		//得到当前报表的数据量
+		var infos = jQuery('.mini-pager-right').html()||"";
+		if(infos==""){alert("导出之前请查询一下。");return false;}
+		var pageReg = /\d+/gi;
+		var nums = infos.match(pageReg);
+		var num = nums[1];
+		//如果数据量小于10000,随时可以下载
+		if(Number(num) <= 50000){
+			$("#id_export_message").show();
+			$("#id_export_button").hide();
+			exportExcel('${pageContext.request.contextPath}/report/export1104Excel.action');
+		}else if(Number(num) > 50000 && Number(num) <=100000){
+			//在上班期间不能下载
+			if((day>=8 && day<12)||(day>=14&&day<18)){
+				alert('抱歉，数据量过大，请在非工作期间下载！');
+				return;
+			}else{
+				$("#id_export_message").show();
+				$("#id_export_button").hide();
+				exportExcel('${pageContext.request.contextPath}/report/export1104Excel.action');
+			}
+		}else{
+			alert('数据量过大，请过滤后下下载！');
+			return;
+		}
+	}
+   	function exportExcel(actionurl){
+   		var exportObjects = new Array();
+   	     var data = form.getData();
+   	     var yearstr=mini.get("reportyear").getValue();
+	     var newyear='';
+	     if(yearstr!=null||yearstr!=''){
+	    newyear=mini.formatDate(yearstr, "yyyy");
+	      }
+	     if(newyear!=null||newyear!=''){
+	    	data.reportyear=newyear;
+	      }
+   	     exportObjects.push(data);
+   		var browser = SysBrowser.getBrowser();
+   		var exportParams = JsonUtil.encode(exportObjects);	
+   		var reportname=mini.get("reportname").getText();
+   		var html = "<form id='form_export' method='post' target='_self' action='"+actionurl+"'>";
+   		html += "<input type='hidden' name='browser' value='"+browser+"'>";
+   		html += "<input type='hidden' name='reportName' value='" + reportname + "'>";
+   		html += "<input type='hidden' name='exportParams' value='" + exportParams + "'>";
+   		html += "</form>";
+   		var exportFrame = jQuery('#iframe_export').contents();
+   		exportFrame.find('body').html(html);
+   		exportFrame.find('#form_export').submit();
+   	}
+	function rebackInfo(){
+		mini.alert('系统繁忙中,请不要导报表');
+		$("#id_export_message").hide();
+		$("#id_export_button").show();
+	}
+	function rebacksuccess(){
+		mini.alert('导出成功！');
+		$("#id_export_message").hide();
+		$("#id_export_button").hide();
+		
+	}
+    </script>
+</body>
+</html>

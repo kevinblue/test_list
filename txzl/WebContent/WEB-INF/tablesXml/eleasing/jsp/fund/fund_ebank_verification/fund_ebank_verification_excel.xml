@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql>   
+      <!--网银余额,已核销金额,网银ID,客户ID,客户名称,网银编号,本方银行,本方账户,本方账号,客户银行,客户账户,客户账号,付款人,
+                    到账金额类型,到账金额,无关金额,租金,非租金,经销商保证金,过程中金额,到账日期,流水号,备注  -->
+	        <![CDATA[
+	        
+	        select ttt.* from (
+                        SELECT DISTINCT FE.ID,
+                                        CI.ID CUSTID,
+                                        CI.CUST_NAME CUSTNAME,
+                                        FE.EBDATA_ID EBDATAID,
+                                        FE.UP_ID UPID,
+                                        OWN_BANK OWNBANK,
+                                        FE.OWN_ACCOUNT OWNACCOUNT,
+                                        FE.OWN_ACC_NUMBER OWNACCNUMBER,
+                                        FE.CLIENT_BANK CLIENTBANK,
+                                        FE.CLIENT_ACCOUNT CLIENTACCOUNT,
+                                        FE.CLIENT_ACC_NUMBER CLIENTACCNUMBER,
+                                        FE.CLIENT_NAME CLIENTNAME,
+                                        FE.MONEY_TYPE MONEYTYPE,
+                                        INFO.CONTRACT_NUMBER CONTRACIDINCOME,
+                                        FE.RENT_LIST_INCOME RENTLISTINCOME,
+                                        FUND.PLAN_DATE PLANDATE,
+                                        NVL(FE.FACT_MONEY, 0) FACTMONEY,
+                                        NVL(FE.NO_WITH_MONEY, 0) NOWITHMONEY,
+                                        NVL(CFRI.RENT, 0) RENT,
+                                        NVL(CFFC.FACT_MONEY, 0) FUNDMONEY,
+                                        NVL(FEP.PROCESS_AMOUNT, 0) FUNDPMONEY,
+                                        FE.FACT_DATE FACTDATE,
+                                        FE.SN SN,
+                                        FE.SUMMARY SUMMARY,
+                                        FE.CREATOR_ AS CREATOR,
+                                        BASE2.REALNAME_ AS CREATOR_NAME,
+                                        SUBSTR(FE.CREATE_DATE,0,10) create_date,
+                                        FE.MODIFICATOR_,
+                                        BASE3.USERNAME_ AS MODIFICATOR_NAME,
+                                        FE.MODIFY_DATE,
+                                        NVL(FE.INVALID_, '否') INVALID,
+                                        ROUND(NVL(FE.FACT_MONEY, 0) -
+                                              NVL(FE.NO_WITH_MONEY, 0) -
+                                              NVL(CFRI.RENT, 0) -
+                                              NVL(CFFC.FACT_MONEY, 0) -
+                                              NVL(FEP.PROCESS_AMOUNT, 0),
+                                              2) OWMONEY,
+                                        ROUND(NVL(CFRI.RENT, 0) +
+                                              NVL(CFFC.FACT_MONEY, 0) +
+                                              NVL(FEP.PROCESS_AMOUNT, 0),
+                                              2) HIREMONEY
+                          FROM FUND_EBANK_DATA FE 
+                          LEFT JOIN CONTRACT_INFO INFO ON INFO.ID=FE.CONTRACT_ID_INCOME 
+                          LEFT JOIN CONTRACT_FUND_RENT_PLAN FUND ON FUND.CONTRACT_ID=fE.CONTRACT_ID_INCOME AND FUND.RENT_LIST=FE.RENT_LIST_INCOME 
+                          LEFT JOIN T_USERS BASE2 ON FE.CREATOR_ = BASE2.ID_
+                          LEFT JOIN T_USERS BASE3 ON FE.MODIFICATOR_ = BASE3.ID_
+                          LEFT JOIN CUST_INFO CI ON CI.ID = FE.CUST_ID
+                          LEFT JOIN 
+                          (
+                            SELECT EBANK_NUMBER,
+                                   SUM(FACT_MONEY) FACT_MONEY
+                            FROM CONTRACT_FUND_FUND_CHARGE
+                            GROUP BY EBANK_NUMBER
+                          ) CFFC ON (CFFC.EBANK_NUMBER = FE.ID)
+                          LEFT JOIN 
+                          (
+                            SELECT EBDATA_ID,
+                                   SUM(PROCESS_AMOUNT) PROCESS_AMOUNT
+                            FROM FUND_EBANK_PROCESS
+                            WHERE WORK_FLAG = 0
+                            and process_name!='网银批量核销'
+                            GROUP BY EBDATA_ID
+                           ) FEP ON (FEP.EBDATA_ID = FE.ID)
+                          LEFT JOIN 
+                          (
+                            SELECT EBANK_NUMBER,
+                                   NVL(SUM(RENT), 0) + NVL(SUM(PENALTY), 0) RENT
+                            FROM CONTRACT_FUND_RENT_INCOME
+                            GROUP BY EBANK_NUMBER
+                           ) CFRI ON (CFRI.EBANK_NUMBER = FE.ID)
+
+                        where 1=1  
+                         and fe.INVALID_='否'
+                         and NVL(FE.NO_CONTRACT,1)=1	--非暂收款
+                     /* and                      ROUND(NVL(CFRI.RENT, 0) +
+                                              NVL(CFFC.FACT_MONEY, 0) +
+                                              NVL(FEP.PROCESS_AMOUNT, 0),
+                                              2) <=0
+                                              */
+                                            --  and nvl(fe.contract_id_income,'ee')<>'ee'
+                      /~invalid: AND  FE.INVALID_={invalid} ~/
+                      /~cid: AND CI.ID='{cid}'~/
+                      /~custordealer: AND (CI.ID='{cid}' or FE.CUST_ID='{did}')~/
+                      /~hasMoney: 
+                      		AND ROUND(
+                      				NVL(FE.FACT_MONEY, 0) -
+                                    NVL(FE.NO_WITH_MONEY, 0) -
+                                    NVL(CFRI.RENT, 0) -
+                                    NVL(CFFC.FACT_MONEY, 0) -
+                                   
+                                    NVL(FEP.PROCESS_AMOUNT, 0)
+                                 ,2)>0
+                      ~/
+                      /~sn: AND FE.SN like '%{sn}%' ~/ 
+                      /~clientname: AND FE.CLIENT_NAME like '%{clientname}%' ~/
+                      /~custname: AND CI.CUST_NAME like '%{custname}%'~/
+                      /~factdate_start: AND FE.FACT_DATE>='{factdate_start}' ~/
+                      /~factdate_end: AND FE.FACT_DATE<='{factdate_end}' ~/
+                      ORDER BY CI.CUST_NAME DESC,FE.ID
+                      ) ttt
+                      where 1=1 and owmoney>0
+                       /~ebdataid: AND EBDATAID like '%{ebdataid}%' ~/
+                        /~custname: AND CUSTNAME like '%{custname}%' ~/
+                         /~clientname: AND CLIENTNAME like '%{clientname}%' ~/
+                         /~sn: AND SN like '%{sn}%' ~/
+                         /~factmoney: AND FACTMONEY like '%{factmoney}%' ~/
+                         /~factdate_start: and factdate>='{factdate_start}' ~/
+                         /~factdate_end: and factdate<='{factdate_end}' ~/
+                         /~factdate: and factdate='{factdate}' ~/        
+       ]]> 
+    </table_sql>
+    </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

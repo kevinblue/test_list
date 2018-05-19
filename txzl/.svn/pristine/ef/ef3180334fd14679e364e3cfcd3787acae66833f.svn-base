@@ -1,0 +1,158 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<script>
+jQuery(function(){
+	var showTools = true;
+	if('${param.isView}' == 'true'){showTools = false;};
+	seajs.use([ "js/apcomponent/aptable/aptable.js" ], function(ApTable) {
+		new ApTable({
+			id:"todo_regulating_of_breathing",
+			renderTo:"id_todo_regulating_of_breathing",
+			width:globalClientWidth - 50,
+			height:600,
+			lazyLoad:false,
+			isClickLoad:false,
+			remoteOper :false,
+			showPager:true,
+			pageSize : 500,//每页显示几条数据
+			showToolbar:showTools,
+			multiSelect:true,
+			xmlFileName:'/eleasing/workflow/rent/regulating_breathing/todo_regulating_breathing_list_new.xml',
+			tools :[
+						{
+							html:'调息',
+							plain:true,
+							iconCls:'icon-addfolder',
+							handler:function(miniTable, buttonText) {
+								var rowDatas = miniTable.getSelecteds();
+				        		 if(rowDatas.length == 0){
+				        			// jQuery.messager.alert('错误提示',"<div style='font-size:18px;line-height:30px;'>请选择需要调息的合同</div>",'error');
+				        			 mini.alert("请选择需要调息的合同");		
+				        		 }else {
+				        			 todoTX(rowDatas);
+				        		 }
+							
+							}
+						}],
+			params:{adjustid:"${requestScope['fund_standard_interest.id'] }",docid:flowUnid},
+		    columns:[
+					{type:'indexcolumn'}, 
+					{type:'checkcolumn'},
+					{header:'id',field:'id', visible:false},
+					{header:'proj_id',field:'projid', visible:false},
+					{header:'custid',field:'custid', visible:false},
+					{header:'docid',field:'docid', visible:false},
+					{header:'合同号',field:'contractid',width:100,queryConfig:{}},
+					{header:'业务合同号',field:'contractnumber',width:150,queryConfig:{}},
+					{header:'客户名',field:'custname',width:200,queryConfig:{isNewLine:true}},
+					{header:'设备款',field:'equipamt',queryConfig:{}},
+					{header:'首付款',field:'firstpayment'},
+					{header:'还租次数',field:'incomenumber'},
+					{header:'付租类型',field:'incomenumberyear'},
+					{header:'付租方式',field:'periodtype'},
+					{header:'起租日期',field:'startdate'},
+					{header:'利率',field:'yearrate',visible : false},
+					{header:'内部收益率',field:'irr'},
+					{header:'利率浮动类型',field:'ratefloattypename'},
+					{header:'调息生效节点',field:'adjuststylename'},
+		            {header:'操作',align:'center',width:120,
+						     renderer:function(e){
+						             var id = e.record.id;
+		                             return "<a href='javascript:void(0);' onclick='viewShowCondition(\""+id+"\")'>当前商务条件查看</a>";}}
+	        ]
+		});});});	
+//查看商务条件
+function viewShowCondition(contractId){
+	var adjusttype = $("#adjusttype").val();//根据adjusttype确定租金计划从哪张表获取
+	var URL = getRootPath()+"/leasing/selectContractCondition.action?contractid="+contractId+"&adjusttype="+adjusttype;
+    openFullScreenWindow(URL);
+}
+var isContinue=true;//控制循环是否继续
+var c;
+//总循环控制调息
+function todoTX(rowDatas){
+	if(confirm("确认对选中合同进行调息?")){
+		isContinue=true;
+		c=rowDatas.length;
+		
+		jQuery("#msgButtonText").html("停止请求");//设置控制按钮
+		
+		shwoMessageWindwos();//显示操作信息层
+		
+		for(var i=0;i<rowDatas.length&&isContinue;i++){
+			showMsg(rowDatas[i]["contractnumber"]+"开始请求调息!");
+			doSendTX(rowDatas[i]["id"],rowDatas[i]["contractnumber"]);//调用调息ajax
+		}
+	}
+}
+
+//显示操作信息层
+function shwoMessageWindwos(){
+	mini.get("id_station_message").show();
+    mini.unmask(document.body);
+    
+}
+function msgButton(){
+	if(isContinue){
+		if(confirm("确认中断调息吗?")){
+			isContinue=false;
+			showMsg("调息被人为中断!");
+			jQuery("#msgButtonText").html("关闭");//设置控制按钮
+			
+			return;
+		}
+	}else{
+		//把信息写入富文本域
+		var msg=jQuery("#msg_memo").html();
+		while(msg.indexOf("<br>")>=0){
+			msg=msg.replace("<br>","\n");
+		}
+		jQuery("#tx_text_memo").val(jQuery("#tx_text_memo").val()+msg);
+		jQuery("#msg_memo").html("");
+		//重新加载列表
+		mini.get("todo_regulating_of_breathing").load();
+		mini.get("current_regulating_of_breathing").load();
+		
+		mini.get("id_station_message").hide();
+	}
+}
+//往控制台显示消息
+function showMsg(msg){
+	msg="-------------------------------------------------------------------------<br>"+msg+"<br>";
+	jQuery("#msg_memo").html(jQuery("#msg_memo").html()+msg);
+}
+//发contract——id 到后台调用调息函数
+function doSendTX(cid,contractNumber){
+	var adjusttype = $("#adjusttype").val();
+	ajaxRequest({
+	     url:"${pageContext.request.contextPath}/leasing/acl/addAdjustinterest.acl",
+	     params:{adjustid:"${requestScope['fund_standard_interest.id'] }",docid:flowUnid,contractid:cid,adjusttype:adjusttype},
+	     timeout:30*1000,
+	     async:true,//改为同步请求
+	     success:function(res){
+	 		res=res.responseText;
+	 		res=res.replace(/(^\s+)|(\s+$)/g, ""); 
+	 		showMsg(contractNumber+"调息请求成功!反馈如下["+res+"]");
+	 		txBackFun(cid);
+	     },
+	     failure:function(res){
+	    	res=res.responseText;
+	 		res=res.replace(/(^\s+)|(\s+$)/g, "");
+	 		showMsg("<strong id='red'>"+contractNumber+"调息请求失败!反馈如下["+res+"]</strong>");
+	 		txBackFun();
+	     }
+	});
+}
+function txBackFun(id){
+	c--;
+	if(c<=0){
+		isContinue=false;
+		jQuery("#msgButtonText").html("关闭");//设置控制按钮
+	}
+	if(id){
+		jQuery("#id_adjust_contractids").val(jQuery("#id_adjust_contractids").val()+(jQuery("#id_adjust_contractids").val()==""?"":",")+id);
+	}
+}
+</script>
+
+<div id="id_todo_regulating_of_breathing"></div>

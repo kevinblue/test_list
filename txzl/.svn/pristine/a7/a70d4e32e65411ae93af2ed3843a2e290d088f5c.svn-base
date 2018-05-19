@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[		   
+             select 
+             	ci.id id,
+             	pi.proj_id projid,
+				ci.contract_id contractid, --项目编号
+				ci.project_name projectname,  --项目名称
+				ci.proj_manage projmanage,
+				(select tu.realname_ from t_users tu where tu.id_=ci.proj_manage) manager, --项目经理
+				ci.proj_impoter projimpoter,
+				(select t.realname_ from t_users t where t.id_=ci.proj_impoter) impoter, --项目导入人
+				ci.proj_dept projdept,
+				(select td.name_ from t_depts td where td.id_=ci.proj_dept) deptname,    --业务部
+				ci.leas_form leasform,
+				(select tdd.name_ from t_dicts_datas tdd where tdd.id_=ci.leas_form) leasformname,-- 业务类型
+				cg.assuror assuror, --担保人
+				(select vcia.custname from vi_cust_info_all vcia where vcia.custid = cg.assuror) assurorname,
+				ge.guarantor guarantor,    --其他担保
+				cc.start_date startdate,   --起租日
+				nvl(vc.rentmoney,0) rentmoney,  --租金金额     
+				cp.plandate plandate,  --首次逾期时间
+				col.incrent incrent,    --逾期金额
+				'' sendtime --催收函/律师函发送时间
+				from contract_info ci
+				left join proj_info pi on ci.proj_id=pi.id
+				left join (select distinct
+						cgm.contract_id contractid,cgm.assuror assuror 
+						from contract_guarantee_method cgm ) cg on ci.id=cg.contractid 
+				left join (select cge.contract_id contractid,wm_concat(cge.guarantor) guarantor from contract_guarantee_equip cge group by cge.contract_id) ge
+				on ci.id=ge.contractid
+				left join contract_condition cc on ci.id=cc.contract_id
+				left join (select vcfrp.CONTRACTID contractid,nvl(sum(vcfrp.RENT),0) rentmoney from vi_contract_fund_rent_plan vcfrp group by vcfrp.CONTRACTID) vc
+				on ci.id=vc.contractid
+				left join (select vcp.contract_id contractid,min(vcp.plan_date) plandate from vi_contract_penalty vcp where vcp.penalty>0 group by vcp.contract_id) cp
+				on ci.id=cp.contractid
+				left join (select vcol.contract_id contractid,nvl(nvl(vcol.rent,0)-nvl(vcol.inc_rent,0),0) incrent from vi_contract_out_list vcol) col
+				on ci.id=col.contractid
+				--left join vi_cust_info_all vcia on vcia.custid = cg.assuror
+				where ci.id='{contractid}'
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 筛选： 1 设备款未投放完毕       2 合同审批通过 状态 >=21  <31
+ 字段说明：
+ 未收资金合计 = 应收资金合计 - 已收资金合计 - 调整资金合计
+-->
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+     <alldb>
+      <table_sql> 
+	        <![CDATA[
+ 				select info.id
+		        ,info.contract_status
+		        ,info.contract_id contractid
+		        ,info.contract_number contractnumber
+		        ,info.project_name projectname
+		         ,us.realname_ projmanagename
+		        ,cust.cust_name custname
+		        ,proj.proj_id projid,
+		        info.proj_dept projdept,info.proj_manage projmanage
+		         
+		         from contract_info  info 
+		         
+		        left join proj_info proj on info.proj_id=proj.id
+		         
+		        left join cust_info cust on info.cust_id=cust.id
+		        
+		        left join t_users us on us.id_=info.proj_manage
+		        
+				where 1=1
+				and info.business_type='business_type.lease'
+				and info.contract_status >=21
+				AND INSTR(FN_CONTRACT_BELONGINGS(info.ID),'{_TENWA_USERID}')>0
+				--and info.contract_status < 31
+				--配置参数查sql
+                /~projid: and proj.proj_id    like replace('%{projid}%',' ','') ~/ 
+                /~projectname: and info.project_name     like replace('%{projectname}%',' ','') ~/ 
+                /~custname: and cust.cust_name    like replace('%{custname}%',' ','') ~/ 
+                /~projmanagename: and us.realname_     like replace('%{projmanagename}%',' ','') ~/ 
+                /~contractnumber: and info.contract_number    like replace('%{contractnumber}%',' ','') ~/ 
+				<EXTRACTEND>order by contractid desc<EXTRACTEND>   
+				
+		   ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+      <Data_Authority>true</Data_Authority>
+    </data>
+  </table>
+</table-root>

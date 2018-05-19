@@ -1,0 +1,261 @@
+
+ /**
+ * 项目名称：    系统名称
+ * 包名：              com.tenwa.business.job
+ * 文件名：         QuartzJobTest.java
+ * 版本信息：    1.0.0
+ * 创建日期：     2013-2-21-上午11:00:16
+ * Copyright：2013XX公司-版权所有
+ **/
+
+package com.tenwa.business.job;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
+import com.tenwa.business.entity.BaseMessage;
+import com.tenwa.business.entity.BaseMessageToUser;
+import com.tenwa.business.entity.DictionaryData;
+import com.tenwa.business.entity.User;
+import com.tenwa.business.service.BaseService;
+import com.tenwa.kernal.annotation.QuartzJob;
+import com.tenwa.kernal.utils.DateUtil;
+import com.tenwa.kernal.utils.WebUtil;
+import com.tenwa.leasing.entity.fund.ContractFundPaymentInterfaceLog;
+import com.tenwa.leasing.utils.DataBaseManager;
+
+
+ /**
+ * 类名称：     QuartzJobPaymentUpdate
+ * 类描述：     
+ * 创建人：     Administrator
+ * 修改人：     Administrator
+ * 修改时间：2017-3-8 下午11:00:16
+ * 修改备注：
+ * @version 1.0.0
+ **/
+@QuartzJob(description="CBS付款更新")
+public class QuartzJobPaymentUpdate implements Job {
+
+	/**
+	 * (non-Javadoc)
+	 * @see org.quartz.Job#execute(org.quartz.JobExecutionContext)
+	 **/
+
+	@Override
+	public void execute(JobExecutionContext arg0) throws JobExecutionException {
+		//使用spring的事物
+		BaseService baseService = (BaseService)WebUtil.getApplicationContext().getBean("baseService");
+        //使用springAOP事物管理的service做一些事情
+		System.out.println(">>>当前时间:"+DateUtil.getSystemDateTime());
+		List<ContractFundPaymentInterfaceLog>  loglist=null;
+		Map<String,Object>  allmap=new HashMap<String,Object>();
+		allmap.put("paymentStatus", "A");
+		try {
+			loglist=baseService.findEntityByProperties(ContractFundPaymentInterfaceLog.class,allmap);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		DataBaseManager  dbm=DataBaseManager.getInstance();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		//String  secSql="select * from contract_payment_interface";
+		ResultSet  result=null;
+		int num=0;
+		String str="";
+		try {
+			conn = dbm.getConnection();
+			result=executeSelectSql(loglist, conn, ps);
+			this.updatePaymentStatus(result, baseService);
+			str="更新成功";
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			str="更新失败";
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			str="更新失败";
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+					conn = null;
+				}
+			}
+
+		}
+	}
+	/**
+	 * 查出中间表状态不为A，但 erp_payment_id 值和日志表相等的结果集
+	 * @param loglist
+	 * @param conn
+	 * @param ps
+	 * @return
+	 * @throws Exception
+	 */
+	private ResultSet executeSelectSql(List<ContractFundPaymentInterfaceLog>  loglist,Connection conn,PreparedStatement ps) throws Exception{
+		String  query="";
+		for(int i=0;i<loglist.size();i++){
+			query=query+"'"+loglist.get(i).getErpPaymentId()+"'";
+			if(i<(loglist.size()-1)){
+				query=query+",";
+			}
+		}
+		String  secSql="select * from CBS_AUTHCRIZATICH_TO_FAYHENT c where  c.record_status!='A' and c.erp_payment_id in (" +query +" )";
+		ps=conn.prepareStatement(secSql);
+	    ResultSet resultset=ps.executeQuery();
+		return resultset;
+		
+	}
+	
+	/**
+	 * 更新本地日志付款状态---要么成功，要么失败
+	 * @param resultset
+	 * @throws Exception
+	 */
+	private void updatePaymentStatus(ResultSet  resultset,BaseService baseService) throws Exception{
+		List<ContractFundPaymentInterfaceLog>  loglist0=new ArrayList<ContractFundPaymentInterfaceLog>();
+		List<ContractFundPaymentInterfaceLog>  loglist=null;
+		if(resultset!=null){
+			ContractFundPaymentInterfaceLog  log0=null;
+			while(resultset.next()){	
+				String paystatus=resultset.getString("record_status");
+				String reason=resultset.getString("reason");
+				String erp_payment_id=resultset.getString("erp_payment_id");
+				Map<String,Object>  map=new HashMap<String,Object>();
+				map.put("erpPaymentId",erp_payment_id);
+				loglist=baseService.findEntityByProperties(ContractFundPaymentInterfaceLog.class, map);
+					if(loglist.size()>0){
+						log0=loglist.get(0);
+						//返回付款状态，如果失败会返回错误原因
+						log0.setPaymentStatus(paystatus);
+						log0.setErrorReason(reason);
+						loglist0.add(log0);
+					}				
+			}
+			if(loglist0.size()>0){
+				baseService.updateAllEntities(loglist0);
+				remindPayment(loglist0,baseService);
+			}
+		}
+
+	}
+	/**
+	 * 此方法过时，也是更新付款状态信息
+	 * @param loglist
+	 * @param resultset
+	 * @param baseService
+	 * @return
+	 * @throws Exception
+	 */
+	private  int  updatePayment(List<ContractFundPaymentInterfaceLog>  loglist,
+			ResultSet  resultset,BaseService baseService) throws Exception{
+		int num=0;
+		List<ContractFundPaymentInterfaceLog>  loglist0=new ArrayList<ContractFundPaymentInterfaceLog>();
+		if(loglist.size()>0&&resultset!=null){
+				for(int i=0;i<loglist.size();i++){
+					resultset.first();
+					ContractFundPaymentInterfaceLog  log=loglist.get(i);
+					String logid=log.getId();
+					String erp_payment_id=log.getErpPaymentId();
+					ContractFundPaymentInterfaceLog  log0=null;
+					log0=baseService.findEntityByID(ContractFundPaymentInterfaceLog.class, logid);
+				   // String paystatus=resultset.getString(2);			
+						do{	
+							String paystatus=resultset.getString("record_status");
+							String reason=resultset.getString(resultset.findColumn("error_reason"));
+							if(erp_payment_id.equals(resultset.getString(resultset.findColumn("erp_payment_id")))){	
+								num++;							
+								//返回付款状态，如果失败会返回错误原因
+								log0.setPaymentStatus(paystatus);
+								log0.setErrorReason(reason);
+								loglist0.add(log0);						
+								break;
+							}
+						}while(resultset.next());			
+				}
+				baseService.updateAllEntities(loglist0);	
+		
+		}
+		remindPayment(loglist0, baseService);
+		return num;
+	}
+	
+	/**
+	 * 根据查出来的更新的集合来发送成功与失败的提醒
+	 * @param loglist
+	 * @param baseService
+	 * @throws Exception
+	 */
+	private  void  remindPayment(List<ContractFundPaymentInterfaceLog>  loglist,BaseService baseService) throws Exception{
+		
+		ContractFundPaymentInterfaceLog  obj=null;
+		for(int i=0;i<loglist.size();i++){
+			obj=loglist.get(i);
+			String message="";
+			String mstitle="";
+			if("S".equals(obj.getPaymentStatus())){
+				mstitle="付款成功提醒";
+				message="合同号为："+obj.getPaymentContractId()+"，流程号为："+obj.getPaymentProcessId()+"付款成功";
+			}else if("F".equals(obj.getPaymentStatus())){
+				mstitle="付款失败提醒";
+				message="合同号为："+obj.getPaymentContractId()+"，流程号为："+obj.getPaymentProcessId()+"付款失败";
+			}else{
+				continue;
+			}
+			
+			//获取当前系统时间
+			Date now = new Date(); 
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");//可以方便地修改日期格式
+			String sysDate = dateFormat.format( now ); 
+			User user=new User();
+			user=baseService.findEntityByID(User.class, "Administrator");
+			BaseMessage bm=new BaseMessage();
+			bm.setMsgTitle(mstitle);  //提醒标题
+			bm.setMsgText(message);		 //提醒消息正文
+			bm.setSendDate(sysDate);     //发布时间
+			bm.setCreateDate(sysDate);   //创建时间
+			DictionaryData dda=new DictionaryData();
+			dda.setName("msgtype.1");
+			bm.setMsgType(dda);
+			bm.setFromUser(user);
+			bm.setCreator(user);
+			baseService.saveEntity(bm);
+			String id=bm.getId();
+			BaseMessageToUser bmu=new BaseMessageToUser();
+
+			bmu.setMsgID(bm);
+			
+			//User  user0=tableService.findEntityByID(User.class, obj.getString("payment_userid"));
+			// 当前用户信息
+			//User user0 = (User) SecurityUtil.getPrincipal();
+			User user0=obj.getCreator();
+			bmu.setReadUser(user0);//消息接收人--发起人
+			bmu.setReadStatus("1");
+			bmu.setCreateDate(sysDate);
+			bmu.setCreator(user0);
+			baseService.saveEntity(bmu);
+		}
+		
+	}
+
+}

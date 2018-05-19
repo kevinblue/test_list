@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	  select tdd.name_ rentinvoicetype,(select name_ from t_dicts_datas td where td.id_=list.rent_rate) rentrate,
+	  list.* from (
+        select 
+        planrent.cid,
+        planrent.id            as id,
+        planrent.plan_id       as pid,
+        rii.id                 as rentinvoicid,
+        planrent.contractid    as contractid,
+        planrent.CONTRACTNUMBER,
+        cinfo.cust_name        as custname,
+        planrent.rentlist      as rentlist,
+        ''      as plandate,
+        planrent.planmoney     as planmoney,
+        planrent.hiredate      as incomedate,
+        planrent.plantype      as plantypeid,
+        '罚息'                 as plantype,
+        planrent.planmoney     as incomemoney,
+        planrent.invoice_type     as rentinvoicetypeid,
+        ri.rent_rate,     --税率       
+        planrent.taxregcode    as taxregcode,
+        planrent.taxbank||' '||planrent.taxacc      as taxbank,
+        planrent.taxacc        as taxacc,
+        planrent.phone         as phone,
+        planrent.regaddress||' '||planrent.phone   as regaddress,
+  
+        case when nvl(rii.invoice_status,0)=0  then '未申请' 
+        when nvl(rii.invoice_status,0)=1   then '已退回' 
+        when nvl(rii.invoice_status,0)=2   then '已申请' 
+        when nvl(rii.invoice_status,0)=-1  then '不开票' end as status,
+        planrent.LEASEFORM
+        from 
+        (
+          --罚息开票
+          select 
+          ci.id as cid,
+          ci.leas_form as leasform,
+          cit.tax_reg_type as taxregtype,
+          cit.received_invoice_type as received,
+          cfri.id as id,
+          cfri.plan_id,
+          ci.contract_id    as contractid,
+          CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+          ci.cust_id        as cust_id,
+          cfri.plan_list    as rentlist,
+          cfri.hire_date    as hiredate,
+          'penalty'        as plantype,
+          cit.invoice_type     as invoice_type,
+          cfri.penalty         as planmoney,
+          cit.tax_reg_code  as taxregcode,
+          cit.tax_bank      as taxbank,
+          cit.tax_acc       as taxacc,
+          cit.invoice_phone as phone,
+          cit.invoice_add   as regaddress,
+          TDS.NAME_         AS LEASEFORM
+          from contract_fund_rent_income cfri
+          left join contract_info ci on cfri.contract_id=ci.id
+          left join contract_condition cc on ci.id=cc.contract_id
+          left join contract_invoice_type cit on ci.id=cit.contract_id
+          left join t_dicts_datas tds on ci.leas_form = tds.id_
+          where  ci.contract_status>=31 and nvl(cfri.penalty,0)>0  and nvl(cfri.roll_back,0)=0 
+          
+        ) planrent 
+          
+        left join t_dicts_datas tds1 on planrent.invoice_type=tds1.id_
+        left join cust_info cinfo on planrent.cust_id=cinfo.id
+        left join rent_invoice_info rii on planrent.id=rii.cfri_id  and planrent.plantype=rii.tax_type and   rii.bill_type='invoice'
+        left join 
+        (
+          select count(rii2.id) submitnum,cfri.id  from contract_fund_rent_income cfri 
+          left join rent_invoice_info rii2 on cfri.id=rii2.cfri_id  and rii2.bill_type='invoice'
+          left join rent_invoice_download_info ridi on rii2.ridi_id=ridi.id
+          where nvl(ridi.is_cancel,0)!=0 and nvl(ridi.hc_status,0)!=0 
+          group by cfri.id
+        )chargelist on planrent.id=chargelist.id
+        left join rate_info ri on ri.leas_form =planrent.leasform  and ri.tax_reg_type=planrent.taxregtype and ri.received_invoice_type=planrent.received
+        
+        where 1=1
+        --有效提交记录为0 
+        and nvl(chargelist.submitnum,0)=0
+ 
+     )list left join t_dicts_datas tdd on tdd.id_=list.rentinvoicetypeid
+     where 1=1
+     /~status: and list.status in ('<<status>>') ~/
+     /~contractid: and list.contractid like '%{contractid}%' ~/
+     /~contractnumber: and list.contractnumber like '%{contractnumber}%' ~/
+	 /~custname: and list.custname like '%{custname}%' ~/
+	 /~incomedateStart: and list.incomedate >='{incomedateStart}' ~/
+     /~incomedateEnd: and list.incomedate <='{incomedateEnd}' ~/
+     /~plantype: and list.plantype like '%{plantype}%' ~/
+     /~leaseform: and list.leaseform = '{leaseform}' ~/
+     
+     order by list.contractid,list.rentlist
+     
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

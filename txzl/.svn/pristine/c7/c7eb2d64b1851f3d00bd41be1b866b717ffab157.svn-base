@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data>
+    <alldb>
+      <table_sql> 
+	        <![CDATA[
+	                 select *from (
+          --租金
+           --计划本金一次性开票信息
+              select
+              ci.id as cid,
+              rd.out_no outno,
+              ci.contract_id contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              cinfo.cust_name custname,
+              cc.start_date cdate,
+              cc.equip_amt money,
+              '本金一次性开票' as plantype,
+              tds1.name_   taxlevel,
+              rd.invoice_no invoiceno,
+              rd.invoice_money invoicemoney,
+              rd.invoice_date invoicedate,
+              rd.tax_money as taxmoney,
+              rd.tax_rate as taxrate,
+              rd.tax_bank taxbank,
+              rd.tax_acc taxacc,
+              rd.tax_tel taxphone,
+              rd.TAX_REG_CODE taxregcode,
+              rd.tax_addr taxregadd,
+              case  nvl(rd.is_backimport,0) when '0' then '未回导' when '1' then '已回导' end backstatus,
+              case  nvl(rd.hc_status,0) when '0' then '未红冲' when '1' then '已红冲' when '-1' then '红冲发票' when '2' then '已作废' end hcstatus,
+              nvl(rd.is_cancel,'否') iscancel,
+              rd.exp_user as exportperson,
+              tds2.name_ as leaseform
+              from rent_invoice_download_info rd
+              left join contract_info ci on rd.contract_id=ci.id
+              left join contract_condition cc on ci.id=cc.contract_id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+              left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              where rd.rent_invoice_id is null
+              and rd.is_export='1'
+              --非红冲记录
+              --and nvl(rd.hc_status,0)!=-1
+              
+              union all
+          --计划开票信息
+              select
+              ci.id as cid,
+              rd.out_no outno,
+              ci.contract_id contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              cinfo.cust_name custname,
+              cfrp.plan_date cdate,
+              --case rii.tax_type when 'corpusone' then cfrp.corpus when 'rent' then cfrp.rent when 'corpus' then cfrp.corpus when 'interest' then cfrp.interest end money,
+              rii.money as money,
+              case rii.tax_type when  'corpusone' then '本金一次性开票' when  'rent' then '租金' when  'corpus' then '本金' when  'interest' then '利息'  when 'penalty' then '罚息' end as plantype,
+              tds1.name_   taxlevel,
+              rd.invoice_no invoiceno,
+              rd.invoice_money invoicemoney,
+              rd.invoice_date invoicedate,
+              rd.tax_money as taxmoney,
+              rd.tax_rate as taxrate,
+              rd.tax_bank taxbank,
+              rd.tax_acc taxacc,
+              rd.tax_tel taxphone,
+              rd.TAX_REG_CODE taxregcode,
+              rd.tax_addr taxregadd,
+              case  nvl(rd.is_backimport,0) when '0' then '未回导' when '1' then '已回导' end backstatus,
+              case  nvl(rd.hc_status,0) when '0' then '未红冲' when '1' then '已红冲' when '-1' then '红冲发票' when '2' then '已作废' end hcstatus,
+              nvl(rd.is_cancel,'否') iscancel,
+              rd.exp_user as exportperson,
+              tds2.name_ as leaseform
+              from rent_invoice_download_info rd
+              left join rent_invoice_info rii on rd.rent_invoice_id=rii.id
+              left join contract_fund_rent_plan cfrp on rii.cfrp_id=cfrp.id
+              
+              left join contract_info ci on cfrp.contract_id=ci.id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+              left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              where rii.cfrp_id is not null
+              and rd.is_export='1'
+              --非红冲记录
+              --and nvl(rd.hc_status,0)!=-1
+              
+              union
+            --实收开票信息
+              select
+              ci.id as cid,
+              rd.out_no outno,
+              ci.contract_id contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              cinfo.cust_name custname,
+              cfri.hire_date cdate,
+              --case rii.tax_type when 'corpusone' then cfri.corpus when 'rent' then cfri.rent when 'corpus' then cfri.corpus when 'interest' then cfri.interest end money,  
+              rii.money as money,
+              case rii.tax_type when  'corpusone' then '本金一次性开票' when  'rent' then '租金' when  'corpus' then '本金' when  'interest' then '利息'  when 'penalty' then '罚息' end as plantype,
+              
+              tds1.name_   taxlevel,
+              rd.invoice_no invoiceno,
+              rd.invoice_money invoicemoney,
+              rd.invoice_date invoicedate,
+              rd.tax_money as taxmoney,
+              rd.tax_rate as taxrate,
+              rd.tax_bank taxbank,
+              rd.tax_acc taxacc,
+              rd.tax_tel taxphone,
+              rd.TAX_REG_CODE taxregcode,
+              rd.tax_addr taxregadd,
+              case  nvl(rd.is_backimport,0) when '0' then '未回导' when '1' then '已回导' end backstatus,
+              case  nvl(rd.hc_status,0) when '0' then '未红冲' when '1' then '已红冲' when '-1' then '红冲发票' when '2' then '已作废' end hcstatus,
+              nvl(rd.is_cancel,'否') iscancel,
+              rd.exp_user as exportperson,
+              tds2.name_ as leaseform
+              from rent_invoice_download_info rd
+              left join rent_invoice_info rii on rd.rent_invoice_id=rii.id
+              left join contract_fund_rent_income cfri on rii.cfri_id=cfri.id
+              
+              left join contract_info ci on cfri.contract_id=ci.id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+              left join t_dicts_datas tds2 on ci.leas_form = tds2.id_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              where rii.cfri_id is not null
+              and rd.is_export='1'
+              --非红冲记录
+             -- and nvl(rd.hc_status,0)!=-1
+             --资金
+             union
+             --计划开票信息
+            select
+            ci.id as cid,
+            fdinfo.out_no outno,
+              ci.contract_id contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              cinfo.cust_name custname,
+              cffp.plan_date cdate,
+              cffp.plan_money money,
+              tds.name_  plantype,   --tds.name_ feetype,
+              tds1.name_   taxlevel,
+              fdinfo.invoice_no invoiceno,
+              fdinfo.invoice_money invoicemoney,
+              fdinfo.invoice_date invoicedate,
+              fdinfo.tax_money as taxmoney,
+              fdinfo.tax_rate as taxrate,
+              fdinfo.tax_bank taxbank,
+              fdinfo.tax_acc taxacc,
+              fdinfo.tax_tel taxphone,
+              fdinfo.TAX_REG_CODE taxregcode,
+              fdinfo.tax_addr taxregadd,
+              --fdinfo.ems_no emsno,
+              --fdinfo.send_date sentdate,
+              case  nvl(fdinfo.is_backimport,0) when '0' then '未回导' when '1' then '已回导' end backstatus,
+              case  nvl(fdinfo.hc_status,0) when '0' then '未红冲' when '1' then '已红冲' when '-1' then '红冲发票' when '2' then '已作废' end hcstatus,
+              nvl(fdinfo.is_cancel,'否') iscancel,
+              fdinfo.exp_user as exportperson,
+              TDD2.NAME_        AS LEASEFORM
+              from fund_invoice_download_info fdinfo
+              left join fund_invoice_info fii on fdinfo.fund_invoice_id=fii.id
+              left join contract_fund_fund_plan cffp on fii.cffp_id=cffp.id
+              left join t_dicts_datas tds on cffp.fee_type=tds.id_
+              left join contract_info ci on cffp.contract_id=ci.id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+              LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              where fii.cffp_id is not null
+              and fdinfo.is_export='1'
+              --红冲记录
+               --and nvl(fdinfo.hc_status,0)!=-1
+                
+              union 
+            --实收开票信息
+              select
+              ci.id as cid,
+              fdinfo.out_no outno,
+              ci.contract_id contractid,
+              CI.CONTRACT_NUMBER AS CONTRACTNUMBER,
+              cinfo.cust_name custname,
+              cffc.fact_date cdate,
+              cffc.fact_money money,
+               tds.name_  plantype,--tds.name_ feetype,
+              tds1.name_   taxlevel,
+              fdinfo.invoice_no invoiceno,
+              fdinfo.invoice_money invoicemoney,
+              fdinfo.invoice_date invoicedate,
+              fdinfo.tax_money as taxmoney,
+              fdinfo.tax_rate as taxrate,
+              fdinfo.tax_bank taxbank,
+              fdinfo.tax_acc taxacc,
+              fdinfo.tax_tel taxphone,
+              fdinfo.TAX_REG_CODE taxregcode,
+              fdinfo.tax_addr taxregadd,
+              --fdinfo.ems_no emsno,
+             -- fdinfo.send_date sentdate,
+              case  nvl(fdinfo.is_backimport,0) when '0' then '未回导' when '1' then '已回导' end backstatus,
+              case  nvl(fdinfo.hc_status,0) when '0' then '未红冲' when '1' then '已红冲' when '-1' then '红冲发票' when '2' then '已作废' end hcstatus,
+              nvl(fdinfo.is_cancel,'否') iscancel,
+              fdinfo.exp_user as exportperson,
+              TDD2.NAME_        AS LEASEFORM
+              from fund_invoice_download_info fdinfo
+              left join fund_invoice_info fii on fdinfo.fund_invoice_id=fii.id
+              left join contract_fund_fund_charge cffc on fii.cffc_id=cffc.id
+              left join t_dicts_datas tds on cffc.fee_type=tds.id_
+              left join contract_info ci on cffc.contract_id=ci.id
+              left join contract_invoice_type cit on ci.id=cit.contract_id
+              left join t_dicts_datas tds1 on cit.invoice_type=tds1.id_
+              LEFT JOIN t_dicts_datas TDD2 ON CI.LEAS_FORM = TDD2.ID_
+              left join cust_info cinfo on ci.cust_id=cinfo.id
+              where fii.cffc_id is not null
+              and fdinfo.is_export='1'
+              --红冲记录
+                --and nvl(fdinfo.hc_status,0)!=-1
+          
+            ) tab
+            where 1=1
+            /~contractid: and tab.contractid like '%{contractid}%' ~/
+            /~contractnumber: and tab.contractnumber like '%{contractnumber}%' ~/
+			/~custname: and tab.custname like '%{custname}%' ~/
+			/~plantype: and tab.plantype like '%{plantype}%' ~/
+			/~invoiceno: and tab.invoiceno like '%{invoiceno}%' ~/
+			/~cdateStart: and tab.cdate >='{cdateStart}' ~/
+            /~cdateEnd: and tab.cdate <='{cdateEnd}' ~/
+			/~invoicedateStart: and tab.invoicedate >='{invoicedateStart}' ~/
+            /~invoicedateEnd: and tab.invoicedate <='{invoicedateEnd}' ~/
+            /~backstatus: and tab.backstatus in ('{backstatus}') ~/
+            /~hcstatus: and tab.hcstatus in ('{hcstatus}') ~/
+            /~leaseform: and tab.leaseform = '{leaseform}' ~/
+			 ]]> 
+	  </table_sql>
+	  </alldb>
+      <dataSource>dataSource</dataSource>
+      <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

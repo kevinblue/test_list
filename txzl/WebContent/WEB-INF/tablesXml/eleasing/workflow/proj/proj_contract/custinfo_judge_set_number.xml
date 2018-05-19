@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<table-root 
+  xmlns="http://www.tracywindy.org/table" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.tracywindy.org/table http://www.tracywindy.org/table/table-1.0.xsd">
+  <table>
+    <data> 
+    <alldb>
+	  <table_sql> 
+	        <![CDATA[
+		  (SELECT 
+       CI.ID value,
+       CI.CUST_NAME name,
+        CI.CUST_CLASS custclass
+        FROM CUST_INFO CI
+        left join proj_equip_tmp p on p.vndr=ci.id
+        WHERE NVL(CI.INVALID_, '否') = '否'
+       /~projid: AND p.proj_id ='{projid}' ~/
+       /~docid: AND p.doc_id ='{docid}' ~/
+      )
+       union all
+       
+      ( SELECT 
+       CI.ID value,
+       CI.CUST_NAME name,
+        CI.CUST_CLASS custclass
+        FROM CUST_INFO CI
+        left join proj_guarantee_equip_tmp p1 on p1.GUARANTOR=ci.id
+        WHERE NVL(CI.INVALID_, '否') = '否'
+       /~projid1: AND p1.proj_id ='{projid1}' ~/
+       /~docid1: AND p1.doc_id ='{docid1}' ~/ 
+      )
+       union all
+       
+      ( SELECT 
+       CI.ID value,
+       CI.CUST_NAME name,
+        CI.CUST_CLASS custclass
+        FROM CUST_INFO CI
+        left join proj_guarantee_method_tmp p2 on p2.ASSUROR=ci.id
+        WHERE NVL(CI.INVALID_, '否') = '否'
+       /~projid2: AND p2.proj_id ='{projid2}' ~/
+       /~docid2: AND p2.doc_id ='{docid2}' ~/    
+      )
+       
+       union all
+       
+       ( SELECT 
+       CI.ID value,
+       CI.CUST_NAME name,
+        CI.CUST_CLASS custclass
+        FROM CUST_INFO CI
+        WHERE NVL(CI.INVALID_, '否') = '否'
+       /~cust_id: AND CI.ID ='{cust_id}' ~/)
+       
+       union all
+       
+       ( SELECT 
+       CI.ID value,
+       CI.CUST_NAME name,
+        CI.CUST_CLASS custclass
+        FROM CUST_INFO CI
+        WHERE NVL(CI.INVALID_, '否') = '否'
+         /~limited: AND CI.ID = '{limited}'~/
+      )
+			 ]]> 
+	  </table_sql>
+	   </alldb>
+      <dataSource>dataSource</dataSource>
+	  <show_sql>true</show_sql>
+    </data>
+  </table>
+</table-root>

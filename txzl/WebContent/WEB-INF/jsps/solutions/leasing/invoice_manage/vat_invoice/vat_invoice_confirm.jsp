@@ -1,0 +1,260 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>进项发票确认</title>
+<%@include file="/base/mini.jsp"%>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tenwa/tenwa.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/js/tracywindy/tracywindyAjax.js"></script>
+
+<script type="text/javascript">
+//状态下拉查询
+var statusdata = [{name : '未提交',value : '0'},{name : '已提交',value : "1"},{name : '已确认',value : "2"},{name : '已退回',value : "3"},{name : '全部',value : ""}];
+var toolsFlag = '0';
+jQuery(function(){
+	tenwa.createTable({
+		id: 'vat_invoice_info_confirm',
+		renderTo: 'id_table_container_vat_invoice_info_confirm',
+		width: '100%',
+		height: '100%',
+		lazyLoad: false,
+		entityClassName : 'com.tenwa.leasing.entity.invoice.VatInvoiceInfo',
+		title: "进项发票确认",
+		editFormPopupWindowWidth:700,
+		editFormPopupWindowHeight:250,
+		multiSelect : true,
+		remoteOper: true,
+		showPage: true,
+		hiddenQueryArea : false,
+		pageSize: 20,
+		queryButtonColSpan: 4,
+		params:{invoicestatusname:"1"},
+		xmlFileName: '/eleasing/jsp/invoice_manage/vat_invoice/vat_invoice_record.xml',
+		confirmRemoveCallBack: function(miniTable){
+			var checkedRowDatas = miniTable.getSelecteds();
+			var contractnum = checkedRowDatas[0].contractnum;
+			var sumamt = checkedRowDatas[0].sumamt;
+			if(parseInt(contractnum) > 0 || parseFloat(sumamt) > 0){
+				mini.alert("进项发票已关联到合同请点击修改,删除发票下关联合同");
+				return false;
+			}
+			return true;
+		},
+		showPager : true,//分页按钮是否显示
+		tools: [{
+			html : '确认发票清单',
+			plain : true,
+			iconCls : 'icon-ok',
+			handler : function(miniTable, buttonText) {
+				var checkedRowDatas = miniTable.getSelecteds();
+				var operType = "确认提交";
+				var operTitle = "发票清单";
+				var operAction = "saveVatInvoice";
+				
+				if(0 == checkedRowDatas.length){
+					mini.alert("请选择要"+operType+"的记录！！");
+					return;
+				}
+			    var params = {};
+			    var tempIdArr = [];
+			    for(var i = 0;i<checkedRowDatas.length;i++){
+					var checkedRowdata = checkedRowDatas[i];
+					var invoicestatusname = checkedRowdata.invoicestatusname;
+					if(invoicestatusname != '已提交'){
+						mini.alert("请选择已提交的数据");
+						return;
+					};
+					var id = checkedRowdata.id;
+					tempIdArr.push(id);
+				}
+				params["ids"] = tempIdArr.join(",");
+					
+				if(!window.confirm((operType+"当前"+checkedRowDatas.length+"条记录么？"))) return;
+				var url=getRootPath()+"/acl/"+operAction+".acl";
+				//遮罩
+				mini.mask({
+					el : document.body,
+					cls : 'mini-mask-loading',
+					html : '数据操作中 请稍等...'
+				});
+				jQuery.ajax({
+					url : url,
+					type : 'POST',
+					timeout : 30 * 1000,
+					data : params,
+					dataType : 'json',
+					error : function(res, errInfo, e) {
+						mini.unmask(document.body);
+					},
+					success : function(resultJson) {
+						var returnState = resultJson.returnType;
+						switch (returnState) {
+						case "SUCCESS": {
+							miniTable.reload();
+							mini.unmask(document.body);
+							mini.alert(operType+operTitle + " 成功！");
+							break;
+						}
+						case "FAILURE": {
+							mini.unmask(document.body);
+							mini.alert(operType+operTitle + " 失败！");
+							break;
+						}
+						}
+					}
+				});
+			}
+			}, '-',
+			{
+				html : '退回发票清单',
+				plain : true,
+				iconCls : 'icon-cancel',
+				handler : function(miniTable, buttonText) {
+					var checkedRowDatas = miniTable.getSelecteds();
+					var operType = "退回";
+					var operTitle = "发票清单";
+					var operAction = "backVatInvoice";
+					
+					if(0 == checkedRowDatas.length){
+						mini.alert("请选择要"+operType+"的记录！！");
+						return;
+					}
+				    var params = {};
+				    var tempIdArr = [];
+				    for(var i = 0;i<checkedRowDatas.length;i++){
+						var checkedRowdata = checkedRowDatas[i];
+						var invoicestatusname = checkedRowdata.invoicestatusname;
+						if(invoicestatusname != '已提交'){
+							mini.alert("请选择已提交的数据");
+							return;
+						};
+						var id = checkedRowdata.id;
+						tempIdArr.push(id);
+					}
+					params["ids"] = tempIdArr.join(",");
+						
+					if(!window.confirm(("确定"+operType+"当前"+checkedRowDatas.length+"条记录么？"))) return;
+					var url=getRootPath()+"/acl/"+operAction+".acl";
+					//遮罩
+					mini.mask({
+						el : document.body,
+						cls : 'mini-mask-loading',
+						html : '数据操作中 请稍等...'
+					});
+					jQuery.ajax({
+						url : url,
+						type : 'POST',
+						timeout : 30 * 1000,
+						data : params,
+						dataType : 'json',
+						error : function(res, errInfo, e) {
+							mini.unmask(document.body);
+						},
+						success : function(resultJson) {
+							var returnState = resultJson.returnType;
+							switch (returnState) {
+							case "SUCCESS": {
+								miniTable.reload();
+								mini.unmask(document.body);
+								mini.alert(operType+operTitle + " 成功！");
+								break;
+							}
+							case "FAILURE": {
+								mini.unmask(document.body);
+								mini.alert(operType+operTitle + " 失败！");
+								break;
+							}
+							}
+						}
+					});
+				}
+				}
+
+			],
+
+		columns: [
+		    {type:'indexcolumn'},
+			{type: 'checkcolumn'},
+			{field: 'id', header: 'id',visible:false,formEditorConfig : {fieldVisible: false}},
+ 			{field: 'invoiceno', header: '发票号',width:85,queryConfig : {},formEditorConfig : {required: true,width:180}},
+			{field: 'invoicemoney', header: '发票金额',width:85,align: 'right',dataType:'currency',queryConfig : {type:'float',vtype:'float'},
+				formEditorConfig : {
+				required: true,
+				width:180,
+				vtype: 'float'
+			}},
+			{field: 'sumamt',header: '已登记合同金额',width:85,align: 'right',dataType:'currency',formEditorConfig : {fieldVisible :false}},
+			{field: 'contractinfo',header: '发票信息',width:130,formEditorConfig : {fieldVisible :false}},
+			{field: 'contractno',header: '合同编号',visible :false},
+			{field: 'purchasenits', header: '购货单位',width:85,queryConfig:{},formEditorConfig : {}},
+			
+			{field: 'suppliername', header: '供货商',width:85,queryConfig:{newLine: true},formEditorConfig : {fieldVisible: false}},
+			{field: 'supplier', header: '供货商 ',visible:false,
+				formEditorConfig : {
+				//type:'combobox'
+				//newLine: true,
+				width: 200,
+				type : 'ComboBox',
+				required: true,
+				textField: 'name',
+				valueField: 'value',
+				fieldVisible: true,
+				width: 150,
+				colspan:3,
+				params: {
+					cust_type: 'cust_type.vndr',
+					xmlFileName: '/eleasing/workflow/contract/contract_approval/contract_custinfo.xml'
+				}
+			}},
+			{field: 'goodsname', header: '货物名称',width:85, queryConfig : {},formEditorConfig : {newLine:true,width:200}},
+			{field: 'recorddate', header: '登记日期',type:"date",width:70,format:"yyyy-MM-dd",queryConfig : {
+				type: 'date',
+				vtype: 'date',
+				range : true,
+				format: 'yyyy-MM-dd'
+			},formEditorConfig : {
+				width:180,
+				type: 'date',
+				vtype: 'date',
+				format: 'yyyy-MM-dd'
+			}},
+
+			{field: 'invoicestatusname', header: '发票状态',width:70,formEditorConfig : {fieldVisible :false,newLine : true},
+				queryConfig : {
+					newLine:true,
+					type : 'combobox',//表单域类型
+					valueField : 'value',
+					textField : 'name',
+					allowInput : false,
+					showNullItem : false,
+					defaultValue:'1',
+					data : statusdata
+				}
+			},
+			{field: 'creatorname', header: '登记人',width:70,formEditorConfig:{fieldVisible :false}},
+			{field: 'memo', header: '备注',visible: false,
+				formEditorConfig : {
+					type : 'textarea',
+					colspan : 3,
+					width : 300,
+					newLine : true,
+					fieldVisible :true
+				}
+			}
+		]
+	});
+});
+</script>
+</head>	
+<body>
+<div id="id_table_container_vat_invoice_info_confirm" style="height: 100%;"></div>
+</body>
+</html>
+
+
+
+
+
+
