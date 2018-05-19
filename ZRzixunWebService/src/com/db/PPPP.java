@@ -1,0 +1,121 @@
+package com.db;
+
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class PPPP {
+	public static void main(String[] args) {
+		Map<String, String> map = new HashMap<String, String>();// 历史数据
+			map.put("开封天路", "3973750");// 经销商名称，问卷ID
+		  map.put("新疆佳琪", "42910601");
+			map.put("新疆佳琪111", "42910601");
+
+		String paper_id[] =	{"3973750","4291060","AAA","BBBB"};// 问卷ID
+  
+		Map<String, String> amap = new HashMap<String, String>();// 总数12条数据
+			amap.put("111", "开封天路");// tuid和经销商名称
+			amap.put("222", "开封天路");
+			amap.put("333", "开封天路");
+			amap.put("444", "开封天路");
+			amap.put("5555", "眉山勇多");
+			amap.put("9393089", "眉山勇多");
+			amap.put("9393094", "眉山勇多");
+			amap.put("6666", "平顶山御风");
+			amap.put("9393088", "遂宁新纪元 ");
+			amap.put("7777", "新疆佳琪");
+		  amap.put("9393095", "新疆佳琪");
+		Map<String, String> resultMap = new HashMap<String, String>();// 要插入se表的数据
+		Map<String, String> maphistory = new HashMap<String, String>();// 要插入se表的数据
+		for (String key : amap.keySet()) {// 遍历amap键和值
+			//System.out.println(key+"---->>>"+amap.get(key));
+			if (map.containsKey(amap.get(key))) {// 包含
+
+				for (int j = 0; j < paper_id.length; j++) {
+
+					if (map.get(amap.get(key)).equals(paper_id[j])) {// 如果包含
+
+						if (j == paper_id.length - 1) {
+							System.out.println(amap.get(key) + "---"+ map.get(amap.get(key)) + "----"+ paper_id[0]);
+							resultMap.put(key, paper_id[0]);
+							map.put(amap.get(key), paper_id[0]);
+
+						} else {
+							System.out.println(amap.get(key) + "==="+ map.get(amap.get(key)) + "==="+ paper_id[j + 1]);
+							resultMap.put(key, paper_id[j + 1]);
+							map.put(amap.get(key), paper_id[j + 1]);
+
+							break;
+						}
+
+					}else{
+						
+						resultMap.put(key, paper_id[0]);
+					
+
+					}
+
+				}
+
+			} else {// 不包含的就添加到map容器里
+
+				resultMap.put(key, paper_id[0]);
+				map.put(amap.get(key), paper_id[0]);
+				maphistory.put(amap.get(key), paper_id[0]);// 
+
+			}
+
+		}
+
+		for (String key : map.keySet()) {
+			///System.out.println(key+"2222222"+map.get(key));
+				
+			}
+		System.out.println(resultMap);//插入 se表的数据
+	   System.out.println(map);//修改历史数据
+	   System.out.println(maphistory);//新添加的历史数据
+		String string = "a,b,c";
+		String  stringArr[]= string.split(",");
+		//System.out.println(stringArr.length);
+		//得到IP，输出PC-201309011313/122.206.73.83
+		InetAddress ia;
+		try {
+			ia = InetAddress.getLocalHost();
+			System.out.println(ia);
+			getLocalMac(ia);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+	}
+	private static void getLocalMac(InetAddress ia) throws SocketException {
+		// TODO Auto-generated method stub
+		//获取网卡，获取地址
+		byte[] mac = NetworkInterface.getByInetAddress(ia).getHardwareAddress();
+		System.out.println("mac数组长度："+mac.length);
+		StringBuffer sb = new StringBuffer("");
+		for(int i=0; i<mac.length; i++) {
+			if(i!=0) {
+				sb.append("-");
+			}
+			//字节转换为整数
+			int temp = mac[i]&0xff;
+			String str = Integer.toHexString(temp);
+			System.out.println("每8位:"+str);
+			if(str.length()==1) {
+				sb.append("0"+str);
+			}else {
+				sb.append(str);
+			}
+		}
+		System.out.println("本机MAC地址:"+sb.toString().toUpperCase());
+	}
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="Geely_JiuYuan_Interface"
+  id="myeclipse.1417061354867"
+  context-root="/Geely_JiuYuan_Interface"
+  j2ee-spec="5.0"
+  archive="Geely_JiuYuan_Interface.war">
+  <attributes>
+    <attribute name="webrootdir" value="WebRoot" />
+  </attributes>
+</project-module>
+
