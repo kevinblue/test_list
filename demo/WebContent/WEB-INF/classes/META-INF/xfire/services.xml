@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans >
+    <service xmlns="http://xfire.codehaus.org/config/1.0">
+        <name>FundRequestERP</name>
+        <serviceClass>com.tenwa.server.FundRequestERP</serviceClass>
+        <implementationClass>com.tenwa.server.impl.FundRequestERPImpl</implementationClass>
+    </service>
+</beans>
