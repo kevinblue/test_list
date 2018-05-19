@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="DataInterface_baoyang"
+  id="myeclipse.1447299466796"
+  context-root="/DataInterface_baoyang"
+  j2ee-spec="5.0"
+  archive="DataInterface_baoyang.war">
+  <attributes>
+    <attribute name="webrootdir" value="WebRoot" />
+  </attributes>
+</project-module>
+
